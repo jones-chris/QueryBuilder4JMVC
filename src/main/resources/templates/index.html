@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width"/>
+
+    <link rel="stylesheet" th:href="@{/css/main.css}"/>
+
+    <title>Query Builder</title>
+</head>
+
+<body>
+
+<form id="qb" name="qb" action="/query" method="post">
+
+    <label for="columns">Selected Columns</label>
+    <select name="columns" id="columns" multiple="multiple">
+        <option value="service">service</option>
+        <option value="fund">fund</option>
+    </select>
+
+    <label for="table">Selected Table</label>
+    <select name="table" id="table">
+        <option value="county_spending_detail">county_spending_detail</option>
+    </select>
+
+    <label for="limit">Limit</label>
+    <select name="limit" id="limit">
+        <option value="5">5</option>
+        <option value="10">10</option>
+        <option value="50">50</option>
+        <option value="100">100</option>
+    </select>
+
+    <label for="distinct">Distinct?</label>
+    <input type="radio" id="distinct" name="distinct"/>
+
+    <label for="groupBy">Group By?</label>
+    <input type="radio" id="groupBy" name="groupBy"/>
+
+    <label for="orderBy">Order By?</label>
+    <input type="radio" id="orderBy" name="orderBy"/>
+
+    <label for="ascending">Ascending?</label>
+    <input type="radio" id="ascending" name="ascending"/>
+
+    <label for="suppressNulls">Suppress Nulls?</label>
+    <input type="radio" id="suppressNulls" name="suppressNulls"/>
+
+    <div class="criteria-row">
+
+        <input type="hidden" id="criteria0.id" name="criteria[0].id" value="0"/>
+        <input type="hidden" id="criteria0.parentId" name="criteria[0].parentId" value=""/>
+        <input id="criteria0.conjunction" name="criteria[0].conjunction" value="And"/>
+        <input id="criteria0.frontParenthesis" name="criteria[0].frontParenthesis" value=""/>
+        <input id="criteria0.column" name="criteria[0].column" value="fund"/>
+        <input id="criteria0.operator" name="criteria[0].operator" value="equalTo"/>
+        <input id="criteria0.filter" name="criteria[0].filter" value="bob"/>
+        <input id="criteria0.endParenthesis" name="criteria[0].endParenthesis" value=""/>
+
+        <br/>
+
+        <input type="hidden" id="criteria1.id" name="criteria[1].id" value="1"/>
+        <input type="hidden" id="criteria1.parentId" name="criteria[1].parentId" value="0"/>
+        <input id="criteria1.conjunction" name="criteria[1].conjunction" value="And"/>
+        <input id="criteria1.frontParenthesis" name="criteria[1].frontParenthesis" value=""/>
+        <input id="criteria1.column" name="criteria[1].column" value="fund"/>
+        <input id="criteria1.operator" name="criteria[1].operator" value="equalTo"/>
+        <input id="criteria1.filter" name="criteria[1].filter" value="bob"/>
+        <input id="criteria1.endParenthesis" name="criteria[1].endParenthesis" value=""/>
+
+    </div>
+
+    <button type="submit">Query</button>
+
+</form>
+
+</body>
+</html>

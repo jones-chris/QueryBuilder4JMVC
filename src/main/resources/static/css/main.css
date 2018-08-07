@@ -1,0 +1,43 @@
+form {
+      text-align: -webkit-center;
+}
+
+select, input {
+      width: 140px;
+      margin-left: 20px;
+      margin-right: 20px;
+      margin-top: 10px;
+      margin-bottom: 10px;
+}
+
+.td-buttons {
+      display: grid;
+      padding-right: 25px;
+      margin-top: 40px;
+}
+
+.div-tables {
+      display: inline-block;
+      height: 200px;
+}
+
+.select-tables {
+      width: auto;
+}
+
+.select-columns {
+      border-style: groove;
+      width: fit-content;
+      padding-top: 20px;
+      padding-bottom: 20px;
+      padding-left: 20px;
+      padding-right: 20px;
+}
+
+.selected-columns-label {
+      display: block;
+}
+
+.criteria-row {
+      padding-bottom: 10px;
+}

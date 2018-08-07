@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width"/>
+
+    <link rel="stylesheet" th:href="@{/css/main.css}"/>
+
+    <title>Query Builder</title>
+</head>
+
+<body>
+
+<form id="qb" name="qb" action="/query" method="post">
+
+    <!--Tables-->
+    <div id="tablesDiv" class="select-columns">
+
+        <table>
+
+            <tr>
+                <th>Tables</th>
+            </tr>
+            <tr>
+                <td>
+                    <select name="table" id="table" class="select-tables">
+                        <option value="county_spending_detail">county_spending_detail</option>
+                    </select>
+                </td>
+            </tr>
+
+        </table>
+
+    </div>
+
+    <!--Select Columns-->
+    <div id="selectColumnsDiv" class="select-columns">
+
+        <table>
+
+            <tr>
+                <th>Available Columns</th>
+                <th></th>
+                <th>Selected Columns</th>
+                <th></th>
+            </tr>
+
+            <tr>
+                <td>
+                    <select name="availableColumns" id="availableColumns" multiple="multiple" size="10">
+                        <option value="service">service</option>
+                    </select>
+                </td>
+                <td class="td-buttons">
+                    <button>Add</button>
+                    <br/>
+                    <button>Remove</button>
+                </td>
+                <td>
+                    <select name="columns" id="columns" multiple="multiple" size="10">
+                        <option value="service">service</option>
+                    </select>
+                </td>
+                <td class="td-buttons">
+                    <button>Up</button>
+                    <br/>
+                    <button>Down</button>
+                </td>
+            </tr>
+
+        </table>
+
+    </div>
+
+    <!--Other Options & Criteria-->
+    <div id="criteriaDiv">
+
+        <div class="select-columns">
+
+            <p><strong>Criteria</strong></p>
+
+            <div id="row.0" class="criteria-row">
+                <input type="hidden" id="criteria0.id" name="criteria[0].id" value="0"/>
+                <input type="hidden" id="criteria0.parentId" name="criteria[0].parentId" value=""/>
+                <select id="criteria0.conjunction" name="criteria[0].conjunction">
+                    <option value="And">And</option>
+                    <option value="Or">Or</option>
+                </select>
+                <input type="hidden" id="criteria0.frontParenthesis" name="criteria[0].frontParenthesis" value=""/>
+                <select id="criteria0.column" name="criteria[0].column">
+                    <option value="service">service</option>
+                </select>
+                <select id="criteria0.operator" name="criteria[0].operator">
+                    <option value="equalTo">&equals;</option>
+                    <option value="notEqualTo">&lt;&gt;</option>
+                    <option value="greaterThanOrEquals">&gt;&equals;</option>
+                    <option value="lessThanOrEquals">&lt;&equals;</option>
+                    <option value="greaterThan">&gt;</option>
+                    <option value="lessThan">&lt;</option>
+                    <option value="like">like</option>
+                    <option value="notLike">not like</option>
+                    <option value="in">in</option>
+                    <option value="notIn">not in</option>
+                    <option value="isNull">is null</option>
+                    <option value="isNotNull">is not null</option>
+                </select>
+                <input id="criteria0.filter" name="criteria[0].filter" value="bob"/>
+                <input type="hidden" id="criteria0.endParenthesis" name="criteria[0].endParenthesis" value=""/>
+                <input type="button" value="Add Criteria" onclick=""/>
+                <input type="button" value="Remove Criteria"/>
+            </div>
+        </div>
+
+        <!--Other Options-->
+        <div id="otherOptionsDiv" class="select-columns">
+
+            <table>
+
+                <tr>
+                    <td>
+                        <label for="limit">Limit</label>
+                        <select name="limit" id="limit">
+                            <option value="5">5</option>
+                            <option value="10">10</option>
+                            <option value="50">50</option>
+                            <option value="100">100</option>
+                        </select>
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        <input type="radio" id="distinct" name="distinct"/> Distinct
+                    </td>
+                    <td>
+                        <input type="radio" id="groupBy" name="groupBy"/> Group By
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        <input type="radio" id="orderBy" name="orderBy"/> Order By
+                    </td>
+                    <td>
+                        <input type="radio" id="ascending" name="ascending"/> Ascending
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        <input type="radio" id="suppressNulls" name="suppressNulls"/> Suppress Nulls
+                    </td>
+                </tr>
+
+            </table>
+
+        </div>
+
+    </div>
+
+
+    <button type="submit">Query</button>
+
+    <!--Results-->
+
+</form>
+
+<!--<script-->
+        <!--src="https://code.jquery.com/jquery-3.3.1.min.js"-->
+        <!--integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8="-->
+        <!--crossorigin="anonymous">-->
+<!--</script>-->
+<script th:src="@{/js/main.js}"></script>
+
+</body>
+</html>
