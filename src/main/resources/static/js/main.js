@@ -4,110 +4,111 @@ let columns = ['fiscal_year_period', 'fiscal_year', 'service', 'department', 'pr
 let tables = ['county_spending_detail'];
 let criteria = [];
 
-let inputs = document.getElementsByTagName('input');
-for (var i=0; i<inputs.length; i++) {
-    if (inputs[i].type === 'button') {
-        if (inputs[i].value === 'Add Criteria') {
-            inputs[i].onclick = function () {
-                  let parentId = this.parentNode.id.slice(-1);
-                  let id = parseInt(parentId) + 1;
-                  renumberCriteriaAdding(id);
 
-                  //inserts new row after row where 'Add Criteria' button was clicked.
-                  let newDiv = document.createElement('div');
-                  newDiv.id = 'row.' + id;
-                  newDiv.classList.add('criteria-row');
-                  this.parentNode.insertAdjacentElement('afterend', newDiv);
-                  //let newRow = document.getElementById('criteriaDiv').insertRow(this.parentNode.parentNode.rowIndex + 1);
-
-                  // create id input element
-                  let idInput = document.createElement('input');
-                  idInput.type = 'hidden';
-                  idInput.id = 'criteria' + id + '.id';
-                  idInput.name = 'criteria[' + id + '].id';
-                  idInput.value = id;
-                  newDiv.appendChild(idInput);
-
-                  // create parentId input element
-                  let parentIdInput = document.createElement('input');
-                  parentIdInput.type = 'hidden';
-                  parentIdInput.id = 'criteria' + id + '.parentId';
-                  parentIdInput.name = 'criteria[' + id + '].parentId';
-                  parentIdInput.value = parentId;
-                  newDiv.appendChild(parentIdInput);
-
-                  // create conjunction select element
-                  let conjunctionEl = createNewConjunctionSelectEl(id);
-                  newDiv.appendChild(conjunctionEl);
-
-                  // create front parenthesis input element
-                  let frontParenInput = document.createElement('input');
-                  frontParenInput.type = 'hidden';
-                  frontParenInput.id = 'criteria' + id + '.frontParenthesis';
-                  frontParenInput.name = 'criteria[' + id + '].frontParenthesis';
-                  newDiv.appendChild(frontParenInput);
-
-                  // create column select element
-                  let columnEl = createNewColumnSelectEl(id, columns);
-                  newDiv.appendChild(columnEl);
-
-                  // create operator select element
-                  let operatorEl = createNewOperatorSelectEl(id);
-                  newDiv.appendChild(operatorEl);
-
-                  // create filter input element
-                  let filterInput = document.createElement('input');
-                  filterInput.id = 'criteria' + id + '.filter';
-                  filterInput.name = 'criteria[' + id + '].filter';
-                  newDiv.appendChild(filterInput);
-
-                  // create end parenthesis input element
-                  let endParenInput = document.createElement('input');
-                  endParenInput.type = 'hidden';
-                  endParenInput.id = 'criteria' + id + '.endParenthesis';
-                  endParenInput.name = 'criteria[' + id + '].endParenthesis';
-                  newDiv.appendChild(endParenInput);
-
-                  // create 'Add Criteria' button
-                  let addCriteriaButton = document.createElement('input');
-                  addCriteriaButton.type = 'button';
-                  addCriteriaButton.value = 'Add Criteria';
-                  addCriteriaButton.onclick = this.onclick;
-                  newDiv.appendChild(addCriteriaButton);
-
-                  // create 'Remove Criteria' button
-                  let removeCriteriaButton = document.createElement('input');
-                  removeCriteriaButton.type = 'button';
-                  removeCriteriaButton.value = 'Remove Criteria';
-                  removeCriteriaButton.onclick = function () {
-                      let rowIndex = parseInt(this.parentNode.id.slice(-1));
-                      this.parentNode.remove();
-                      renumberCriteriaRemoving(rowIndex);
-                      reindentCriteria();
-                  }
-                  newDiv.appendChild(removeCriteriaButton);
-
-                  reindentCriteria();
-            };
-        } else if (inputs[i].value === 'Remove Criteria') {
-              inputs[i].onclick = function () {
-                  let rowIndex = parseInt(this.parentNode.id.slice(-1));
-                  this.parentNode.remove();
-                  renumberCriteriaRemoving(rowIndex);
-                  reindentCriteria();
-              }
-        }
-    }
+document.getElementById('addRootCriteria').onclick = function() {
+    addCriteria(null);
 }
 
-function deleteChildrenCriteria(id) {
-    let table = document.getElementById('criteriaTable');
-    let trRows = table.rows;
-    for (var i=0; i<trRows; i++) {
-        if (trRows.children[1].value === id) {
-            table.deleteRow(i);
-        }
+// parentNode:  The criteria node to insert this child node after
+function addCriteria(parentNode) {
+    // These default assignments for parentId and id assume we are adding a new root criteria.
+    let parentId = null;
+    let id = 0;
+
+    // If the parentNode parameter is not null, then that means we are adding a child criteria and will reassign the
+    //   parentId and id variables.
+    if (parentNode !== null) {
+        parentId = parentNode.id.slice(-1);
+        id = parseInt(parentId) + 1;
     }
+    //let parentId = parentNode.id.slice(-1);
+    //let id = parseInt(parentId) + 1;
+    renumberCriteriaAdding(id);
+
+    //inserts new row after row where 'Add Criteria' button was clicked.
+    let newDiv = document.createElement('div');
+    newDiv.id = 'row.' + id;
+    newDiv.classList.add('criteria-row');
+    //this.parentNode.insertAdjacentElement('afterend', newDiv);
+
+    // create id input element
+    let idInput = document.createElement('input');
+    idInput.type = 'hidden';
+    idInput.id = 'criteria' + id + '.id';
+    idInput.name = 'criteria[' + id + '].id';
+    idInput.value = id;
+    newDiv.appendChild(idInput);
+
+    // create parentId input element
+    let parentIdInput = document.createElement('input');
+    parentIdInput.type = 'hidden';
+    parentIdInput.id = 'criteria' + id + '.parentId';
+    parentIdInput.name = 'criteria[' + id + '].parentId';
+    parentIdInput.value = parentId;
+    newDiv.appendChild(parentIdInput);
+
+    // create conjunction select element
+    let conjunctionEl = createNewConjunctionSelectEl(id);
+    newDiv.appendChild(conjunctionEl);
+
+    // create front parenthesis input element
+    let frontParenInput = document.createElement('input');
+    frontParenInput.type = 'hidden';
+    frontParenInput.id = 'criteria' + id + '.frontParenthesis';
+    frontParenInput.name = 'criteria[' + id + '].frontParenthesis';
+    newDiv.appendChild(frontParenInput);
+
+    // create column select element
+    let columnEl = createNewColumnSelectEl(id, columns);
+    newDiv.appendChild(columnEl);
+
+    // create operator select element
+    let operatorEl = createNewOperatorSelectEl(id);
+    newDiv.appendChild(operatorEl);
+
+    // create filter input element
+    let filterInput = document.createElement('input');
+    filterInput.id = 'criteria' + id + '.filter';
+    filterInput.name = 'criteria[' + id + '].filter';
+    newDiv.appendChild(filterInput);
+
+    // create end parenthesis input element
+    let endParenInput = document.createElement('input');
+    endParenInput.type = 'hidden';
+    endParenInput.id = 'criteria' + id + '.endParenthesis';
+    endParenInput.name = 'criteria[' + id + '].endParenthesis';
+    newDiv.appendChild(endParenInput);
+
+    // create 'Add Criteria' button
+    let addCriteriaButton = document.createElement('input');
+    addCriteriaButton.type = 'button';
+    addCriteriaButton.value = 'Add Criteria';
+    addCriteriaButton.onclick = function () {
+        addCriteria(newDiv);
+    }
+
+    newDiv.appendChild(addCriteriaButton);
+
+    // create 'Remove Criteria' button
+    let removeCriteriaButton = document.createElement('input');
+    removeCriteriaButton.type = 'button';
+    removeCriteriaButton.value = 'Remove Criteria';
+    removeCriteriaButton.onclick = function () {
+      //let id = parseInt(id);
+      //this.parentNode.remove();
+      newDiv.remove();
+      renumberCriteriaRemoving(newDiv.id.slice(-1));
+      reindentCriteria();
+    }
+    newDiv.appendChild(removeCriteriaButton);
+
+    if (parentNode === null) {
+        document.getElementById('criteriaAnchor').prepend(newDiv);
+    } else {
+        parentNode.insertAdjacentElement('afterend', newDiv);
+    }
+
+    reindentCriteria();
 }
 
 function removeCriteria(rowIndex) {
@@ -192,10 +193,10 @@ function renumberCriteriaRemoving(idThatWasRemoved) { //TODO:  add parameter to 
             let currentParentId = criteria[i].children[1].value;
             let newParentId = null;
             if (currentParentId !== "") {
-                if (parseInt(currentParentId) === 0 && idThatWasRemoved !== 0) {
+                if (parseInt(currentParentId) === 0 && parseInt(idThatWasRemoved) !== 0) {
                     newParentId = currentParentId;
                 }
-                if (parseInt(currentParentId) === 0 && idThatWasRemoved === 0) {
+                if (parseInt(currentParentId) === 0 && parseInt(idThatWasRemoved) === 0) {
                     newParentId = null;
                 }
                 if (parseInt(currentParentId) > 0) {

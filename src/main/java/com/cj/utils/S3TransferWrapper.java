@@ -30,11 +30,9 @@ public class S3TransferWrapper extends TimerTask {
         final String FILE_PATH = PROJECT_ROOT_DIRECTORY + "\\data\\log.csv";
 
         File file = new File(FILE_PATH);
-        try (FileWriter fileWriter = new FileWriter(file, false)) {
-
-            Connection conn = DriverManager.getConnection("jdbc:sqlite:./data/logging.db");
-
-            ResultSet rs = conn.createStatement().executeQuery("select * from log;");
+        try (FileWriter fileWriter = new FileWriter(file, false);
+             Connection conn = DriverManager.getConnection("jdbc:sqlite:./data/logging.db");
+             ResultSet rs = conn.createStatement().executeQuery("select * from log;")) {
 
             fileWriter.append("TIMESTAMP,SELECT_STATEMENT_TO_STRING,SELECT_STATEMENT_TO_SQL,DATABASE_STILL_EXISTS,TABLE_STILL_EXISTS," +
                     "NUM_OF_TABLES_IS_SAME,NUM_OF_COLUMNS_IN_TABLE_IS_SAME,NUM_OF_ROWS_IN_TABLE_IS_SAME,TABLE_DATA_IS_SAME," +
@@ -66,6 +64,9 @@ public class S3TransferWrapper extends TimerTask {
 
             fileWriter.flush();
             fileWriter.close();
+
+            // Delete records from database since they were exported to csv.
+            conn.createStatement().execute("delete from log;");
 
             String clientRegion = "us-east-1";
             String bucketName = "jones-chris-aleph-tav";
