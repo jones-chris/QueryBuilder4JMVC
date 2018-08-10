@@ -13,77 +13,125 @@
 
 <form id="qb" name="qb" action="/query" method="post">
 
-    <!--Tables-->
-    <div id="tablesDiv" class="select-columns">
+    <div class="tables-and-columns-div">
 
-        <table>
+        <!--Tables-->
+        <div id="tablesDiv" class="select-columns">
 
-            <tr>
-                <th>Tables</th>
-            </tr>
-            <tr>
-                <td>
-                    <select name="table" id="table" class="select-tables">
-                        <option value="county_spending_detail">county_spending_detail</option>
-                    </select>
-                </td>
-            </tr>
+            <table>
 
-        </table>
+                <tr>
+                    <th>Tables</th>
+                </tr>
+                <tr>
+                    <td>
+                        <select name="table" id="table" class="select-tables">
+                            <option value="county_spending_detail">county_spending_detail</option>
+                        </select>
+                    </td>
+                </tr>
 
-    </div>
+            </table>
 
-    <!--Select Columns-->
-    <div id="selectColumnsDiv" class="select-columns">
+        </div>
 
-        <table>
+        <!--Select Columns-->
+        <div id="selectColumnsDiv" class="select-columns">
 
-            <tr>
-                <!--<th>Available Columns</th>-->
-                <!--<th></th>-->
-                <th>Selected Columns</th>
-                <th></th>
-            </tr>
+            <table>
 
-            <tr>
-                <!--<td>-->
+                <tr>
+                    <!--<th>Available Columns</th>-->
+                    <!--<th></th>-->
+                    <th>Selected Columns</th>
+                    <th></th>
+                </tr>
+
+                <tr>
+                    <!--<td>-->
                     <!--<select name="availableColumns" id="availableColumns" multiple="multiple" size="10">-->
-                        <!--<option value="fiscal_year_period">fiscal_year_period</option>-->
-                        <!--<option value="fiscal_year">fiscal_year</option>-->
-                        <!--<option value="service">service</option>-->
-                        <!--<option value="department">department</option>-->
-                        <!--<option value="program">program</option>-->
-                        <!--<option value="amount">amount</option>-->
+                    <!--<option value="fiscal_year_period">fiscal_year_period</option>-->
+                    <!--<option value="fiscal_year">fiscal_year</option>-->
+                    <!--<option value="service">service</option>-->
+                    <!--<option value="department">department</option>-->
+                    <!--<option value="program">program</option>-->
+                    <!--<option value="amount">amount</option>-->
                     <!--</select>-->
-                <!--</td>-->
-                <!--<td class="td-buttons">-->
+                    <!--</td>-->
+                    <!--<td class="td-buttons">-->
                     <!--<button>Add</button>-->
                     <!--<br/>-->
                     <!--<button>Remove</button>-->
-                <!--</td>-->
-                <td>
-                    <select name="columns" id="columns" multiple="multiple" size="10">
-                        <option value="fiscal_year_period">fiscal_year_period</option>
-                        <option value="fiscal_year">fiscal_year</option>
-                        <option value="service">service</option>
-                        <option value="department">department</option>
-                        <option value="program">program</option>
-                        <option value="amount">amount</option>
-                    </select>
-                </td>
-                <td class="td-buttons">
-                    <button>Up</button>
-                    <br/>
-                    <button>Down</button>
-                </td>
-            </tr>
+                    <!--</td>-->
+                    <td>
+                        <select name="columns" id="columns" multiple="multiple" size="10">
+                            <option value="fiscal_year_period">fiscal_year_period</option>
+                            <option value="fiscal_year">fiscal_year</option>
+                            <option value="service">service</option>
+                            <option value="department">department</option>
+                            <option value="program">program</option>
+                            <option value="amount">amount</option>
+                        </select>
+                    </td>
+                    <!--<td class="td-buttons">-->
+                    <!--<button>Up</button>-->
+                    <!--<br/>-->
+                    <!--<button>Down</button>-->
+                    <!--</td>-->
+                </tr>
 
-        </table>
+            </table>
+
+        </div>
 
     </div>
 
     <!--Other Options & Criteria-->
     <div id="criteriaDiv">
+
+        <!--Other Options-->
+        <div id="otherOptionsDiv" class="select-columns">
+
+            <p><strong>Other Options</strong></p>
+
+            <table>
+
+                <tr>
+                    <td>
+                        <label for="limit">Limit</label>
+                        <select name="limit" id="limit">
+                            <option value="5">5</option>
+                            <option value="10">10</option>
+                            <option value="50">50</option>
+                            <option value="100">100</option>
+                        </select>
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        <input type="checkbox" id="distinct" name="distinct"/> Distinct
+                    </td>
+                    <td>
+                        <input type="checkbox" id="groupBy" name="groupBy"/> Group By
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        <input type="checkbox" id="orderBy" name="orderBy"/> Order By
+                    </td>
+                    <td>
+                        <input type="checkbox" id="ascending" name="ascending"/> Ascending
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        <input type="checkbox" id="suppressNulls" name="suppressNulls"/> Suppress Nulls
+                    </td>
+                </tr>
+
+            </table>
+
+        </div>
 
         <div class="select-columns">
 
@@ -130,62 +178,14 @@
             <!--</div>-->
         </div>
 
-        <!--Other Options-->
-        <div id="otherOptionsDiv" class="select-columns">
-
-            <table>
-
-                <tr>
-                    <td>
-                        <label for="limit">Limit</label>
-                        <select name="limit" id="limit">
-                            <option value="5">5</option>
-                            <option value="10">10</option>
-                            <option value="50">50</option>
-                            <option value="100">100</option>
-                        </select>
-                    </td>
-                </tr>
-                <tr>
-                    <td>
-                        <input type="radio" id="distinct" name="distinct"/> Distinct
-                    </td>
-                    <td>
-                        <input type="radio" id="groupBy" name="groupBy"/> Group By
-                    </td>
-                </tr>
-                <tr>
-                    <td>
-                        <input type="radio" id="orderBy" name="orderBy"/> Order By
-                    </td>
-                    <td>
-                        <input type="radio" id="ascending" name="ascending"/> Ascending
-                    </td>
-                </tr>
-                <tr>
-                    <td>
-                        <input type="radio" id="suppressNulls" name="suppressNulls"/> Suppress Nulls
-                    </td>
-                </tr>
-
-            </table>
-
-        </div>
-
     </div>
 
-
-    <button type="submit">Query</button>
+    <button type="submit">Run Query</button>
 
     <!--Results-->
 
 </form>
 
-<!--<script-->
-        <!--src="https://code.jquery.com/jquery-3.3.1.min.js"-->
-        <!--integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8="-->
-        <!--crossorigin="anonymous">-->
-<!--</script>-->
 <script th:src="@{/js/main.js}"></script>
 
 </body>

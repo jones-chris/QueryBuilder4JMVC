@@ -2,23 +2,13 @@ form {
       text-align: -webkit-center;
 }
 
-select, input {
+
+.criteria-select-and-input {
       width: 140px;
       margin-left: 20px;
       margin-right: 20px;
       margin-top: 10px;
       margin-bottom: 10px;
-}
-
-.td-buttons {
-      display: grid;
-      padding-right: 25px;
-      margin-top: 40px;
-}
-
-.div-tables {
-      display: inline-block;
-      height: 200px;
 }
 
 .select-tables {
@@ -34,10 +24,10 @@ select, input {
       padding-right: 20px;
 }
 
-.selected-columns-label {
-      display: block;
-}
-
 .criteria-row {
       padding-bottom: 10px;
+}
+
+.tables-and-columns-div {
+      display: inline-flex;
 }

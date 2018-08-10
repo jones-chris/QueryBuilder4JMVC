@@ -21,15 +21,13 @@ function addCriteria(parentNode) {
         parentId = parentNode.id.slice(-1);
         id = parseInt(parentId) + 1;
     }
-    //let parentId = parentNode.id.slice(-1);
-    //let id = parseInt(parentId) + 1;
+
     renumberCriteriaAdding(id);
 
     //inserts new row after row where 'Add Criteria' button was clicked.
     let newDiv = document.createElement('div');
     newDiv.id = 'row.' + id;
     newDiv.classList.add('criteria-row');
-    //this.parentNode.insertAdjacentElement('afterend', newDiv);
 
     // create id input element
     let idInput = document.createElement('input');
@@ -49,6 +47,7 @@ function addCriteria(parentNode) {
 
     // create conjunction select element
     let conjunctionEl = createNewConjunctionSelectEl(id);
+    conjunctionEl.classList.add('criteria-select-and-input');
     newDiv.appendChild(conjunctionEl);
 
     // create front parenthesis input element
@@ -60,16 +59,19 @@ function addCriteria(parentNode) {
 
     // create column select element
     let columnEl = createNewColumnSelectEl(id, columns);
+    columnEl.classList.add('criteria-select-and-input');
     newDiv.appendChild(columnEl);
 
     // create operator select element
     let operatorEl = createNewOperatorSelectEl(id);
+    operatorEl.classList.add('criteria-select-and-input');
     newDiv.appendChild(operatorEl);
 
     // create filter input element
     let filterInput = document.createElement('input');
     filterInput.id = 'criteria' + id + '.filter';
     filterInput.name = 'criteria[' + id + '].filter';
+    filterInput.classList.add('criteria-select-and-input');
     newDiv.appendChild(filterInput);
 
     // create end parenthesis input element
@@ -83,6 +85,7 @@ function addCriteria(parentNode) {
     let addCriteriaButton = document.createElement('input');
     addCriteriaButton.type = 'button';
     addCriteriaButton.value = 'Add Criteria';
+    addCriteriaButton.classList.add('criteria-select-and-input');
     addCriteriaButton.onclick = function () {
         addCriteria(newDiv);
     }
@@ -93,12 +96,11 @@ function addCriteria(parentNode) {
     let removeCriteriaButton = document.createElement('input');
     removeCriteriaButton.type = 'button';
     removeCriteriaButton.value = 'Remove Criteria';
+    removeCriteriaButton.classList.add('criteria-select-and-input');
     removeCriteriaButton.onclick = function () {
-      //let id = parseInt(id);
-      //this.parentNode.remove();
-      newDiv.remove();
-      renumberCriteriaRemoving(newDiv.id.slice(-1));
-      reindentCriteria();
+        newDiv.remove();
+        renumberCriteriaRemoving(newDiv.id.slice(-1));
+        reindentCriteria();
     }
     newDiv.appendChild(removeCriteriaButton);
 

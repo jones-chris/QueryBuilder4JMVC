@@ -1,0 +1,9 @@
+<component name="libraryTable">
+  <library name="Gradle: :com.querybuilder4j:">
+    <CLASSES>
+      <root url="jar://$PROJECT_DIR$/../../../QueryBuilder4J/out/artifacts/com_querybuilder4j_jar/com.querybuilder4j.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES />
+  </library>
+</component>
