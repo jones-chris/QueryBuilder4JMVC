@@ -7,7 +7,7 @@ import com.cj.utils.Converter;
 import com.cj.service.DatabaseAuditService;
 import com.querybuilder4j.config.DatabaseType;
 import com.querybuilder4j.utils.ResultSetToHashMapConverter;
-import org.json.JSONArray;
+import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.HttpStatus;
@@ -98,29 +98,30 @@ public class DatabaseMetaDataController {
     //execute query and return results
     @RequestMapping(value = "/query", method = RequestMethod.POST)
     @ResponseBody
-    public ResponseEntity<String> getQueryResults(com.querybuilder4j.sqlbuilders.statements.SelectStatement selectStatement) throws Exception {
-        //Load properties file.
-        Properties props = new Properties();
-        InputStream input = this.getClass().getClassLoader().getResourceAsStream("application.properties");
-        props.load(input);
+    public ResponseEntity<String> getQueryResults(com.querybuilder4j.sqlbuilders.statements.SelectStatement selectStatement) {
 
-        //Get column meta data to use in SelectStatement's toString method.
-        ResultSet columnMetaData = databaseMetaDataService.getColumns(null, selectStatement.getTable());
-        Map<String, Integer> columnMetaDataMap = ResultSetToHashMapConverter.toHashMap(columnMetaData);
-
-        //Set selectStatement's databaseType and tableSchema.
-        selectStatement.setDatabaseType(Enum.valueOf(DatabaseType.class, props.getProperty("databaseType")));
-        selectStatement.setTableSchema(columnMetaDataMap);
-
-        //Convert selectStatement to SQL string and run against database.
-        //Then convert ResultSet to JSON.
         try (Connection conn = dataSource.getConnection();
              Statement stmt = conn.createStatement()) {
 
-            ResultSet rs = stmt.executeQuery(selectStatement.toSql());
-            String json = Converter.convertToJSON(rs).toString();
+            //Load properties file.
+            Properties props = new Properties();
+            InputStream input = this.getClass().getClassLoader().getResourceAsStream("application.properties");
+            props.load(input);
 
-            //Log the SelectStatement and the databas audit results to logging.db
+            //Get column meta data to use in SelectStatement's toString method.
+            ResultSet columnMetaData = conn.getMetaData().getColumns(null, null, selectStatement.getTable(), "%");
+            Map<String, Integer> columnMetaDataMap = ResultSetToHashMapConverter.toHashMap(columnMetaData);
+
+            //Set selectStatement's databaseType and tableSchema.
+            selectStatement.setDatabaseType(Enum.valueOf(DatabaseType.class, props.getProperty("databaseType")));
+            selectStatement.setTableSchema(columnMetaDataMap);
+
+            //Convert selectStatement to SQL string and run against database.
+            //Then convert ResultSet to JSON.
+            ResultSet rs = stmt.executeQuery(selectStatement.toSql());
+            String queryResults = Converter.convertToJSON(rs).toString();
+
+            //Log the SelectStatement and the database audit results to logging.db
             //If any of the database audit results return false (a failure - meaning this statement changed the querybuilder4j
             //  database in some way), then send email to querybuilder4j@gamil.com for immediate notification.
             Map<String, Boolean> databaseAuditResults = databaseAuditService.runAllChecks(1, 1, new String[1], 1);
@@ -133,7 +134,14 @@ public class DatabaseMetaDataController {
                 }
             }
 
-            return new ResponseEntity<>(json, HttpStatus.OK);
+            //Create JSON string to be added to response body.  JSON string includes query results, selectStatement in SQL format,
+            //  and database audit results.
+            JSONObject jsonObject = new JSONObject(databaseAuditResults);
+            jsonObject.append("queryResults", queryResults);
+            jsonObject.append("sqlResult", selectStatement.toSql());
+
+
+            return new ResponseEntity<>(jsonObject.toString(4), HttpStatus.OK);
 
         } catch (Exception ex) {
             return new ResponseEntity<>(ex.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);

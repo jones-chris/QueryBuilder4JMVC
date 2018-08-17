@@ -7,7 +7,27 @@ let criteria = [];
 
 document.getElementById('addRootCriteria').onclick = function() {
     addCriteria(null);
-}
+};
+
+document.getElementById('runQuery').onclick = function() {
+    $.ajax({
+        type: 'POST',
+        url: $('#qb').attr('action'),
+        data: $('#qb').serialize(),
+        success: function(data) {
+            console.log(data);
+            document.getElementById('queryResults').innerHTML = data.queryResults[0];
+            document.getElementById('sqlResult').innerHTML = data.sqlResult[0];
+            document.getElementById('databaseExists').innerHTML = data.databaseExists;
+            document.getElementById('tableExists').innerHTML = data.tableExists;
+            document.getElementById('numOfTablesIsSame').innerHTML = data.tablesAreSame;
+            document.getElementById('numOfColumnsIsSame').innerHTML = data.numOfTableColumnsAreSame;
+            document.getElementById('numOfRowsIsSame').innerHTML = data.numOfTableRowsAreSame;
+            document.getElementById('tableDataIsSame').innerHTML = data.tableDataIsSame;
+        },
+        dataType: 'json'
+    })
+};
 
 // parentNode:  The criteria node to insert this child node after
 function addCriteria(parentNode) {

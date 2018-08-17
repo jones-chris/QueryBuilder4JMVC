@@ -5,8 +5,10 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Repository;
 
 import javax.sql.DataSource;
+import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Statement;
 
 @Repository
 public class DatabaseMetaDataDaoImpl implements DatabaseMetaDataDao {
@@ -17,23 +19,36 @@ public class DatabaseMetaDataDaoImpl implements DatabaseMetaDataDao {
 
     @Override
     public ResultSet getSchemas() throws SQLException {
-        return dataSource.getConnection().getMetaData().getSchemas();
+
+        try (Connection conn = dataSource.getConnection()) {
+            return conn.getMetaData().getSchemas();
+        } catch (SQLException ex) {
+            throw ex;
+        }
+
     }
 
     @Override
     public ResultSet getTablesAndViews(String schema) throws SQLException {
+
         String sql = "SELECT tbl_name FROM sqlite_master where type ='table' OR type ='view';";
-        return dataSource.getConnection().createStatement().executeQuery(sql);
+        try (Connection conn = dataSource.getConnection();
+             Statement stmt = conn.createStatement()) {
+            return stmt.executeQuery(sql);
+        } catch (SQLException ex) {
+            throw ex;
+        }
+
     }
 
     @Override
     public ResultSet getColumns(String schema, String table) throws SQLException {
-//        String sql = "SELECT p.name as columnName " +
-//                "FROM sqlite_master m " +
-//                "left outer join pragma_table_info((m.name)) p " +
-//                "     on m.name <> p.name " +
-//                "order by columnName;";
-//        return dataSource.getConnection().createStatement().executeQuery(sql);
-        return dataSource.getConnection().getMetaData().getColumns(null, null, table, "%");
+
+        try (Connection conn = dataSource.getConnection()) {
+            return conn.getMetaData().getColumns(null, null, table, "%");
+        } catch (SQLException ex) {
+            throw ex;
+        }
+
     }
 }

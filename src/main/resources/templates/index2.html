@@ -11,7 +11,7 @@
 
 <body>
 
-<form id="qb" name="qb" action="/query" method="post">
+<form id="qb" name="qb" target="results" action="/query" method="post">
 
     <div class="tables-and-columns-div">
 
@@ -41,28 +41,15 @@
             <table>
 
                 <tr>
-                    <!--<th>Available Columns</th>-->
-                    <!--<th></th>-->
+
                     <th>Selected Columns</th>
                     <th></th>
+
+
                 </tr>
 
                 <tr>
-                    <!--<td>-->
-                    <!--<select name="availableColumns" id="availableColumns" multiple="multiple" size="10">-->
-                    <!--<option value="fiscal_year_period">fiscal_year_period</option>-->
-                    <!--<option value="fiscal_year">fiscal_year</option>-->
-                    <!--<option value="service">service</option>-->
-                    <!--<option value="department">department</option>-->
-                    <!--<option value="program">program</option>-->
-                    <!--<option value="amount">amount</option>-->
-                    <!--</select>-->
-                    <!--</td>-->
-                    <!--<td class="td-buttons">-->
-                    <!--<button>Add</button>-->
-                    <!--<br/>-->
-                    <!--<button>Remove</button>-->
-                    <!--</td>-->
+
                     <td>
                         <select name="columns" id="columns" multiple="multiple" size="10">
                             <option value="fiscal_year_period">fiscal_year_period</option>
@@ -73,11 +60,7 @@
                             <option value="amount">amount</option>
                         </select>
                     </td>
-                    <!--<td class="td-buttons">-->
-                    <!--<button>Up</button>-->
-                    <!--<br/>-->
-                    <!--<button>Down</button>-->
-                    <!--</td>-->
+
                 </tr>
 
             </table>
@@ -141,51 +124,48 @@
 
             <p id="criteriaAnchor"></p>
 
-            <!--<div id="row.0" class="criteria-row">-->
-                <!--<input type="hidden" id="criteria0.id" name="criteria[0].id" value="0"/>-->
-                <!--<input type="hidden" id="criteria0.parentId" name="criteria[0].parentId" value=""/>-->
-                <!--<select id="criteria0.conjunction" name="criteria[0].conjunction">-->
-                    <!--<option value="And">And</option>-->
-                    <!--<option value="Or">Or</option>-->
-                <!--</select>-->
-                <!--<input type="hidden" id="criteria0.frontParenthesis" name="criteria[0].frontParenthesis" value=""/>-->
-                <!--<select id="criteria0.column" name="criteria[0].column">-->
-                    <!--<option value="fiscal_year_period">fiscal_year_period</option>-->
-                    <!--<option value="fiscal_year">fiscal_year</option>-->
-                    <!--<option value="service">service</option>-->
-                    <!--<option value="department">department</option>-->
-                    <!--<option value="program">program</option>-->
-                    <!--<option value="amount">amount</option>-->
-                <!--</select>-->
-                <!--<select id="criteria0.operator" name="criteria[0].operator">-->
-                    <!--<option value="equalTo">&equals;</option>-->
-                    <!--<option value="notEqualTo">&lt;&gt;</option>-->
-                    <!--<option value="greaterThanOrEquals">&gt;&equals;</option>-->
-                    <!--<option value="lessThanOrEquals">&lt;&equals;</option>-->
-                    <!--<option value="greaterThan">&gt;</option>-->
-                    <!--<option value="lessThan">&lt;</option>-->
-                    <!--<option value="like">like</option>-->
-                    <!--<option value="notLike">not like</option>-->
-                    <!--<option value="in">in</option>-->
-                    <!--<option value="notIn">not in</option>-->
-                    <!--<option value="isNull">is null</option>-->
-                    <!--<option value="isNotNull">is not null</option>-->
-                <!--</select>-->
-                <!--<input id="criteria0.filter" name="criteria[0].filter" value="bob"/>-->
-                <!--<input type="hidden" id="criteria0.endParenthesis" name="criteria[0].endParenthesis" value=""/>-->
-                <!--<input type="button" value="Add Criteria" onclick=""/>-->
-                <!--<input type="button" value="Remove Criteria"/>-->
-            <!--</div>-->
         </div>
 
     </div>
 
-    <button type="submit">Run Query</button>
-
-    <!--Results-->
+    <button type="button" id="runQuery">Run Query</button>
 
 </form>
 
+<!--Results-->
+<div>
+
+    <label for="sqlResult"> <b>Generated SQL:  </b> </label>
+    <p id="sqlResult"></p>
+
+    <label for="databaseExists"> <b>Database Still Exists?  </b> </label>
+    <p id="databaseExists"></p>
+
+    <label for="tableExists"> <b>county_spending_detail Table Still Exists?  </b> </label>
+    <p id="tableExists"></p>
+
+    <label for="numOfTablesIsSame"> <b>Number Of Tables Is The Same?  </b> </label>
+    <p id="numOfTablesIsSame"></p>
+
+    <label for="numOfColumnsIsSame"> <b>Number Of Table Columns Is The Same?  </b> </label>
+    <p id="numOfColumnsIsSame"></p>
+
+    <label for="numOfRowsIsSame"> <b>Number Of Table Rows Is The Same?  </b> </label>
+    <p id="numOfRowsIsSame"></p>
+
+    <label for="tableDataIsSame"> <b>Number Of Table Data Is The Same?  </b> </label>
+    <p id="tableDataIsSame"></p>
+
+    <label for="queryResults"> <b>Query Results:  </b> </label>
+    <p id="queryResults"></p>
+
+</div>
+
+<script
+        src="https://code.jquery.com/jquery-3.3.1.min.js"
+        integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8="
+        crossorigin="anonymous">
+</script>
 <script th:src="@{/js/main.js}"></script>
 
 </body>
