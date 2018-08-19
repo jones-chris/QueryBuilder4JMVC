@@ -16,6 +16,7 @@ document.getElementById('runQuery').onclick = function() {
         data: $('#qb').serialize(),
         success: function(data) {
             console.log(data);
+            document.getElementById('ajaxError').innerHTML = null;
             document.getElementById('queryResults').innerHTML = data.queryResults[0];
             document.getElementById('sqlResult').innerHTML = data.sqlResult[0];
             document.getElementById('databaseExists').innerHTML = data.databaseExists;
@@ -24,6 +25,19 @@ document.getElementById('runQuery').onclick = function() {
             document.getElementById('numOfColumnsIsSame').innerHTML = data.numOfTableColumnsAreSame;
             document.getElementById('numOfRowsIsSame').innerHTML = data.numOfTableRowsAreSame;
             document.getElementById('tableDataIsSame').innerHTML = data.tableDataIsSame;
+        },
+        error: function(textStatus, errorThrown) {
+            console.log(textStatus);
+            console.log(errorThrown);
+            document.getElementById('ajaxError').innerHTML = errorThrown + ':  ' + textStatus.responseText;
+            document.getElementById('queryResults').innerHTML = null;
+            document.getElementById('sqlResult').innerHTML = null;
+            document.getElementById('databaseExists').innerHTML = null;
+            document.getElementById('tableExists').innerHTML = null;
+            document.getElementById('numOfTablesIsSame').innerHTML = null;
+            document.getElementById('numOfColumnsIsSame').innerHTML = null;
+            document.getElementById('numOfRowsIsSame').innerHTML = null;
+            document.getElementById('tableDataIsSame').innerHTML = null;
         },
         dataType: 'json'
     })
