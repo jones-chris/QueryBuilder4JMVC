@@ -3,7 +3,46 @@
 let columns = ['fiscal_year_period', 'fiscal_year', 'service', 'department', 'program', 'amount'];
 let tables = ['county_spending_detail'];
 let criteria = [];
-
+let tableData = {
+     fiscal_year_period: [
+        '4',
+        '5',
+        '6'
+     ],
+     fiscal_year: [
+        '2014',
+        '2017'
+     ],
+     service: [
+        'General Government',
+        'Health and Human Services',
+        'Housing and Community Development',
+        'Transportation'
+     ],
+     department: [
+        'Health and Human Services',
+        'Housing and Community Affairs',
+        'Human Resources',
+        'Liquor Control',
+        'Transportation'
+     ],
+     program: [
+        'Administration',
+        'Health & Employee Welfare',
+        'Multi-Family Housing Programs',
+        'Outpatient Behavioral Health Services - Adult',
+        'Retail Sales Operations',
+        'Warehouse Operations'
+     ],
+     amount: [
+        '169.02',
+        '198459.06',
+        '1576281.42',
+        '200',
+        '214.85',
+        '878'
+     ]
+};
 
 document.getElementById('addRootCriteria').onclick = function() {
     addCriteria(null);
@@ -95,6 +134,21 @@ function addCriteria(parentNode) {
     let columnEl = createNewColumnSelectEl(id, columns);
     columnEl.classList.add('criteria-select-and-input');
     newDiv.appendChild(columnEl);
+    columnEl.onchange = function() {
+        let datalistId = 'criteria' + id + '.datalist';
+        let datalistName = 'criteria[' + id + '].datalist';
+        let columnName = columnEl.value;
+
+        // delete current datalist for this element.
+        currentDataListEl = document.getElementById(datalistId);
+        delete currentDataListEl.parentElement.removeChild(currentDataListEl);
+
+        let datalist = createNewDataListEl(datalistId, datalistName, columnName);
+        let filterInput = this.nextSibling.nextSibling;
+        filterInput.appendChild(datalist);
+        filterInput.setAttribute('list', datalistId);
+    };
+    //TODO:  Add onchange event handler to update filter's datalist based on column choice.
 
     // create operator select element
     let operatorEl = createNewOperatorSelectEl(id);
@@ -106,6 +160,15 @@ function addCriteria(parentNode) {
     filterInput.id = 'criteria' + id + '.filter';
     filterInput.name = 'criteria[' + id + '].filter';
     filterInput.classList.add('criteria-select-and-input');
+
+    //create datalist
+    let datalistId = 'criteria' + id + '.datalist';
+    let datalistName = 'criteria[' + id + '].datalist';
+    let columnName = columnEl.value;
+    let datalist = createNewDataListEl(datalistId, datalistName, columnName);
+    filterInput.appendChild(datalist);
+    filterInput.setAttribute('list', datalistId); //TODO:  Change attribute value to datalistId variable.
+
     newDiv.appendChild(filterInput);
 
     // create end parenthesis input element
@@ -204,6 +267,9 @@ function renumberCriteriaAdding(idThatWasAdded) { //TODO:  add parameter to dete
             //filter
             criteria[i].children[6].id = 'criteria' + newId + '.filter'; //id
             criteria[i].children[6].name = 'criteria[' + newId + '].filter'; //name
+            let datalist =  criteria[i].children[6].children[0];
+            datalist.id = 'criteria' + newId + '.datalist';
+            criteria[i].children[6].setAttribute('list', 'criteria' + newId + '.datalist');
 
             //end parenthesis
             criteria[i].children[7].id = 'criteria' + newId + '.endParenthesis'; //id
@@ -301,6 +367,30 @@ function reindentCriteria() {
             criteria[i].style.paddingLeft = newPaddingLeft + 'px';
         }
     }
+}
+
+//id = the id for the new datalist element.
+//name = the name for the new datalist element.
+//columnName = the column to retrieve data for.
+function createNewDataListEl(id, name, columnName) {
+    let datalist = document.createElement('datalist');
+    datalist.id = id;
+    datalist.name = name;
+
+    var data = tableData.columnName
+    for (var prop in tableData) {
+        if (prop.toString() === columnName) {
+    		for (var index in tableData[prop]) {
+    		    let opt = document.createElement('option');
+    		    opt.text = tableData[prop][index];
+    		    opt.value = tableData[prop][index];
+    		    datalist.appendChild(opt);
+    		}
+    		break;
+        }
+    }
+
+    return datalist;
 }
 
 function createNewConjunctionSelectEl(id) {

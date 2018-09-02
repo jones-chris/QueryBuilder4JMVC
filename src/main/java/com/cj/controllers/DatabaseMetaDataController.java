@@ -154,6 +154,8 @@ public class DatabaseMetaDataController {
 
         healerFunctions.put("databaseExists", () -> {
             databaseHealerService.createDatabase();
+            databaseHealerService.createTable();
+            databaseHealerService.insertTestData();
         });
         healerFunctions.put("tableExists", () -> {
             databaseHealerService.createTable();

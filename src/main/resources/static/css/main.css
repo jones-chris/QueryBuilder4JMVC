@@ -31,3 +31,13 @@ form {
 .tables-and-columns-div {
       display: inline-flex;
 }
+
+nav {
+    background: #000;
+    text-align: center;
+    color: lime;
+}
+
+.nav-links {
+
+}
