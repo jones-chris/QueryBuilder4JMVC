@@ -3,20 +3,17 @@ package com.cj.controllers;
 import com.cj.service.DatabaseHealerService;
 import com.cj.service.DatabaseMetaDataService;
 import com.cj.service.LoggingService;
-import com.cj.utils.Converter;
 import com.cj.service.DatabaseAuditService;
-import com.querybuilder4j.config.DatabaseType;
-import com.querybuilder4j.utils.ResultSetToHashMapConverter;
 import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.jdbc.core.namedparam.SqlParameterSource;
 import org.springframework.web.bind.annotation.*;
 
 import javax.sql.DataSource;
 import java.io.InputStream;
-import java.sql.*;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
@@ -100,32 +97,21 @@ public class DatabaseMetaDataController {
     @ResponseBody
     public ResponseEntity<String> getQueryResults(com.querybuilder4j.sqlbuilders.statements.SelectStatement selectStatement) {
 
-        try (Connection conn = dataSource.getConnection();
-             Statement stmt = conn.createStatement()) {
-
+        try {
             //Load properties file.
             Properties props = new Properties();
-            InputStream input = this.getClass().getClassLoader().getResourceAsStream("application.properties");
+            InputStream input = this.getClass().getClassLoader().getResourceAsStream("querybuilder4j_db.properties");
             props.load(input);
 
-            //Get column meta data to use in SelectStatement's toString method.
-            ResultSet columnMetaData = conn.getMetaData().getColumns(null, null, selectStatement.getTable(), "%");
-            Map<String, Integer> columnMetaDataMap = ResultSetToHashMapConverter.toHashMap(columnMetaData);
-
-            //Set selectStatement's databaseType and tableSchema.
-            selectStatement.setDatabaseType(Enum.valueOf(DatabaseType.class, props.getProperty("databaseType")));
-            selectStatement.setTableSchema(columnMetaDataMap);
-
-            //Convert selectStatement to SQL string and run against database.
-            //Then convert ResultSet to JSON.
-            ResultSet rs = stmt.executeQuery(selectStatement.toSql());
-            String queryResults = Converter.convertToJSON(rs).toString();
+            String sql = selectStatement.toSql(props);
+            SqlParameterSource paramMap = selectStatement.getSqlParameterMap();
+            String queryResults = databaseMetaDataService.executeQuery(sql, paramMap);
 
             //Log the SelectStatement and the database audit results to logging.db
             //If any of the database audit results return false (a failure - meaning this statement changed the querybuilder4j
             //  database in some way), then send email to querybuilder4j@gamil.com for immediate notification.
             Map<String, Boolean> databaseAuditResults = databaseAuditService.runAllChecks(1, 1, new String[1], 1);
-            loggingService.add(selectStatement, databaseAuditResults);
+            loggingService.add(selectStatement, sql, databaseAuditResults);
 
             Map<String, Runnable> healerFunctions = buildHealerFunctionsMap();
             for (String key : databaseAuditResults.keySet()) {
@@ -138,11 +124,9 @@ public class DatabaseMetaDataController {
             //  and database audit results.
             JSONObject jsonObject = new JSONObject(databaseAuditResults);
             jsonObject.append("queryResults", queryResults);
-            jsonObject.append("sqlResult", selectStatement.toSql());
-
+            jsonObject.append("sqlResult", sql);
 
             return new ResponseEntity<>(jsonObject.toString(4), HttpStatus.OK);
-
         } catch (Exception ex) {
             return new ResponseEntity<>(ex.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
         }

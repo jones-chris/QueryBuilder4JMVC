@@ -16,8 +16,8 @@ public class LoggingServiceImpl implements LoggingService {
 
 
     @Override
-    public boolean add(SelectStatement stmt, Map<String, Boolean> databaseAuditResults) {
-        return loggingDao.add(stmt, databaseAuditResults);
+    public boolean add(SelectStatement stmt, String sql, Map<String, Boolean> databaseAuditResults) {
+        return loggingDao.add(stmt, sql, databaseAuditResults);
     }
 
     @Override

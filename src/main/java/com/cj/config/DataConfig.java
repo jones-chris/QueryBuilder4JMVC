@@ -2,16 +2,18 @@ package com.cj.config;
 
 import org.apache.tomcat.dbcp.dbcp2.BasicDataSource;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.Primary;
-import org.springframework.context.annotation.PropertySource;
+import org.springframework.context.annotation.*;
 import org.springframework.core.env.Environment;
 
 import javax.sql.DataSource;
 
 @Configuration // this annotation declares that the class contains one or more @Bean annotations
-@PropertySource("application.properties")
+@PropertySources({
+        @PropertySource("application.properties"),
+        @PropertySource("logging_db.properties"),
+        @PropertySource("querybuilder4j_db.properties")
+})
+//@PropertySource("application.properties")
 public class DataConfig {
 
     @Autowired
@@ -23,14 +25,14 @@ public class DataConfig {
         BasicDataSource ds = new BasicDataSource();
 
         // Driver class name
-        ds.setDriverClassName(env.getProperty("spring.datasource.driver-class-name"));
+        ds.setDriverClassName(env.getProperty("driver-class-name"));
 
         // Set URL
-        ds.setUrl(env.getProperty("spring.database.url"));
+        ds.setUrl(env.getProperty("url"));
 
         // Set username & password
-        ds.setUsername(env.getProperty("spring.database.username"));
-        ds.setPassword(env.getProperty("spring.database.password"));
+        ds.setUsername(env.getProperty("username"));
+        ds.setPassword(env.getProperty("password"));
 
         return ds;
     }

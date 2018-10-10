@@ -17,17 +17,17 @@ public class LoggingDaoImpl implements LoggingDao {
 
 
     @Override
-    public boolean add(SelectStatement stmt, Map<String, Boolean> databaseAuditResults) {
+    public boolean add(SelectStatement stmt, String sql, Map<String, Boolean> databaseAuditResults) {
 
         Timestamp timestamp = new Timestamp(System.currentTimeMillis());
 
-        String sql = String.format("insert into log (timestamp, select_statement_to_string, select_statement_to_sql, database_still_exists, " +
+        String insertSql = String.format("insert into log (timestamp, select_statement_to_string, select_statement_to_sql, database_still_exists, " +
                 "table_still_exists, num_of_tables_is_same, num_of_cols_in_table_is_same, num_of_rows_in_table_is_same, " +
                 "table_data_is_same, user_table_permissions_are_same) " +
                 "values ('%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s');",
                 timestamp,
                 stmt.toString(),
-                stmt.toSql().replace("'", "''"), // escape single quotes.
+                sql.replace("'", "''"), // escape single quotes.
                 databaseAuditResults.get("databaseExists"),
                 databaseAuditResults.get("tableExists"),
                 databaseAuditResults.get("tablesAreSame"),
@@ -38,7 +38,7 @@ public class LoggingDaoImpl implements LoggingDao {
 
         try (Connection conn = dataSource.getConnection();
              Statement statement = conn.createStatement()) {
-            return statement.execute(sql);
+            return statement.execute(insertSql);
         } catch (Exception ex) {
             return false;
         }

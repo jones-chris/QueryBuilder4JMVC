@@ -1,6 +1,7 @@
 //TODO:  try this for drawing tree lines in criteria div:  http://jsfiddle.net/vLYX5/1 and also https://stackoverflow.com/questions/21864989/draw-lines-between-2-elements-in-html-page
 
-let columns = ['fiscal_year_period', 'fiscal_year', 'service', 'department', 'program', 'amount'];
+let columns = ['county_spending_detail.fiscal_year_period', 'county_spending_detail.fiscal_year', 'county_spending_detail.service',
+               'county_spending_detail.department', 'county_spending_detail.program', 'county_spending_detail.amount'];
 let tables = ['county_spending_detail'];
 let criteria = [];
 let tableData = {

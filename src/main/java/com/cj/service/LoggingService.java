@@ -8,7 +8,7 @@ import java.util.Map;
 
 public interface LoggingService {
 
-    boolean add(SelectStatement stmt, Map<String, Boolean> databaseAuditResults);
+    boolean add(SelectStatement stmt, String sql, Map<String, Boolean> databaseAuditResults);
     ResultSet getAllRecords() throws SQLException;
     
 }
