@@ -8,8 +8,8 @@ import java.util.Map;
 
 public interface DatabaseMetaDataDao {
 
-    ResultSet getSchemas() throws SQLException;
-    ResultSet getTablesAndViews(String schema) throws SQLException;
+    String getSchemas() throws Exception;
+    String getTablesAndViews(String schema) throws Exception;
     Map<String, Integer> getColumns(String schema, String table) throws SQLException;
     String executeQuery(String sql, SqlParameterSource paramMap) throws Exception;
 

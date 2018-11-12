@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <meta http-equiv="X-UA-Compatible" content="ie=edge"/>
+    <link rel="stylesheet" th:href="@{/css/QueryBuilder.css}"/>
+    <title>qb4j</title>
+</head>
+<body>
+
+    <script
+            src="https://code.jquery.com/jquery-3.3.1.min.js"
+            integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8="
+            crossorigin="anonymous">
+    </script>
+    <script th:src="@{/js/QueryBuilder4j2.js}"></script>
+
+    <!--Results-->
+    <div id="resultsDiv" name="resultsDiv">
+
+        <p id="ajaxError" style="color: red"></p>
+
+        <label for="sqlResult"> <b>Generated SQL:  </b> </label>
+        <p id="sqlResult"></p>
+
+        <label for="databaseExists"> <b>Database Still Exists?  </b> </label>
+        <p id="databaseExists"></p>
+
+        <label for="tableExists"> <b>county_spending_detail Table Still Exists?  </b> </label>
+        <p id="tableExists"></p>
+
+        <label for="numOfTablesIsSame"> <b>Number Of Tables Is The Same?  </b> </label>
+        <p id="numOfTablesIsSame"></p>
+
+        <label for="numOfColumnsIsSame"> <b>Number Of Table Columns Is The Same?  </b> </label>
+        <p id="numOfColumnsIsSame"></p>
+
+        <label for="numOfRowsIsSame"> <b>Number Of Table Rows Is The Same?  </b> </label>
+        <p id="numOfRowsIsSame"></p>
+
+        <label for="tableDataIsSame"> <b>Number Of Table Data Is The Same?  </b> </label>
+        <p id="tableDataIsSame"></p>
+
+        <label for="queryResults"> <b>Query Results:  </b> </label>
+        <p id="queryResults"></p>
+
+    </div>
+
+</body>
+</html>

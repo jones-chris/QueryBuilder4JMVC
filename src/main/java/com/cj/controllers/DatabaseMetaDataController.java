@@ -4,15 +4,15 @@ import com.cj.service.DatabaseHealerService;
 import com.cj.service.DatabaseMetaDataService;
 import com.cj.service.LoggingService;
 import com.cj.service.DatabaseAuditService;
+import com.cj.utils.Converter;
+import com.querybuilder4j.sqlbuilders.statements.SelectStatement;
 import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.jdbc.core.namedparam.SqlParameterSource;
 import org.springframework.web.bind.annotation.*;
 
-import javax.sql.DataSource;
 import java.io.InputStream;
 import java.util.HashMap;
 import java.util.Map;
@@ -20,29 +20,24 @@ import java.util.Properties;
 
 @RestController
 public class DatabaseMetaDataController {
-    @Qualifier("querybuilder4j.db")
-    @Autowired
-    private DataSource dataSource;
     @Autowired
     private LoggingService loggingService;
     @Autowired
     private DatabaseAuditService databaseAuditService;
+
+
     @Autowired
     private DatabaseHealerService databaseHealerService;
     @Autowired
     private DatabaseMetaDataService databaseMetaDataService;
 
     //get query templates
-//    @RequestMapping(value = "/queryTemplates", method = RequestMethod.GET)
-//    @ResponseBody
-//    public String getQueryTemplates() throws Exception {
-//        Statement stmt = dataSource.getConnection().createStatement();
-//        String sql = "SELECT name FROM qb_templates;";
-//        ResultSet rs = stmt.executeQuery(sql);
-//
-//        return Converter.convertToJSON(rs).toString();
-//    }
-//
+    @RequestMapping(value = "/queryTemplates", method = RequestMethod.GET)
+    @ResponseBody
+    public String getQueryTemplates() throws Exception {
+        return "[{\"data\":\"query template 1\"}]";
+    }
+
 //    //get query template by unique name
 //    @RequestMapping(value = "/queryTemplates/{name}", method = RequestMethod.GET)
 //    @ResponseBody
@@ -54,48 +49,58 @@ public class DatabaseMetaDataController {
 //        return Converter.convertToJSON(rs);
 //    }
 //
-//    //get schemas
-//    @RequestMapping(value = "/schemas", method = RequestMethod.GET)
-//    @ResponseBody
-//    public ResponseEntity<String> getSchemas() throws Exception {
-//        try {
-//            ResultSet rs = databaseMetaDataService.getSchemas();
-//            return new ResponseEntity<>(Converter.convertToJSON(rs).toString(), HttpStatus.OK);
-//        } catch (SQLException ex) {
-//            return new ResponseEntity<>(ex.getMessage(), HttpStatus.OK);
-//        }
-//    }
-//
-//    //get tables/views
-//    @RequestMapping(value = "/tablesAndViews/{schema}", method = RequestMethod.GET)
-//    @ResponseBody
-//    public ResponseEntity<String> getTablesAndViews(@PathVariable(value = "schema", required = true) String schema) throws Exception {
-//        //String username = dataSource.getConnection().getMetaData().getUserName();
-//        try {
-//            ResultSet rs = databaseMetaDataService.getTablesAndViews(schema);
-//            return new ResponseEntity<>(Converter.convertToJSON(rs).toString(), HttpStatus.OK);
-//        } catch (SQLException ex) {
-//            return new ResponseEntity<>(ex.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
-//        }
-//    }
-//
-//    //get table/view columns
-//    @RequestMapping(value = "/columns/{schema}/{table}", method = RequestMethod.GET)
-//    @ResponseBody
-//    public ResponseEntity<String> getColumns(@PathVariable String schema,
-//                                             @PathVariable String table) throws Exception {
-//        try {
-//            ResultSet rs = databaseMetaDataService.getColumns(schema, table);
-//            return new ResponseEntity<>(Converter.convertToJSON(rs).toString(), HttpStatus.OK);
-//        } catch (SQLException ex) {
-//            return new ResponseEntity<>(ex.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
-//        }
-//    }
+    //get schemas
+    @RequestMapping(value = "/schemas", method = RequestMethod.GET)
+    @ResponseBody
+    public ResponseEntity<String> getSchemas() {
+        try {
+            String schemasJson = databaseMetaDataService.getSchemas();
+            return new ResponseEntity<>(schemasJson, HttpStatus.OK);
+        } catch (Exception ex) {
+            return new ResponseEntity<>(ex.getMessage(), HttpStatus.OK);
+        }
+    }
+
+    //get tables/views
+    @RequestMapping(value = "/tablesAndViews/{schema}", method = RequestMethod.GET)
+    @ResponseBody
+    public ResponseEntity<String> getTablesAndViews(@PathVariable(value = "schema", required = true) String schema) {
+        try {
+            schema = (schema.equals("null")) ? null : schema;
+            String tablesJson = databaseMetaDataService.getTablesAndViews(schema);
+            return new ResponseEntity<>(tablesJson, HttpStatus.OK);
+        } catch (Exception ex) {
+            return new ResponseEntity<>(ex.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    //get table/view columns
+    @RequestMapping(value = "/columns/{schema}/{tables}", method = RequestMethod.GET)
+    @ResponseBody
+    public ResponseEntity<String> getColumns(@PathVariable String schema,
+                                             @PathVariable String tables)  {
+        try {
+            schema = (schema.equals("null")) ? null : schema;
+
+            String[] splitTables = tables.split("&");
+
+            Map<String, Integer> columnsMap = new HashMap<>();
+            for (String table : splitTables) {
+                Map<String, Integer> columns = databaseMetaDataService.getColumns(schema, table);
+                columnsMap.putAll(columns);
+            }
+
+            String columnsJson = Converter.convertToJSON(columnsMap.keySet().toArray(), "column").toString();
+            return new ResponseEntity<>(columnsJson, HttpStatus.OK);
+        } catch (Exception ex) {
+            return new ResponseEntity<>(ex.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
 
     //execute query and return results
     @RequestMapping(value = "/query", method = RequestMethod.POST)
     @ResponseBody
-    public ResponseEntity<String> getQueryResults(com.querybuilder4j.sqlbuilders.statements.SelectStatement selectStatement) {
+    public ResponseEntity<String> getQueryResults(SelectStatement selectStatement) {
 
         try {
             //Load properties file.

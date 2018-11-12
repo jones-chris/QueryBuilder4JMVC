@@ -10,7 +10,7 @@ public class ViewController {
 
     @RequestMapping(value = "/", method = RequestMethod.GET)
     public String getIndex(ModelMap model) {
-        return "index2";
+        return "index4";
     }
 
 }

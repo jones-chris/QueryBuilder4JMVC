@@ -32,6 +32,27 @@ public class Converter {
     }
 
     /**
+     * Converts a String array into a JSON Array.  The key will be used as the key for each item in the array.
+     * @param array
+     * @param key
+     * @return
+     * @throws Exception
+     */
+    public static JSONArray convertToJSON(Object[] array, String key) throws Exception {
+
+        JSONArray jsonArray = new JSONArray();
+        JSONObject obj;
+        for (Object item : array) {
+            obj = new JSONObject();
+            obj.put(key, item.toString());
+            jsonArray.put(obj);
+        }
+
+        return jsonArray;
+
+    }
+
+    /**
      * Convert a result set into a XML List
      * @param resultSet
      * @return a XML String with list elements
@@ -52,4 +73,5 @@ public class Converter {
         return xmlArray.toString();
 
     }
+
 }
