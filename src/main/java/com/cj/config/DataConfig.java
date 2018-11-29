@@ -1,5 +1,11 @@
 package com.cj.config;
 
+import com.amazonaws.auth.AWSStaticCredentialsProvider;
+import com.amazonaws.auth.BasicAWSCredentials;
+import com.amazonaws.regions.Regions;
+import com.amazonaws.services.dynamodbv2.AmazonDynamoDB;
+import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClientBuilder;
+import com.amazonaws.services.dynamodbv2.document.DynamoDB;
 import org.apache.tomcat.dbcp.dbcp2.BasicDataSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.*;
@@ -11,7 +17,8 @@ import javax.sql.DataSource;
 @PropertySources({
         @PropertySource("application.properties"),
         @PropertySource("logging_db.properties"),
-        @PropertySource("querybuilder4j_db.properties")
+        @PropertySource("querybuilder4j_db.properties"),
+        @PropertySource("dynamo_db.properties")
 })
 //@PropertySource("application.properties")
 public class DataConfig {
@@ -52,6 +59,20 @@ public class DataConfig {
         ds.setPassword(env.getProperty("logging.database.password"));
 
         return ds;
+    }
+
+    @Bean(name = "dynamo.db")
+    public DynamoDB dataSource_dynamo() {
+        String accessKey = env.getProperty("aws.accessKey");
+        String secretKey = env.getProperty("aws.secretKey");
+        BasicAWSCredentials awsCredentials = new BasicAWSCredentials(accessKey, secretKey);
+
+        AmazonDynamoDB client = AmazonDynamoDBClientBuilder.standard()
+                                                           .withCredentials(new AWSStaticCredentialsProvider(awsCredentials))
+                                                           .withRegion(Regions.US_EAST_2)
+                                                           .build();
+
+        return new DynamoDB(client);
     }
 
 }

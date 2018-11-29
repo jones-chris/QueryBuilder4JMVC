@@ -60,6 +60,9 @@ dependencies {
     // https://mvnrepository.com/artifact/com.amazonaws/aws-java-sdk-s3
     extraLibs group: 'com.amazonaws', name: 'aws-java-sdk-s3', version: '1.11.375'
 
+    // https://mvnrepository.com/artifact/com.amazonaws/aws-java-sdk-dynamodb
+    extraLibs group: 'com.amazonaws', name: 'aws-java-sdk-dynamodb', version: '1.11.449'
+
     configurations.compile.extendsFrom(configurations.extraLibs)
 
 }

@@ -1,10 +1,9 @@
 package com.cj.controllers;
 
-import com.cj.service.DatabaseHealerService;
-import com.cj.service.DatabaseMetaDataService;
-import com.cj.service.LoggingService;
-import com.cj.service.DatabaseAuditService;
+import com.amazonaws.services.dynamodbv2.document.Item;
+import com.cj.service.*;
 import com.cj.utils.Converter;
+import com.google.gson.Gson;
 import com.querybuilder4j.sqlbuilders.statements.SelectStatement;
 import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -24,31 +23,53 @@ public class DatabaseMetaDataController {
     private LoggingService loggingService;
     @Autowired
     private DatabaseAuditService databaseAuditService;
-
-
     @Autowired
     private DatabaseHealerService databaseHealerService;
     @Autowired
     private DatabaseMetaDataService databaseMetaDataService;
+    @Autowired
+    private DynamoService dynamoService;
 
     //get query templates
     @RequestMapping(value = "/queryTemplates", method = RequestMethod.GET)
     @ResponseBody
-    public String getQueryTemplates() throws Exception {
+    public String getQueryTemplates() {
         return "[{\"data\":\"query template 1\"}]";
     }
 
-//    //get query template by unique name
-//    @RequestMapping(value = "/queryTemplates/{name}", method = RequestMethod.GET)
-//    @ResponseBody
-//    public JSONArray getQueryTemplateById(@PathVariable String name) throws Exception {
-//        Statement stmt = dataSource.getConnection().createStatement();
+    //get query template by unique name
+    @RequestMapping(value = "/queryTemplates/{name}", method = RequestMethod.GET)
+    @ResponseBody
+    public ResponseEntity<String> getQueryTemplateById(@PathVariable String name) throws Exception {
+        try {
+            Item item = dynamoService.findByName(name);
+            String json = item.toJSON();
+            return new ResponseEntity<>(json, HttpStatus.OK);
+        } catch (Exception ex) {
+            return new ResponseEntity<>(ex.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
+        }
 //        String sql = String.format("SELECT query_object FROM qb_templates WHERE name = '%s';", name);
-//        ResultSet rs = stmt.executeQuery(sql);
-//
-//        return Converter.convertToJSON(rs);
-//    }
-//
+    }
+
+
+    //save query template
+    @RequestMapping(value = "/saveQueryTemplate/{name}", method = RequestMethod.POST)
+    @ResponseBody
+    public ResponseEntity<String> saveQueryTemplate(SelectStatement stmt,
+                                                    @PathVariable(value = "name") String name) {
+        try {
+            Gson gson = new Gson();
+            String json = gson.toJson(stmt);
+
+            // save json
+            dynamoService.save(name, json);
+
+            return new ResponseEntity<>("success", HttpStatus.OK);
+        } catch (Exception ex) {
+            return new ResponseEntity<>(ex.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
     //get schemas
     @RequestMapping(value = "/schemas", method = RequestMethod.GET)
     @ResponseBody
@@ -57,7 +78,7 @@ public class DatabaseMetaDataController {
             String schemasJson = databaseMetaDataService.getSchemas();
             return new ResponseEntity<>(schemasJson, HttpStatus.OK);
         } catch (Exception ex) {
-            return new ResponseEntity<>(ex.getMessage(), HttpStatus.OK);
+            return new ResponseEntity<>(ex.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 

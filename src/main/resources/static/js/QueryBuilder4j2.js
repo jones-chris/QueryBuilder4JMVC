@@ -1,10 +1,10 @@
 const scriptVariables = {
     columnMembersWindow : null,
-    getQueryTemplateEndpoint : "http://localhost:8080/queryTemplates",
-    getSchemaEndpoint : "http://localhost:8080/schemas",
-    getTablesEndpoint : "http://localhost:8080/tablesAndViews/",
-    getColumnsEndpoint : "http://localhost:8080/columns/",
-    formSubmissionEndpoint : "http://localhost:8080/query",
+    getQueryTemplateEndpoint : "/queryTemplates",
+    getSchemaEndpoint : "/schemas",
+    getTablesEndpoint : "/tablesAndViews/",
+    getColumnsEndpoint : "/columns/",
+    formSubmissionEndpoint : "/query",
     formMethod : "POST",
     formSubmissionFunction : function () {
     $.ajax({
