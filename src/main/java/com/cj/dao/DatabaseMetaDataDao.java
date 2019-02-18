@@ -11,6 +11,6 @@ public interface DatabaseMetaDataDao {
     String getSchemas() throws Exception;
     String getTablesAndViews(String schema) throws Exception;
     Map<String, Integer> getColumns(String schema, String table) throws SQLException;
-    String executeQuery(String sql, SqlParameterSource paramMap) throws Exception;
+    String executeQuery(String sql) throws Exception;
 
 }

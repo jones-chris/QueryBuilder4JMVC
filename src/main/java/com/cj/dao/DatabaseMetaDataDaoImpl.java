@@ -1,14 +1,10 @@
 package com.cj.dao;
 
 import com.cj.utils.Converter;
-import com.querybuilder4j.utils.JSONRowMapper;
 import com.querybuilder4j.utils.ResultSetToHashMapConverter;
 import org.json.JSONArray;
-import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
-import org.springframework.jdbc.core.namedparam.SqlParameterSource;
 import org.springframework.stereotype.Repository;
 
 import javax.sql.DataSource;
@@ -16,8 +12,6 @@ import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
-import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 @Repository
@@ -69,20 +63,15 @@ public class DatabaseMetaDataDaoImpl implements DatabaseMetaDataDao {
     }
 
     @Override
-    public String executeQuery(String sql, SqlParameterSource paramMap) throws Exception {
+    public String executeQuery(String sql) throws Exception {
 
-        NamedParameterJdbcTemplate jdbcTemplate = new NamedParameterJdbcTemplate(dataSource);
-        List<JSONObject> jsonObjects = jdbcTemplate.query(sql, paramMap, new JSONRowMapper());
-        JSONArray jsonArray = new JSONArray(jsonObjects);
-        return jsonArray.toString();
-
-//        try (Connection conn = dataSource.getConnection();
-//             Statement stmt = conn.createStatement()) {
-//            ResultSet rs = stmt.executeQuery(sql);
-//            return Converter.convertToJSON(rs).toString();
-//        } catch (Exception ex) {
-//            throw ex;
-//        }
+        try (Connection conn = dataSource.getConnection();
+             Statement stmt = conn.createStatement()) {
+            ResultSet rs = stmt.executeQuery(sql);
+            return Converter.convertToJSON(rs).toString();
+        } catch (Exception ex) {
+            throw ex;
+        }
 
     }
 

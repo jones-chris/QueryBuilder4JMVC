@@ -114,7 +114,11 @@ public class DatabaseAuditDaoImpl implements DatabaseAuditDao {
     public boolean numberOfRowsInTableIsTheSame(int expectedNumberOfTableRows) {
         try (Connection conn = dataSource.getConnection();
              Statement stmt = conn.createStatement()) {
-            ResultSet rs = stmt.executeQuery("select count(*) cnt from county_spending_detail;");
+            ResultSet rs = stmt.executeQuery("select (select count(*) from county_spending_detail) " +
+                    "+" +
+                    "(select count(*) from periods) " +
+                    "+" +
+                    "(select count(*) from service_hierarchy) as cnt;");
             return (rs.getInt("cnt") == expectedNumberOfTableRows);
         } catch (Exception ex) {
             return false;
@@ -199,9 +203,9 @@ public class DatabaseAuditDaoImpl implements DatabaseAuditDao {
     public Map<String, Boolean> runAllChecks(int expectedNumberOfTables, int expectedNumberOfTableColumns, String[] expectedData, int expectedNumberOfUsers) {
         boolean databaseExists = databaseStillExists();
         boolean tableExists = tableStillExists("county_spending_detail");
-        boolean tablesAreSame = numberOfTablesIsTheSame(1);
-        boolean numOfTableColumnsAreSame = numberOfTableColumnsIsTheSame(6);
-        boolean numOfTableRowsAreSame = numberOfRowsInTableIsTheSame(6);
+        boolean tablesAreSame = numberOfTablesIsTheSame(3);
+        boolean numOfTableColumnsAreSame = numberOfTableColumnsIsTheSame(11);
+        boolean numOfTableRowsAreSame = numberOfRowsInTableIsTheSame(23);
         boolean tableDataIsSame = false;
         if (numOfTableRowsAreSame) {
              tableDataIsSame = tableDataIsTheSame(new String[1][1]);

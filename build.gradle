@@ -14,7 +14,7 @@ sourceCompatibility = 1.8
 repositories {
     mavenCentral()
     flatDir {
-        dirs 'C:/Users/Public/Repos/QueryBuilder4J/out/artifacts/com_querybuilder4j_jar'
+        dirs '/Users/chris.jones/Repos/QueryBuilder4J/build/libs/'
     }
 }
 
@@ -31,7 +31,7 @@ dependencies {
     extraLibs 'org.apache.tomcat:tomcat-dbcp:8.0.32'
     extraLibs 'org.springframework:spring-orm:4.2.5.RELEASE'
     extraLibs 'org.slf4j:slf4j-api:1.7.13'
-    extraLibs name: 'com.querybuilder4j'
+    extraLibs name: 'querybuilder4j'
 
     // https://mvnrepository.com/artifact/org.json/json
     extraLibs group: 'org.json', name: 'json', version: '20180130'

@@ -26,19 +26,19 @@ public class DatabaseAuditorServiceImpl implements DatabaseAuditService {
     }
 
     public boolean numberOfTableColumnsIsTheSame(int expectedNumberOfTableColumns) {
-        return databaseAuditDao.numberOfTableColumnsIsTheSame(20);
+        return databaseAuditDao.numberOfTableColumnsIsTheSame(expectedNumberOfTableColumns);
     }
 
     public boolean numberOfRowsInTableIsTheSame(int expectedNumberOfTableRows) {
-        return databaseAuditDao.numberOfRowsInTableIsTheSame(10);
+        return databaseAuditDao.numberOfRowsInTableIsTheSame(expectedNumberOfTableRows);
     }
 
     public boolean tableDataIsTheSame(String[][] expectedData) {
-        return databaseAuditDao.tableDataIsTheSame(new String[1][1]);
+        return databaseAuditDao.tableDataIsTheSame(expectedData);
     }
 
     public boolean numberOfUsersWithTableAccessIsTheSame(int expectedNumberOfUsers) {
-        return databaseAuditDao.numberOfUsersWithTableAccessIsTheSame(1);
+        return databaseAuditDao.numberOfUsersWithTableAccessIsTheSame(expectedNumberOfUsers);
     }
 
     @Override

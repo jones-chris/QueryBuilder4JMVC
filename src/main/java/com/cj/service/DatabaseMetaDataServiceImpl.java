@@ -50,7 +50,7 @@ public class DatabaseMetaDataServiceImpl implements DatabaseMetaDataService {
     }
 
     @Override
-    public String executeQuery(String sql, SqlParameterSource paramMap) throws Exception {
-        return databaseMetaDataDao.executeQuery(sql, paramMap);
+    public String executeQuery(String sql) throws Exception {
+        return databaseMetaDataDao.executeQuery(sql);
     }
 }

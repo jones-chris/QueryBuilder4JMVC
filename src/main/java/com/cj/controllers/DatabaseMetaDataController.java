@@ -130,13 +130,12 @@ public class DatabaseMetaDataController {
             props.load(input);
 
             String sql = selectStatement.toSql(props);
-            SqlParameterSource paramMap = selectStatement.getSqlParameterMap();
-            String queryResults = databaseMetaDataService.executeQuery(sql, paramMap);
+            String queryResults = databaseMetaDataService.executeQuery(sql);
 
             //Log the SelectStatement and the database audit results to logging.db
             //If any of the database audit results return false (a failure - meaning this statement changed the querybuilder4j
             //  database in some way), then send email to querybuilder4j@gamil.com for immediate notification.
-            Map<String, Boolean> databaseAuditResults = databaseAuditService.runAllChecks(1, 1, new String[1], 1);
+            Map<String, Boolean> databaseAuditResults = databaseAuditService.runAllChecks(3, 1, new String[1], 1);
             loggingService.add(selectStatement, sql, databaseAuditResults);
 
             Map<String, Runnable> healerFunctions = buildHealerFunctionsMap();

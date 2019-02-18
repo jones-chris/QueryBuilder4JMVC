@@ -18,7 +18,7 @@ import javax.sql.DataSource;
         @PropertySource("application.properties"),
         @PropertySource("logging_db.properties"),
         @PropertySource("querybuilder4j_db.properties"),
-        @PropertySource("dynamo_db.properties")
+        //@PropertySource("dynamo_db.properties")
 })
 //@PropertySource("application.properties")
 public class DataConfig {
