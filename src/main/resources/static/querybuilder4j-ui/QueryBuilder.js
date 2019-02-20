@@ -22,10 +22,18 @@ const scriptVariables = {
     formMethod : "POST",
     // assign a function here to handle form submission.
     formSubmissionFunction : function () {
+        let requestData;
+        try {
+            requestData = buildRequestData();
+        } catch (ex) {
+            alert(ex);
+            return;
+        }
+
         $.ajax({
             type: 'POST',
             url: scriptVariables['formSubmissionEndpoint'],
-            data: buildRequestData(),
+            data: requestData,
             success: function (data) {
                 console.log(data);
                 document.getElementById('ajaxError').innerHTML = null;
@@ -77,9 +85,9 @@ const scriptVariables = {
     //set to true to render
     suppressNulls : true,
     // set to [] to render
-    limitChoices : [5, 10, 50, 500],
+    limitChoices : ['', 5, 10, 50, 500],
     // set to [] to render
-    offsetChoices : [5, 10, 50, 500],
+    offsetChoices : ['', 5, 10, 50, 500],
     queryTemplatesSize : 5,
     schemasSize : 5,
     tablesSize : 5,
@@ -556,8 +564,8 @@ function renderHTML(beforeNode) {
     el = renderSchemaHTML();
     if (el !== undefined) {
         form.appendChild(el);
-        let brEl = createNewElement('br');
-        form.appendChild(brEl);
+        //let brEl = createNewElement('br');
+        //form.appendChild(brEl);
     }
 
     //Tables
@@ -819,8 +827,7 @@ function renderQueryTemplatesHTML() {
     if (scriptVariables['queryTemplates'] !== null) {
         let attributesMap = {
             'id': 'queryTemplates',
-            'name': 'queryTemplates',
-            'class': 'form-control'
+            'name': 'queryTemplates'
         };
         let select = createNewElement('select', attributesMap, scriptVariables['queryTemplates']);
         select.onchange = function() {
@@ -844,7 +851,6 @@ function renderSchemaHTML() {
         let attributesMap = {
             'id': 'schemas',
             'name': 'schemas',
-            'class': 'form-control',
             'size': scriptVariables['schemasSize']
         };
 
@@ -878,7 +884,6 @@ function renderTablesHTML() {
             'id': 'table', //TODO change this back to 'tables' once qb4j can handle multiple tables.
             'name': 'table',
             'multiple': 'true',
-            'class': 'form-control',
             'size': scriptVariables['tablesSize']
         };
 
@@ -1201,7 +1206,6 @@ function renderAvailableColumnsHTML() {
             'id': 'availableColumns',
             'name': 'availableColumns',
             'multiple': 'true',
-            'class': 'form-control',
             'size': scriptVariables['availableColumnsSize']
         };
 
@@ -1223,7 +1227,7 @@ function renderAvailableColumnsHTML() {
             'type': 'button',
             'class': 'available-columns-add-button'
         }, null);
-        addColumnButton.innerHTML = 'Add';
+        addColumnButton.innerHTML = '>>>';
         addColumnButton.onclick = function() {
             let selectedColumns = getSelectedOptionsAsJSON('availableColumns');
             addSelectedColumns(selectedColumns);
@@ -1235,7 +1239,7 @@ function renderAvailableColumnsHTML() {
             'type': 'button', 'class':
                 'available-columns-remove-button'
         }, null);
-        removeColumnButton.innerHTML = 'Remove';
+        removeColumnButton.innerHTML = '<<<';
         removeColumnButton.onclick = function() {
             let selectedColumns = getSelectedOptionsAsJSON('columns', 'indeces');
             removeSelectedColumn(selectedColumns);
@@ -1253,7 +1257,6 @@ function renderAvailableColumnsHTML() {
         let attributesMapSelectedColumns = {
             'id': 'columns', // This is the selectedColumns select box, but the id has to be 'columns' so that Spring MVC binds the request parameter to the Java object automatically.
             'name': 'columns',
-            'class': 'form-control',
             'size': scriptVariables['selectedColumnsSize']
         };
 
@@ -1343,8 +1346,7 @@ function renderOtherOptionsHTML() {
     if (scriptVariables['orderByColumns'] !== null) {
         let attributesMap = {
             'id': 'orderBy',
-            'name': 'orderBy',
-            'class': 'form-control'
+            'name': 'orderBy'
         };
         orderByEl = createNewElement('select', attributesMap,  scriptVariables['orderByColumns']);
         labelOrderBy = createNewElement('label', {'for': 'orderBy'}, null);
@@ -1357,8 +1359,7 @@ function renderOtherOptionsHTML() {
     if (scriptVariables['groupByColumns'] !== null) {
         let attributesMap = {
             'id': 'groupBy',
-            'name': 'groupBy',
-            'class': 'form-control'
+            'name': 'groupBy'
         };
         groupByEl = createNewElement('select', attributesMap,  scriptVariables['groupByColumns']);
         labelGroupBy = createNewElement('label', {'for': 'groupBy'}, null);
@@ -1386,8 +1387,7 @@ function renderOtherOptionsHTML() {
     if (scriptVariables['limitChoices'] !== null) {
         let attributesMap = {
             'id': 'limit',
-            'name': 'limit',
-            'class': 'form-control'
+            'name': 'limit'
         };
         limitEl = createNewElement('select', attributesMap, scriptVariables['limitChoices']);
         labelLimit = createNewElement('label', {'for': 'limit'}, null);
@@ -1400,8 +1400,7 @@ function renderOtherOptionsHTML() {
     if (scriptVariables['offsetChoices'] !== null) {
         let attributesMap = {
             'id': 'offset',
-            'name': 'offset',
-            'class': 'form-control'
+            'name': 'offset'
         };
         offsetEl = createNewElement('select', attributesMap, scriptVariables['offsetChoices']);
         labelOffset = createNewElement('label', {'for': 'offset'}, null);
@@ -1524,6 +1523,10 @@ function getParentTable() {
         }
     }
 
+    if (parentTables.length === 0) {
+        throw 'You must select at least one table.'
+    }
+
     if (parentTables.length - targetJoinTables.length !== 1) {
         throw `You have ${parentTables.length} table(s) chosen, but ${targetJoinTables.length} unique table(s) in your target joins.  
         You should have one less target join tables than the number of tables you choose.`
@@ -1534,14 +1537,9 @@ function getParentTable() {
             return parentTables[i];
         }
     }
-    // parentTables.forEach(parentTable => {
-    //     if (! targetJoinTables.includes(parentTable)) {
-    //         return parentTable;
-    //     }
-    // });
-
 }
 
+// Throws exception if getParentTable throws exception.
 function buildRequestData() {
     // Serialize form's select and input elements except for table select element, which is added manually below.
     let requestData = $('#queryBuilder select, #queryBuilder input').not('#table').serialize()
@@ -1553,14 +1551,9 @@ function buildRequestData() {
     }
 
     // Add parent table as 'table' request attribute.
-    try {
-        let parentTable = getParentTable();
-        requestData += '&table=' + parentTable;
-        return requestData;
-    } catch(ex) {
-        alert(ex);
-        return null; // todo:  handle null return value in calling code.
-    }
+    let parentTable = getParentTable();
+    requestData += '&table=' + parentTable;
+    return requestData;
 }
 
 //===========================================================================
