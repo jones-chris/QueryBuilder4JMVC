@@ -12,6 +12,7 @@ import org.springframework.context.annotation.*;
 import org.springframework.core.env.Environment;
 
 import javax.sql.DataSource;
+import java.util.Properties;
 
 @Configuration // this annotation declares that the class contains one or more @Bean annotations
 @PropertySources({
@@ -25,6 +26,17 @@ public class DataConfig {
 
     @Autowired
     private Environment env; // application.properties values are stores here
+
+    @Bean(name = "querybuilder4jdb_properties")
+    public Properties queryBuilder4JDbProperties() {
+        Properties properties = new Properties();
+        properties.setProperty("driver-class-name", env.getProperty("driver-class-name"));
+        properties.setProperty("url", env.getProperty("url"));
+        properties.setProperty("username", env.getProperty("username"));
+        properties.setProperty("password", env.getProperty("password"));
+        properties.setProperty("databaseType", env.getProperty("databaseType"));
+        return properties;
+    }
 
     @Bean(name = "querybuilder4j.db")
     @Primary

@@ -16,6 +16,8 @@ const scriptVariables = {
     getTablesEndpoint : "/tablesAndViews/",
     // set to your table columns endpoint
     getColumnsEndpoint : "/columns/",
+    // set to your column members endpoint
+    columnMembersEndpoint : '/columns-members/',
     // set to your query endpoint
     formSubmissionEndpoint : "/query",
     // set to the HTTP method that your query endpoint above accepts
@@ -94,7 +96,188 @@ const scriptVariables = {
     availableColumnsSize : 30,
     selectedColumnsSize : 30,
     orderByColumnsSize : 10,
-    groupByColumnsSize : 10
+    groupByColumnsSize : 10,
+    // Do not change - INTERNAL USE ONLY.
+    activeCriteriaIdForColumnMembers : null,
+    // Do not change - INTERNAL USE ONLY.
+    currentOffsetColumnMembers : null,
+    // Do not change - INTERNAL USE ONLY.
+    availableColumnMembers : [],
+    // Do not change - INTERNAL USE ONLY.
+    selectedColumnMembers : []
+};
+
+const columnMembersModalHTML = `
+    <!--Column Members Modal-->
+    <div id="columnMembersModal" name="columnMembersModal" class="column-members-modal">
+        <div id="columnMembersModalContent" name="columnMembersModalContent" class="column-members-modal-content">
+
+            <button type="button" id="closeColumnMembers" name="closeColumnMembers" class="column-members-modal-close-button" onclick="closeColumnMembers()">X</button>
+            <br>
+
+            <!--Search box area-->
+            <div class="column-members-modal-search">
+                <label for="search">Search</label>
+                <input type="text" id="search" placeholder="ex: Cap%" autofocus="autofocus"/>
+            </div>
+
+            <!--Limit and paging area-->
+            <div class="column-members-modal-pagination">
+                <label for="columnMembersLimit">Limit</label>
+                <select name="columnMembersLimit" id="columnMembersLimit">
+                    <option value="10">10</option>
+                    <option value="25">25</option>
+                    <option value="50">50</option>
+                    <option value="100">100</option>
+                </select>
+
+                <label for="columnMembersAscending">Ordering</label>
+                <select id="columnMembersAscending" name="columnMembersAscending">
+                    <option value="true">A-Z,1-9</option>
+                    <option value="false">Z-A,9-1</option>
+                </select>
+
+                <br>
+                <br>
+
+                <button type="button" id="priorPage" onclick=getPageMembers(true) disabled>Prior Page</button>
+                <button type="button" id="nextPage" onclick=getPageMembers(false)>Next Page</button>
+            </div>
+
+            <!--Member selection area-->
+            <div class="column-members-modal-members">
+                <div class="column-members-modal-available-members">
+                    <label for="availableMembers">Available Column Members</label>
+                    <select name="availableMembers" id="availableMembers" size="20" multiple="multiple">
+                    </select>
+                </div>
+
+                <div class="column-members-modal-add-remove-members">
+                    <button type="button" id="addMembers" onclick="addSelectedColumns(getSelectedOptionsAsJSON('availableMembers'), 'selectedColumnMembers', 'selectedMembers')"> >>> </button>
+                    <button type="button" id="removeMembers" onclick="removeSelectedColumn(getSelectedOptionsAsJSON('selectedMembers', 'indeces'), 'selectedColumnMembers', 'selectedMembers')"> <<< </button>
+                </div>
+
+                <div class="column-members-modal-selected-members">
+                    <label for="selectedMembers">Selected Column Members</label>
+                    <select id="selectedMembers" name="selectedMembers" size="20">
+                    </select>
+                </div>
+
+                <div class="column-members-modal-up-down-members">
+                    <button type="button" id="moveUp" onclick="moveSelectedColumn('selectedMembers', 'selectedColumnMembers', true)">Move Up</button>
+                    <button type="button" id="moveDown" onclick="moveSelectedColumn('selectedMembers', 'selectedColumnMembers', false)">Move Down</button>
+                </div>
+            </div>
+
+            <!--Submission and Cancel button area-->
+            <div class="column-members-modal-submit">
+                <input type="button" value="OK" id="ok" onclick="setCriteriaFilterWithColumnMembers(); closeColumnMembers();"/>
+                <button type="button" id="cancel" onclick="closeColumnMembers()">Cancel</button>
+            </div>
+        </div>
+    </div>
+`;
+
+//===============================================================================================
+// Column Members functions
+//===============================================================================================
+
+// Sets all column members modal variables and elements back to their default state.
+function closeColumnMembers() {
+    $('#columnMembersModal').hide();
+    scriptVariables.activeCriteriaIdForColumnMembers = null;
+    scriptVariables.currentOffsetColumnMembers = null;
+    document.getElementById('priorPage').disabled = true;
+    document.getElementById('nextPage').disabled = false;
+    clearOptions('availableMembers');
+    clearOptions('selectedMembers');
+    scriptVariables.availableColumnMembers = [];
+    scriptVariables.selectedColumnMembers = [];
+}
+
+// priorOrNext parameter should be either true (get prior page) or false (get next page).
+function getPageMembers(isPrior) {
+    // Create endpoint
+    let schema = null;
+    let table = document.getElementById(`criteria${scriptVariables.activeCriteriaIdForColumnMembers}.column`).value.split('.')[0];
+    let column = document.getElementById(`criteria${scriptVariables.activeCriteriaIdForColumnMembers}.column`).value.split('.')[1];
+    let endpoint = scriptVariables.columnMembersEndpoint + `${schema}/${table}/${column}/`;
+
+    // Create query string
+    let limit = parseInt(document.getElementById('columnMembersLimit').value);
+    // If current offset is null, then the Column Members modal has been displayed for the fist time, so set current offset to 0.
+    if (scriptVariables.currentOffsetColumnMembers === null) {
+        scriptVariables.currentOffsetColumnMembers = 0;
+    } else {
+        // If getting the prior page, then prepend a negative sign to the limit.
+        if (isPrior === true) {
+            adjustColumnMembersCurrentOffset(-limit);
+        }
+    }
+    let offset = scriptVariables.currentOffsetColumnMembers;
+    let ascending = document.getElementById('columnMembersAscending').value;
+    let search = document.getElementById('search').value;
+    let queryString = `limit=${limit}&offset=${offset}&ascending=${ascending}`;
+    if (search !== '') {
+        queryString += `&search=${search}`;
+    }
+
+    // Call endpoint
+    sendAjaxRequest(endpoint,
+        queryString,
+        'GET',
+        function (data) {
+            // If data's length less than the limit, we have reached the end of the column members.  We do NOT want to update the select options.
+            // Else if data's length is less than the limit, then we have reached the end of the column members.  We do want to update the select options.
+            // Else there is likely still more data to get.  We do want to update the select options and current offset if we retrieved the next page.
+            if (data.length === 0) {
+                document.getElementById('nextPage').disabled = true;
+                document.getElementById('priorPage').disabled = false;
+                alert('You have reached the last page.  There are no additional column members to retrieve.');
+            } else if (data.length < limit) {
+                document.getElementById('nextPage').disabled = true;
+                document.getElementById('priorPage').disabled = false;
+                fillArrayProperty('availableColumnMembers', data);
+                syncSelectOptionsWithDataModel('availableMembers', scriptVariables['availableColumnMembers']);
+                alert('You have reached the last page.  There are no additional column members to retrieve.');
+            } else {
+                document.getElementById('nextPage').disabled = false;
+                fillArrayProperty('availableColumnMembers', data);
+                syncSelectOptionsWithDataModel('availableMembers', scriptVariables['availableColumnMembers']);
+                if (! isPrior){
+                    adjustColumnMembersCurrentOffset(limit);
+                }
+            }
+
+            // Disable or enable prior page button based on whether current offset is 0 or not.
+            if (scriptVariables.currentOffsetColumnMembers === 0) {
+                document.getElementById('priorPage').disabled = true;
+            } else {
+                document.getElementById('priorPage').disabled = false;
+            }
+        }
+    );
+}
+
+function adjustColumnMembersCurrentOffset(adjustment) {
+    scriptVariables.currentOffsetColumnMembers += adjustment;
+    if (scriptVariables.currentOffsetColumnMembers < 0) {
+        scriptVariables.currentOffsetColumnMembers = 0;
+    }
+}
+
+function setCriteriaFilterWithColumnMembers() {
+    let options = document.getElementById('selectedMembers').options;
+    let stringifiedMembers = "";
+    for (let i=0; i<options.length; i++) {
+        stringifiedMembers += options[i].value + ',';
+    }
+
+    // Remove trailing ','
+    stringifiedMembers = stringifiedMembers.substring(0, stringifiedMembers.length - 1);
+
+    // Set criterion's filter to stringifiedMembers.
+    document.getElementById(`criteria${scriptVariables.activeCriteriaIdForColumnMembers}.filter`).value = stringifiedMembers;
 }
 
 function sendAjaxRequest(endpoint, paramString, method, callbackFunction) {
@@ -112,15 +295,6 @@ function sendAjaxRequest(endpoint, paramString, method, callbackFunction) {
         },
         dataType: 'json'
     });
-}
-
-function setColumnMembersWindow() {
-    scriptVariables['columnMembersWindow'] = new ColumnMembers();
-}
-
-function showColumnMembersWindow() {
-    var windowProps = "toolbar=no,menubar=no,location=no,resizable=yes,scrollbars=yes,status=no,dependent=yes";
-    window.open("/ColumnMembers.html", "columnMembers", windowProps);
 }
 
 function getQueryTemplates() {
@@ -178,46 +352,62 @@ function getAvailableColumns(schema, tablesArray) {
         });
 }
 
-function addSelectedColumns(members) {
-    fillArrayProperty('selectedColumns', members, false);
-    syncSelectOptionsWithDataModel('columns', scriptVariables['selectedColumns']);
+// members:  (JSON) JSON of members to add to data model.
+// dataModel:  (string) Name of data model array to add members to.
+// HtmlId:  (boolean) Id of HTML select element to sync with dataModel.
+function addSelectedColumns(members, dataModel, HtmlId) {
+    fillArrayProperty(dataModel, members, false);
+    syncSelectOptionsWithDataModel(HtmlId, scriptVariables[dataModel]);
 }
 
-function removeSelectedColumn(memberIndeces) {
-    deleteArrayPropertyMembers('selectedColumns', memberIndeces);
-    syncSelectOptionsWithDataModel('columns', scriptVariables['selectedColumns']);
+// members:  Array of indeces to remove from dataModel.
+// dataModel:  Name of data model array to remove members from.
+// HtmlId:  Id of HTML select element to sync with dataModel.
+function removeSelectedColumn(memberIndeces, dataModel, HtmlId) {
+    deleteArrayPropertyMembers(dataModel, memberIndeces);
+    syncSelectOptionsWithDataModel(HtmlId, scriptVariables[dataModel]);
 }
 
-function moveSelectedColumnUp(index) {
-    if (index === 0) return null;
+// HtmlId:  The Id of the HTML select element that contains the option element to move up.
+// dataModel:  The name of the data model to update and sync with the HtmlId element with.
+// isUp:  true if moving column up (increasing index) and false if moving column down (decreasing index).
+function moveSelectedColumn(HtmlId, dataModel, isUp) {
+    // Get the index of the array item to move up.  It's assumed that there is only one element selected.
+    // todo:  add functionality for multiple items to be selected.
+    let index = 0;
+    let options = document.getElementById(HtmlId).options;
+    for (let i=0; i<options.length; i++) {
+        if (options[i].selected === true) {
+            index = i;
+            break;
+        }
+    }
 
-    // get destination item
-    var itemToDelete = scriptVariables['selectedColumns'][index - 1];
+    if (isUp) {
+        if (index === 0) { return null; }
 
-    // set destination item to current item
-    scriptVariables['selectedColumns'][index - 1] = scriptVariables['selectedColumns'][index];
+        // get destination item
+        var itemToDelete = scriptVariables[dataModel][index - 1];
 
-    // insert destination item at current item's index
-    scriptVariables['selectedColumns'][index] = itemToDelete;
+        // set destination item to current item
+        scriptVariables[dataModel][index - 1] = scriptVariables[dataModel][index];
 
-    syncSelectOptionsWithDataModel('selectedColumns', scriptVariables['selectedColumns']);
-    //updateSelectedMembersHTML();
-}
+        // insert destination item at current item's index
+        scriptVariables[dataModel][index] = itemToDelete;
+    } else {
+        if (index === options.length - 1) { return null; }
 
-function moveSelectedColumnDown(index) {
-    if (index === scriptVariables['selectedColumns'].length - 1) return null;
+        // get destination item
+        var itemToDelete = scriptVariables[dataModel][index + 1];
 
-    // get destination item
-    var itemToDelete = scriptVariables['selectedColumns'][index + 1];
+        // set destination item to current item
+        scriptVariables[dataModel][index + 1] = scriptVariables[dataModel][index];
 
-    // set destination item to current item
-    scriptVariables['selectedColumns'][index + 1] = scriptVariables['selectedColumns'][index];
+        // insert destination item at current item's index
+        scriptVariables[dataModel][index] = itemToDelete;
+    }
 
-    // insert destination item at current item's index
-    scriptVariables['selectedColumns'][index] = itemToDelete;
-
-    syncSelectOptionsWithDataModel('selectedColumns', scriptVariables['selectedColumns']);
-    //updateSelectedMembersHTML();
+    syncSelectOptionsWithDataModel(HtmlId, scriptVariables[dataModel]);
 }
 
 function addOrderByColumns(members) {
@@ -515,6 +705,24 @@ function addCriteria(parentNode) {
     }
     newDiv.appendChild(removeCriteriaButton);
 
+    // create Column Members button
+    let columnMembersButton = createNewElement('input', {
+        'type': 'button',
+        'value': 'Column Members',
+        'class': 'criteria-add-remove-buttons'
+    }, null);
+    columnMembersButton.onclick = function () {
+        let criteriaId = parseInt(this.parentElement.id.slice(-1));
+        let tableAndColumn = document.getElementById(`criteria${criteriaId}.column`).value;
+        if (tableAndColumn === null) {
+            alert('Please choose a column before choosing Column Members');
+        }
+
+        $('#columnMembersModal').show();
+        scriptVariables.activeCriteriaIdForColumnMembers = criteriaId;
+    }
+    newDiv.appendChild(columnMembersButton);
+
     // insert newDiv into the DOM
     if (parentNode === null) {
         document.getElementById('criteriaAnchor').prepend(newDiv);
@@ -588,17 +796,18 @@ function renderHTML(beforeNode) {
     if (el !== undefined)
         form.appendChild(el);
 
-    // el = renderQueryButtonHTML();
-    // if (el !== undefined) {
-    //     form.appendChild(el);
-    // }
-
     if (beforeNode === undefined) {
         document.body.appendChild(form);
+        addColumnMembersHTML(document.getElementById('queryBuilder'));
     } else {
         document.getElementById(beforeNode).appendChild(form);
+        addColumnMembersHTML(document.getElementById('queryBuilder'));
     }
 
+}
+
+function addColumnMembersHTML(element) {
+    element.insertAdjacentHTML('afterend', columnMembersModalHTML);
 }
 
 // This method assumes you are feeding it a JSON object with key-value pairs.
@@ -1227,10 +1436,10 @@ function renderAvailableColumnsHTML() {
             'type': 'button',
             'class': 'available-columns-add-button'
         }, null);
-        addColumnButton.innerHTML = '>>>';
+        addColumnButton.innerHTML = 'Add';
         addColumnButton.onclick = function() {
             let selectedColumns = getSelectedOptionsAsJSON('availableColumns');
-            addSelectedColumns(selectedColumns);
+            addSelectedColumns(selectedColumns, 'selectedColumns', 'columns');
         };
 
         let removeColumnButton = createNewElement('button', {
@@ -1239,10 +1448,10 @@ function renderAvailableColumnsHTML() {
             'type': 'button', 'class':
                 'available-columns-remove-button'
         }, null);
-        removeColumnButton.innerHTML = '<<<';
+        removeColumnButton.innerHTML = 'Remove';
         removeColumnButton.onclick = function() {
             let selectedColumns = getSelectedOptionsAsJSON('columns', 'indeces');
-            removeSelectedColumn(selectedColumns);
+            removeSelectedColumn(selectedColumns, 'selectedColumns', 'columns');
         };
 
         let addRemoveButtonsDiv = createNewElement('div', {
@@ -1413,26 +1622,7 @@ function renderOtherOptionsHTML() {
     return parentDiv;
 }
 
-// function renderQueryButtonHTML() {
-//     let attributesMap = {
-//         'id': 'runQuery',
-//         'name': 'runQuery',
-//         'type': 'button',
-//         'class': 'run-query-button'
-//     };
-//     let runQueryButton = createNewElement('button', attributesMap, null);
-//     runQueryButton.innerHTML = 'Run Query';
-//     runQueryButton.onclick = function () {
-//         scriptVariables['formSubmissionFunction']();
-//     }
-
-//     let div = createNewElement('div', {'id': 'runQueryDiv', 'name': 'runQueryDiv', 'class': 'run-query-div'}, null);
-//     div.appendChild(runQueryButton);
-
-//     return div;
-// }
-
-function syncSelectOptionsWithDataModel(HtmlId, dataProperty, ) {
+function syncSelectOptionsWithDataModel(HtmlId, dataProperty) {
     clearOptions(HtmlId);
     addOptionsToSelectElement(HtmlId, dataProperty);
 }
@@ -1575,7 +1765,7 @@ $(document).ready(function() {
 
         if (scriptVariables['getSchemaEndpoint'] !== null) {
             getSchemas();
-        } else if (scriptVariables('getTablesEndpoint') !== null) {
+        } else if (scriptVariables['getTablesEndpoint'] !== null) {
             getTables();
         }
     }, scriptVariables['phaseOutMilliseconds'] + 200);

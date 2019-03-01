@@ -2,7 +2,6 @@ package com.cj.service;
 
 import com.cj.dao.DatabaseMetaDataDao;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.jdbc.core.namedparam.SqlParameterSource;
 import org.springframework.stereotype.Service;
 
 import java.sql.SQLException;
@@ -52,5 +51,11 @@ public class DatabaseMetaDataServiceImpl implements DatabaseMetaDataService {
     @Override
     public String executeQuery(String sql) throws Exception {
         return databaseMetaDataDao.executeQuery(sql);
+    }
+
+    @Override
+    public String getColumnMembers(String schema, String table, String column, int limit, int offset, boolean ascending,
+                                   String search) throws Exception {
+        return databaseMetaDataDao.getColumnMembers(schema, table, column, limit, offset, ascending, search);
     }
 }

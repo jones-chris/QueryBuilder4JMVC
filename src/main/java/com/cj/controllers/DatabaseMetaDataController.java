@@ -9,7 +9,6 @@ import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.jdbc.core.namedparam.SqlParameterSource;
 import org.springframework.web.bind.annotation.*;
 
 import java.io.InputStream;
@@ -113,6 +112,24 @@ public class DatabaseMetaDataController {
 
             String columnsJson = Converter.convertToJSON(columnsMap.keySet().toArray(), "column").toString();
             return new ResponseEntity<>(columnsJson, HttpStatus.OK);
+        } catch (Exception ex) {
+            return new ResponseEntity<>(ex.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    // Get column members
+    @RequestMapping(value = "/columns-members/{schema}/{table}/{column}", method = RequestMethod.GET)
+    @ResponseBody
+    public ResponseEntity<String> getColumnMembers(@PathVariable String schema,
+                                                   @PathVariable String table,
+                                                   @PathVariable String column,
+                                                   @RequestParam int limit,
+                                                   @RequestParam int offset,
+                                                   @RequestParam boolean ascending,
+                                                   @RequestParam(required = false) String search) {
+        try {
+            String jsonResults = databaseMetaDataService.getColumnMembers(schema, table, column, limit, offset, ascending, search);
+            return new ResponseEntity<>(jsonResults, HttpStatus.OK);
         } catch (Exception ex) {
             return new ResponseEntity<>(ex.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
         }

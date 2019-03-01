@@ -1,6 +1,10 @@
 package com.cj.dao;
 
 import com.cj.utils.Converter;
+import com.querybuilder4j.config.DatabaseType;
+import com.querybuilder4j.config.Operator;
+import com.querybuilder4j.sqlbuilders.statements.Criteria;
+import com.querybuilder4j.sqlbuilders.statements.SelectStatement;
 import com.querybuilder4j.utils.ResultSetToHashMapConverter;
 import org.json.JSONArray;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -8,17 +12,18 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Repository;
 
 import javax.sql.DataSource;
-import java.sql.Connection;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.sql.Statement;
+import java.sql.*;
 import java.util.Map;
+import java.util.Properties;
 
 @Repository
 public class DatabaseMetaDataDaoImpl implements DatabaseMetaDataDao {
     @Qualifier("querybuilder4j.db")
     @Autowired
     private DataSource dataSource;
+    @Qualifier("querybuilder4jdb_properties")
+    @Autowired
+    private Properties dataSourceProperties;
 
 
     @Override
@@ -73,6 +78,40 @@ public class DatabaseMetaDataDaoImpl implements DatabaseMetaDataDao {
             throw ex;
         }
 
+    }
+
+    @Override
+    public String getColumnMembers(String schema, String table, String column, int limit, int offset, boolean ascending,
+                                   String search) throws Exception {
+        schema = (schema.equals("null")) ? null : schema;
+        String tableAndColumn = table + "." + column;
+
+        SelectStatement selectStatement = new SelectStatement();
+        selectStatement.setDistinct(true);
+        selectStatement.getColumns().add(tableAndColumn);
+        selectStatement.setTable(table);
+        if (search != null) {
+            Criteria criterion = new Criteria(0);
+            criterion.setColumn(tableAndColumn);
+            criterion.setOperator(Operator.like);
+            criterion.setFilter(search);
+            selectStatement.getCriteria().add(criterion);
+        }
+        selectStatement.setLimit(limit);
+        selectStatement.setOffset(offset);
+        selectStatement.setOrderBy(true);
+        selectStatement.setAscending(ascending);
+        selectStatement.setDatabaseType(DatabaseType.Sqlite);
+
+        String sql = selectStatement.toSql(dataSourceProperties);
+
+        try (Connection conn = dataSource.getConnection();
+             Statement stmt = conn.createStatement()) {
+            ResultSet rs = stmt.executeQuery(sql);
+            return Converter.convertToJSON(rs).toString();
+        } catch (Exception ex) {
+            throw ex;
+        }
     }
 
 }

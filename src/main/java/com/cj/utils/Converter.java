@@ -3,13 +3,15 @@ package com.cj.utils;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import java.sql.ResultSet;
+import java.util.Map;
+
 /**
  * Utility for converting ResultSets into some Output formats
  * @author marlonlom
  */
 public class Converter {
     /**
-     * Convert a result set into a JSON Array
+     * Convert a result set into a JSONArray.
      * @param resultSet
      * @return a JSONArray
      * @throws Exception
@@ -29,6 +31,26 @@ public class Converter {
         }
         return jsonArray;
 
+    }
+
+    /**
+     * Convert a Map into a JSONArray.
+     * @param map
+     * @return
+     */
+    public static JSONArray convertToJSON(Map<Object, Object> map) {
+        JSONArray jsonArray = new JSONArray();
+        JSONObject jsonObject;
+        for (Object key : map.keySet()) {
+            String value = map.get(key).toString();
+
+            jsonObject = new JSONObject();
+            jsonObject.put(key.toString(), value);
+
+            jsonArray.put(jsonObject);
+        }
+
+        return jsonArray;
     }
 
     /**
