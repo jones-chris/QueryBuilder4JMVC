@@ -9,7 +9,7 @@ const scriptVariables = {
     // set to the number of milliseconds that should elapse when hiding/showing the various divs.
     phaseOutMilliseconds : 200,
     // set to your query template endpoint
-    getQueryTemplateEndpoint : null,
+    getQueryTemplateEndpoint : '/queryTemplates',
     // set to your schemas endpoint
     getSchemaEndpoint : "/schemas",
     // set to your tables endpoint
@@ -64,8 +64,8 @@ const scriptVariables = {
             dataType: 'json'
         });
     },
-    // set to [] to render
-    queryTemplates : null,
+    // set to [] to render or null to not render.
+    queryTemplates : [],
     // set to [] to render
     schemas : [],
     // set to [] to render
@@ -107,6 +107,10 @@ const scriptVariables = {
     selectedColumnMembers : []
 };
 
+//===============================================================================================
+// Column Members HTML fragment and JavaScript functions
+//===============================================================================================
+
 const columnMembersModalHTML = `
     <!--Column Members Modal-->
     <div id="columnMembersModal" name="columnMembersModal" class="column-members-modal">
@@ -125,6 +129,7 @@ const columnMembersModalHTML = `
             <div class="column-members-modal-pagination">
                 <label for="columnMembersLimit">Limit</label>
                 <select name="columnMembersLimit" id="columnMembersLimit">
+                    <option value="2">2</option>
                     <option value="10">10</option>
                     <option value="25">25</option>
                     <option value="50">50</option>
@@ -178,10 +183,6 @@ const columnMembersModalHTML = `
     </div>
 `;
 
-//===============================================================================================
-// Column Members functions
-//===============================================================================================
-
 // Sets all column members modal variables and elements back to their default state.
 function closeColumnMembers() {
     $('#columnMembersModal').hide();
@@ -189,6 +190,7 @@ function closeColumnMembers() {
     scriptVariables.currentOffsetColumnMembers = null;
     document.getElementById('priorPage').disabled = true;
     document.getElementById('nextPage').disabled = false;
+    document.getElementById('search').value = null;
     clearOptions('availableMembers');
     clearOptions('selectedMembers');
     scriptVariables.availableColumnMembers = [];
@@ -280,6 +282,44 @@ function setCriteriaFilterWithColumnMembers() {
     document.getElementById(`criteria${scriptVariables.activeCriteriaIdForColumnMembers}.filter`).value = stringifiedMembers;
 }
 
+//===============================================================================================
+// SubQueries HTML fragment and JavaScript functions
+//===============================================================================================
+
+function renderSubQueriesHTML() {
+    let div = createNewElement('div', {
+        id: 'subQueriesDiv',
+        name: 'subQueriesDiv'
+    });
+
+    return div;
+}
+
+// const subQueriesHTML = `
+//     <div id="subQueriesDiv" name="subQueriesDiv" hidden="hidden">
+//
+//         <label for="subQueriesSelectElement">Query Template</label>
+//         <!--todo:  Give subQueriesSelectElement same options as the Query Template select element.-->
+//         <select id="subQueriesSelectElement" name="subQueriesSelectElement"></select>
+//
+//         <input type="text" id="subQueries${id}" name="subQueries[${id}]" />
+//
+//         # after selecting name, show input box for each parameter
+//
+//         # under each parameter, show parameter description
+//     </div>
+// `;
+//
+// const subQueryArgsHTML = `
+//     <!--Query Parameter Name and Description-->
+//     <input type="text" id="criteriaArguments${parameterName}" name="criteriaArguments[${parameterName}]" />
+//     <p id="criteriaParameters${parameterName}" name="criteriaParameters${parameterName}"></p>
+// `;
+
+//===============================================================================================
+// General JavaScript functions
+//===============================================================================================
+
 function sendAjaxRequest(endpoint, paramString, method, callbackFunction) {
     $.ajax({
         method: method,
@@ -311,14 +351,96 @@ function getQueryTemplatById(id) {
     sendAjaxRequest(scriptVariables['getQueryTemplateEndpoint'] + '/' + id,
         null,
         "GET",
-        function(queryTemplateData) {
-            alert('Query Template retrieved:  ' + queryTemplateData);
-            //TODO write logic to populate query template's data on screen.
+        function(queryTemplate) {
+            // todo add schema into the SelectStatement class so that it can be added here based on the queryTemplate data.
+            document.getElementById('schemas').value = 'null';
 
-            // update each array variable based on queryTemplateData.
+            // get table and all unique join target tables...add them to the tables array.
+            let tables = [];
+            tables.push(queryTemplate.table);
+            queryTemplate.joins.forEach((join) => {
+                if (!tables.includes(join.targetTable)) {
+                    tables.push(join.targetTable);
+                }
+            });
+            scriptVariables.tables = tables;
+            syncSelectOptionsWithDataModel('table', scriptVariables.tables);
+            Array.from(document.getElementById('table').children).forEach((child) => {
+                child.selected = true;
+            });
 
-            // call syncSelectOptionsWithData for each array variable.
-        });
+            // Now that we have the tables, get the available columns.
+            //getAvailableColumns(document.getElementById('schemas').value, scriptVariables.tables);
+            let tableParamString = scriptVariables.tables.join('&');
+            $.ajax({
+                method: "GET",
+                url: scriptVariables['getColumnsEndpoint'] + 'null' + "/" + tableParamString,
+                data: null,
+                success: function (responseText) {
+                    fillArrayProperty('availableColumns', responseText);
+                    syncSelectOptionsWithDataModel('availableColumns', scriptVariables['availableColumns']);
+                },
+                error: function (jqXHR, textStatus, errorThrown) {
+                    alert(jqXHR);
+                    alert(textStatus);
+                    alert(errorThrown);
+                },
+                dataType: 'json'
+            }).done(function () {
+                // table columns should update automatically after tables array is updated.  Update selected columns.
+                scriptVariables.selectedColumns = queryTemplate.columns;
+                syncSelectOptionsWithDataModel('columns', scriptVariables.selectedColumns);
+
+                // update criteria...call reindent criteria method.
+                queryTemplate.criteria.forEach((criterion) => {
+                    let parentCriteriaId = criterion.parentId;
+                    let parentNode = null;
+                    if (parentCriteriaId !== undefined && parentCriteriaId !== null) {
+                        parentNode = document.getElementById(`row.${parentCriteriaId}`);
+                    }
+                    addCriteria(parentNode, criterion);
+                });
+
+                // get joins and add to joins array
+                queryTemplate.joins.forEach((join) => {
+                    addJoin(join);
+                });
+
+                // Update other options.
+                document.getElementById('distinct').checked = queryTemplate.distinct;
+                document.getElementById('suppressNulls').checked = queryTemplate.suppressNulls;
+                document.getElementById('limit').value = queryTemplate.limit;
+                document.getElementById('offset').value = queryTemplate.offset;
+
+                // todo write logic to add subqueries.
+            });
+
+            //     // get joins and add to joins array
+            //     queryTemplate.joins;
+            //
+            //     // table columns should update automatically after tables array is updated.  Update selected columns.
+            //     scriptVariables.selectedColumns = queryTemplate.columns;
+            //     syncSelectOptionsWithDataModel('columns', scriptVariables.selectedColumns);
+            //
+            //     // update criteria...call reindent criteria method.
+            //     queryTemplate.criteria.forEach((criterion) => {
+            //         let parentCriteriaId = criterion.parentId;
+            //         let parentNode = null;
+            //         if (parentCriteriaId !== undefined && parentCriteriaId !== null) {
+            //             parentNode = document.getElementById(`row.${parentCriteriaId}`);
+            //         }
+            //         addCriteria(parentNode, criterion);
+            //     });
+            //
+            //     // Update other options.
+            //     document.getElementById('distinct').checked = queryTemplate.distinct;
+            //     document.getElementById('suppressNulls').checked = queryTemplate.suppressNulls;
+            //     document.getElementById('limit').value = queryTemplate.limit;
+            //     document.getElementById('offset').value = queryTemplate.offset;
+            //
+            //     // todo write logic to add subqueries.
+            // });
+        })
 }
 
 function getSchemas() {
@@ -558,7 +680,7 @@ function reindentCriteria() {
 }
 
 // parentNode:  The criteria node to insert this child node after
-function addCriteria(parentNode) {
+function addCriteria(parentNode, criterion=null) {
     // These default assignments for parentId and id assume we are adding a new root criteria.
     let parentId = '';
     let id = 0;
@@ -632,18 +754,18 @@ function addCriteria(parentNode) {
     newDiv.appendChild(columnEl);
 
     // create operator select element
-    let optionEqual =               createNewElement('option', {'value': 'equalTo'}, null, '=');
-    let optionNotEqualTo =          createNewElement('option', {'value': 'notEqualTo'}, null, '<>');
+    let optionEqual = createNewElement('option', {'value': 'equalTo'}, null, '=');
+    let optionNotEqualTo = createNewElement('option', {'value': 'notEqualTo'}, null, '<>');
     let optionGreaterThanOrEquals = createNewElement('option', {'value': 'greaterThanOrEquals'}, null, '>=');
-    let optionLessThanOrequals =    createNewElement('option', {'value': 'lessThanOrEquals'}, null, '<=');
-    let optionGreaterThan =         createNewElement('option', {'value': 'greaterThan'}, null, '>');
-    let optionLessThan =            createNewElement('option', {'value': 'lessThan'}, null, '<');
-    let optionLike =                createNewElement('option', {'value': 'like'}, null, 'like');
-    let optionNotLike =             createNewElement('option', {'value': 'notLike'}, null, 'not like');
-    let optionIn =                  createNewElement('option', {'value': 'in'}, null, 'in');
-    let optionNotIn =               createNewElement('option', {'value': 'notIn'}, null, 'not in');
-    let optionIsNull =              createNewElement('option', {'value': 'isNull'}, null, 'is null');
-    let optionIsNotNull =           createNewElement('option', {'value': 'isNotNull'}, null, 'is not null');
+    let optionLessThanOrequals = createNewElement('option', {'value': 'lessThanOrEquals'}, null, '<=');
+    let optionGreaterThan = createNewElement('option', {'value': 'greaterThan'}, null, '>');
+    let optionLessThan = createNewElement('option', {'value': 'lessThan'}, null, '<');
+    let optionLike = createNewElement('option', {'value': 'like'}, null, 'like');
+    let optionNotLike = createNewElement('option', {'value': 'notLike'}, null, 'not like');
+    let optionIn = createNewElement('option', {'value': 'in'}, null, 'in');
+    let optionNotIn = createNewElement('option', {'value': 'notIn'}, null, 'not in');
+    let optionIsNull = createNewElement('option', {'value': 'isNull'}, null, 'is null');
+    let optionIsNotNull = createNewElement('option', {'value': 'isNotNull'}, null, 'is not null');
 
     let operatorEl = createNewElement('select', {
         'id': `criteria${id}.operator`,
@@ -689,7 +811,7 @@ function addCriteria(parentNode) {
     }, null);
     addCriteriaButton.onclick = function () {
         addCriteria(newDiv);
-    }
+    };
     newDiv.appendChild(addCriteriaButton);
 
     // create 'Remove Criteria' button
@@ -702,7 +824,7 @@ function addCriteria(parentNode) {
         newDiv.remove();
         renumberCriteria(newDiv.id.slice(-1), 'remove');
         reindentCriteria();
-    }
+    };
     newDiv.appendChild(removeCriteriaButton);
 
     // create Column Members button
@@ -720,8 +842,17 @@ function addCriteria(parentNode) {
 
         $('#columnMembersModal').show();
         scriptVariables.activeCriteriaIdForColumnMembers = criteriaId;
-    }
+    };
     newDiv.appendChild(columnMembersButton);
+
+    // If a criteria object was passed to this method, then set HTML element values now that div is finished,
+    // but not attached to DOM yet.
+    if (criterion !== null) {
+        conjunctionEl.value = criterion.conjunction;
+        columnEl.value = criterion.column;
+        operatorEl.value = criterion.operator;
+        filterInput.value = criterion.filter;
+    }
 
     // insert newDiv into the DOM
     if (parentNode === null) {
@@ -772,8 +903,6 @@ function renderHTML(beforeNode) {
     el = renderSchemaHTML();
     if (el !== undefined) {
         form.appendChild(el);
-        //let brEl = createNewElement('br');
-        //form.appendChild(brEl);
     }
 
     //Tables
@@ -795,6 +924,10 @@ function renderHTML(beforeNode) {
     el = renderOtherOptionsHTML();
     if (el !== undefined)
         form.appendChild(el);
+
+    //Sub Queries (hidden)
+    el = renderSubQueriesHTML();
+    form.appendChild(el);
 
     if (beforeNode === undefined) {
         document.body.appendChild(form);
@@ -861,7 +994,7 @@ function moveArrayPropertyItem(arrayPropertyName, index, direction) {
     }
 }
 
-function createNewElement(type, attributesMap, dataProperty, innerHtml=null) {
+function createNewElement(type, attributesMap, dataProperty=null, innerHtml=null) {
     if (this[dataProperty] === null) return null;
 
     let select = document.createElement(type);
@@ -1044,11 +1177,11 @@ function renderQueryTemplatesHTML() {
             getQueryTemplatById(queryTemplateId);
         };
 
-        let label = createNewElement('label', {'for': 'queryTemplates'});
-        label.innerHTML = 'Query Templates';
+        // let label = createNewElement('label', {'for': 'queryTemplates'});
+        // label.innerHTML = 'Query Templates';
 
         let div = createNewElement('div', {'id': 'queryTemplatesDiv', 'class': 'query-templates-div'});
-        div.appendChild(label);
+        // div.appendChild(label);
         div.appendChild(select);
 
         return div;
@@ -1095,7 +1228,6 @@ function renderTablesHTML() {
             'multiple': 'true',
             'size': scriptVariables['tablesSize']
         };
-
         let select = createNewElement('select', attributesMap, scriptVariables['tables']);
         select.onchange = function() {
             let schema = document.getElementById('schemas').value;
@@ -1140,256 +1272,374 @@ function renderJoinsHTML() {
         });
         addJoinButton.innerHTML = 'Add Join';
         addJoinButton.onclick = function() {
-            let maxId = 0;
-            $('#joinsDiv div').each(function() {
-                let idLength = $(this)[0].id.length;
-                let id = parseInt($(this)[0].id[idLength - 1]);
-                if (id >= maxId) {
-                    maxId = id + 1;
-                }
-            });
-
-            let newJoinDiv = createNewElement('div', {
-                'id': `join-row${maxId}`,
-                'name': `join-row${maxId}`,
-                'class': 'join-row'
-            });
-            let newJoinType = createNewElement('input', {
-                'id': `joins${maxId}.joinType`,
-                'name': `joins[${maxId}].joinType`,
-                'hidden': 'true',
-                'value': 'LEFT_EXCLUDING' // Note: The name must match the case of the Java enum class.
-            });
-            let newJoinImage = createNewElement('img', {
-                'id': `joins${maxId}.image`,
-                'name': `joins[${maxId}].image`,
-                'src': scriptVariables['joinImageBaseURL'] + 'left_join_excluding.png',
-                'width': '100',
-                'height': '80'
-            });
-            newJoinImage.onclick = function() {
-                // Note:  Names must match the case that the Java enum is in.  The Java enum is in all caaps, so the names
-                // here must be in all caps also or Spring will throw an exception.
-                let images = [
-                    {'name': 'LEFT_EXCLUDING',         'file_path': scriptVariables['joinImageBaseURL'] + 'left_join_excluding.png'},
-                    {'name': 'LEFT',                   'file_path': scriptVariables['joinImageBaseURL'] + 'left_join.png'},
-                    {'name': 'INNER',                  'file_path': scriptVariables['joinImageBaseURL'] + 'inner_join.png'},
-                    {'name': 'RIGHT',                  'file_path': scriptVariables['joinImageBaseURL'] + 'right_join.png'},
-                    {'name': 'RIGHT_EXCLUDING',        'file_path': scriptVariables['joinImageBaseURL'] + 'right_join_excluding.png'},
-                    {'name': 'FULL_OUTER',             'file_path': scriptVariables['joinImageBaseURL'] + 'full_outer_join.png'},
-                    {'name': 'FULL_OUTER_EXCLUDING',   'file_path': scriptVariables['joinImageBaseURL'] + 'full_outer_join_excluding.png'}
-                ];
-
-                let joinType = document.getElementById(`joins${maxId}.joinType`);
-                let currentJoinName = joinType.value;
-                let joinImage = document.getElementById(`joins${maxId}.image`);
-
-                // Set newJoinType and newJoinImage to next join name and file_path in array.
-                for (var i=0; i<images.length; i++) {
-                    if (images[i].name === currentJoinName) {
-                        // If index is less than last index, then get file_path of index + 1.
-                        // Else (if index is last index), then get first file_path in array.
-                        if (i < images.length-1) {
-                            joinType.setAttribute('value', images[i+1].name);
-                            joinImage.src = images[i+1].file_path;
-                            break;
-                        } else {
-                            joinType.setAttribute('value', images[0].name);
-                            joinImage.src = images[0].file_path;
-                            break;
-                        }
-                    }
-                }
-            };
-
-            let newJoinParentColumn = createNewElement('select', {
-                'id': `joins${maxId}.parentJoinColumns`,
-                'name': `joins[${maxId}].parentJoinColumns`
-            });
-            let newJoinTargetColumn = createNewElement('select', {
-                'id': `joins${maxId}.targetJoinColumns`,
-                'name': `joins[${maxId}].targetJoinColumns`
-            });
-
-            // slice() is to copy the 'tables' array.
-            let parentAndTargetJoinTables = scriptVariables['tables'].slice(0);
-            // splice() is to add null as first item in array so that a blank choice is displayed first in resulting select element.
-            parentAndTargetJoinTables.splice(0, 0, null);
-
-            let newJoinParentTable = createNewElement('select', {
-                'id': `joins${maxId}.parentTable`,
-                'name': `joins[${maxId}].parentTable`
-            }, parentAndTargetJoinTables);
-
-            newJoinParentTable.onchange = function() {
-                // Get selected table from select element.
-                let selectedOption = getSelectedOption(this);
-
-                // Get all available columns that are from the selected table.
-                let tableColumns = getTableColumns(selectedOption);
-
-                // Add parent table columns to parent table select elements.
-                let parentJoinColumns = document.getElementsByName(newJoinParentColumn.name);
-                Array.from(parentJoinColumns).forEach(parentJoinColumn => syncSelectOptionsWithDataModel(parentJoinColumn, tableColumns));
-            };
-
-            let newJoinTargetTable = createNewElement('select', {
-                'id': `joins${maxId}.targetTable`,
-                'name': `joins[${maxId}].targetTable`
-            }, parentAndTargetJoinTables);
-            newJoinTargetTable.onchange = function() {
-                // Get selected table from select element.
-                let selectedOption = getSelectedOption(this);
-
-                // Get all available columns that are from the selected table.
-                let tableColumns = getTableColumns(selectedOption);
-
-                // Add target table columns to target table select elements.
-                let targetJoinColumns = document.getElementsByName(newJoinTargetColumn.name);
-                Array.from(targetJoinColumns).forEach(targetJoinColumn => syncSelectOptionsWithDataModel(targetJoinColumn, tableColumns));
-            };
-
-            let newJoinDeleteButton = createNewElement('button', {
-                'id': `joins${maxId}.deleteButton`,
-                'name': `joins[${maxId}].deleteButton`,
-                'class': 'delete-join-button',
-                'type': 'button'
-            });
-            newJoinDeleteButton.onclick = function() {
-                // Get the numerical id of this button.
-                let id = parseInt($(this)[0].id[5]);
-
-                $(`#join-row${id}`).remove();
-
-                // For each div in joinsDiv, change the id if it is greater than the id of the div that was deleted.
-                let divs = document.querySelectorAll('#joinsDiv div');
-                for (var i=0; i<divs.length; i++) {
-                    let idLength = divs[i].id.length;
-                    let id = parseInt(divs[i].id[idLength - 1]);
-                    if (id > maxId) {
-                        // Renumber div
-                        divs[i].setAttribute('name', `join-row${id - 1}`);
-                        divs[i].id = `join-row${id - 1}`;
-                        // Renumber joinType
-                        document.getElementById(`joins${id}.joinType`).name = `joins[${id - 1}].joinType`;
-                        document.getElementById(`joins${id}.joinType`).id = `joins${id - 1}.joinType`;
-                        // Renumber image
-                        document.getElementById(`joins${id}.image`).name = `joins[${id - 1}].image`;
-                        document.getElementById(`joins${id}.image`).id = `joins${id - 1}.image`;
-                        // Renumber parentTable
-                        document.getElementById(`joins${id}.parentTable`).name = `joins[${id - 1}].parentTable`;
-                        document.getElementById(`joins${id}.parentTable`).id = `joins${id - 1}.parentTable`;
-                        // Renumber targetTable
-                        document.getElementById(`joins${id}.targetTable`).name = `joins[${id - 1}].targetTable`;
-                        document.getElementById(`joins${id}.targetTable`).id = `joins${id - 1}.targetTable`;
-
-                        // Renumber parentColumns
-                        let parentJoinColumns = document.getElementsByName(`joins[${id}].parentJoinColumns`);
-                        Array.from(parentJoinColumns).forEach(parentJoinColumn => {
-                            parentJoinColumn.name = `joins[${id - 1}].parentJoinColumns`;
-                        parentJoinColumn.id = `joins${id - 1}.parentJoinColumns`;
-                    });
-
-                        // Renumber targetColumns
-                        let targetJoinColumns = document.getElementsByName(`joins[${id}].targetJoinColumns`);
-                        Array.from(targetJoinColumns).forEach(targetJoinColumn => {
-                            targetJoinColumn.name = `joins[${id - 1}].targetJoinColumns`;
-                        targetJoinColumn.id = `joins${id - 1}.targetJoinColumns`;
-                    });
-
-                        // Renumber deleteButton
-                        let deleteButtons = document.getElementsByName(`joins[${id}].deleteButton`);
-                        Array.from(deleteButtons).forEach(deleteButton => {
-                            deleteButton.name = `joins[${id - 1}].deleteButton`;
-                        deleteButton.id = `joins${id - 1}.deleteButton`;
-                    });
-
-                        // Renumber addParentAndTargetColumn
-                        let addParentAndTargetColumnButtons = document.getElementsByName(`joins[${id}].addParentAndTargetColumn`);
-                        Array.from(addParentAndTargetColumnButtons).forEach(addParentAndTargetColumn => {
-                            addParentAndTargetColumn.name = `joins[${id - 1}].addParentAndTargetColumn`;
-                        addParentAndTargetColumn.id = `joins${id - 1}.addParentAndTargetColumn`;
-                    });
-
-                        // Renumber deleteJoinColumnsButtons
-                        let deleteJoinColumnsButtons = document.getElementsByName(`joins[${id}].deleteJoinColumnsButton`);
-                        Array.from(deleteJoinColumnsButtons).forEach(deleteJoinColumnsButton => {
-                            deleteJoinColumnsButton.name = `joins[${id - 1}].deleteJoinColumnsButton`;
-                        deleteJoinColumnsButton.id = `joins${id - 1}.deleteJoinColumnsButton`;
-                    });
-                    }
-                }
-            };
-            newJoinDeleteButton.innerHTML = 'X';
-
-            let newJoinAddParentAndTargetColumn = createNewElement('button', {
-                'id': `joins${maxId}.addParentAndTargetColumn`,
-                'name': `joins[${maxId}].addParentAndTargetColumn`,
-                'class': 'add-parent-and-target-column',
-                'type': 'button'
-            });
-            newJoinAddParentAndTargetColumn.innerHTML = '+';
-
-            // The onclick event should generate another parentAndTargetColumnPair with the data source identical to first parentAndTargetColumnPair.
-            newJoinAddParentAndTargetColumn.onclick = function() {
-                let parentTableColumns = Array.from(document.getElementById(`joins${maxId}.parentJoinColumns`).options).map(option => option.value);
-                let targetTableColumns = Array.from(document.getElementById(`joins${maxId}.targetJoinColumns`).options).map(option => option.value);
-
-                let anotherParentColumn = createNewElement('select', {
-                    'id': `joins${maxId}.parentJoinColumns`,
-                    'name': `joins[${maxId}].parentJoinColumns`
-                }, parentTableColumns);
-
-                let anotherTargetColumn = createNewElement('select', {
-                    'id': `joins${maxId}.targetJoinColumns`,
-                    'name': `joins[${maxId}].targetJoinColumns`
-                }, targetTableColumns);
-
-                let equalSign = createNewElement('b');
-                equalSign.innerHTML = ' = ';
-
-                let joinColumnsDeleteButton = createNewElement('button', {
-                    'id': `joins${maxId}.deleteJoinColumnsButton`,
-                    'name': `joins[${maxId}].deleteJoinColumnsButton`,
-                    'class': 'delete-join-columns-button',
-                    'type': 'button'
-                })
-                joinColumnsDeleteButton.innerHTML = 'X';
-                joinColumnsDeleteButton.onclick = function() {
-                    this.parentNode.remove();
-                };
-
-                let div = createNewElement('div');
-                div.appendChild(anotherParentColumn);
-                div.appendChild(equalSign);
-                div.appendChild(anotherTargetColumn);
-                div.appendChild(joinColumnsDeleteButton);
-                document.getElementById(`join-row${maxId}`).appendChild(div);
-            };
-
-            newJoinDiv.appendChild(newJoinDeleteButton);
-            newJoinDiv.appendChild(newJoinType);
-            newJoinDiv.appendChild(newJoinParentTable);
-            newJoinDiv.appendChild(newJoinImage);
-            newJoinDiv.appendChild(newJoinTargetTable);
-
-            let firstParentAndTargetColumnDiv = createNewElement('div');
-            firstParentAndTargetColumnDiv.appendChild(newJoinParentColumn);
-            let equalSign = createNewElement('b');
-            equalSign.innerHTML = ' = ';
-            firstParentAndTargetColumnDiv.appendChild(equalSign);
-            firstParentAndTargetColumnDiv.appendChild(newJoinTargetColumn);
-            firstParentAndTargetColumnDiv.appendChild(newJoinAddParentAndTargetColumn);
-            newJoinDiv.appendChild(firstParentAndTargetColumnDiv);
-
-            document.getElementById('joinsDiv').appendChild(newJoinDiv);
-        };
+            addJoin();
+        }
 
         // Add addjoinButton to parent div.
         joinsDiv.appendChild(addJoinButton);
 
         return joinsDiv;
     }
+}
+
+function getJoinsDivMaxId() {
+    let maxId = 0;
+    $('#joinsDiv div').each(function() {
+        let idLength = $(this)[0].id.length;
+        let id = parseInt($(this)[0].id[idLength - 1]);
+        if (id >= maxId) {
+            maxId = id + 1;
+        }
+    });
+
+    return maxId;
+}
+
+function getJoinImageFilePath(joinName) {
+    let images = [
+        {'name': 'LEFT_EXCLUDING',         'file_path': scriptVariables['joinImageBaseURL'] + 'left_join_excluding.png'},
+        {'name': 'LEFT',                   'file_path': scriptVariables['joinImageBaseURL'] + 'left_join.png'},
+        {'name': 'INNER',                  'file_path': scriptVariables['joinImageBaseURL'] + 'inner_join.png'},
+        {'name': 'RIGHT',                  'file_path': scriptVariables['joinImageBaseURL'] + 'right_join.png'},
+        {'name': 'RIGHT_EXCLUDING',        'file_path': scriptVariables['joinImageBaseURL'] + 'right_join_excluding.png'},
+        {'name': 'FULL_OUTER',             'file_path': scriptVariables['joinImageBaseURL'] + 'full_outer_join.png'},
+        {'name': 'FULL_OUTER_EXCLUDING',   'file_path': scriptVariables['joinImageBaseURL'] + 'full_outer_join_excluding.png'}
+    ];
+
+    for (let i in images) {
+        if (images[i].name === joinName) {
+            return images[i].file_path;
+        }
+    }
+}
+
+function addJoin(join=null) {
+    let maxId = getJoinsDivMaxId();
+    // $('#joinsDiv div').each(function() {
+    //     let idLength = $(this)[0].id.length;
+    //     let id = parseInt($(this)[0].id[idLength - 1]);
+    //     if (id >= maxId) {
+    //         maxId = id + 1;
+    //     }
+    // });
+
+    let newJoinDiv = createNewElement('div', {
+        'id': `join-row${maxId}`,
+        'name': `join-row${maxId}`,
+        'class': 'join-row'
+    });
+    let newJoinType = createNewElement('input', {
+        'id': `joins${maxId}.joinType`,
+        'name': `joins[${maxId}].joinType`,
+        'hidden': 'true',
+        'value': (join === null) ? 'LEFT_EXCLUDING' : join.joinType // Note: The name must match the case of the Java enum class.
+    });
+    let newJoinImage = createNewElement('img', {
+        'id': `joins${maxId}.image`,
+        'name': `joins[${maxId}].image`,
+        'src': (join === null) ? scriptVariables.joinImageBaseURL + 'left_join_excluding.png' : getJoinImageFilePath(join.joinType),
+        'width': '100',
+        'height': '80'
+    });
+    newJoinImage.onclick = function() {
+        // Note:  Names must match the case that the Java enum is in.  The Java enum is in all caaps, so the names
+        // here must be in all caps also or Spring will throw an exception.
+        let images = [
+            {'name': 'LEFT_EXCLUDING',         'file_path': scriptVariables['joinImageBaseURL'] + 'left_join_excluding.png'},
+            {'name': 'LEFT',                   'file_path': scriptVariables['joinImageBaseURL'] + 'left_join.png'},
+            {'name': 'INNER',                  'file_path': scriptVariables['joinImageBaseURL'] + 'inner_join.png'},
+            {'name': 'RIGHT',                  'file_path': scriptVariables['joinImageBaseURL'] + 'right_join.png'},
+            {'name': 'RIGHT_EXCLUDING',        'file_path': scriptVariables['joinImageBaseURL'] + 'right_join_excluding.png'},
+            {'name': 'FULL_OUTER',             'file_path': scriptVariables['joinImageBaseURL'] + 'full_outer_join.png'},
+            {'name': 'FULL_OUTER_EXCLUDING',   'file_path': scriptVariables['joinImageBaseURL'] + 'full_outer_join_excluding.png'}
+        ];
+
+        let joinType = document.getElementById(`joins${maxId}.joinType`);
+        let currentJoinName = joinType.value;
+        let joinImage = document.getElementById(`joins${maxId}.image`);
+
+        // Set newJoinType and newJoinImage to next join name and file_path in array.
+        for (let i=0; i<images.length; i++) {
+            if (images[i].name === currentJoinName) {
+                // If index is less than last index, then get file_path of index + 1.
+                // Else (if index is last index), then get first file_path in array.
+                if (i < images.length-1) {
+                    joinType.value = images[i+1].name;
+                    // joinType.setAttribute('value', images[i+1].name);
+                    joinImage.src = images[i+1].file_path;
+                    break;
+                } else {
+                    joinType.value = images[0].name;
+                    // joinType.setAttribute('value', images[0].name);
+                    joinImage.src = images[0].file_path;
+                    break;
+                }
+            }
+        }
+    };
+
+    let parentTableColumns = (join === null) ? null : getTableColumns(join.parentTable);
+    let newJoinParentColumn = createNewElement('select', {
+        'id': `joins${maxId}.parentJoinColumns`,
+        'name': `joins[${maxId}].parentJoinColumns`
+    }, parentTableColumns);
+    if (join !== null) {
+        // Set the mandatory parent column element's value to the join's first parent column.
+        newJoinParentColumn.value = join.parentJoinColumns[0];
+    }
+
+    let targetTableColumns = (join === null) ? null : getTableColumns(join.targetTable);
+    let newJoinTargetColumn = createNewElement('select', {
+        'id': `joins${maxId}.targetJoinColumns`,
+        'name': `joins[${maxId}].targetJoinColumns`
+    }, targetTableColumns);
+    if (join !== null) {
+        // Set the mandatory target column element's value to the join's first target column.
+        newJoinTargetColumn.value = join.targetJoinColumns[0];
+    }
+
+    // slice() is to copy the 'tables' array.
+    let parentAndTargetJoinTables = scriptVariables['tables'].slice(0);
+    // splice() is to add null as first item in array so that a blank choice is displayed first in resulting select element.
+    parentAndTargetJoinTables.splice(0, 0, null);
+
+    let newJoinParentTable = createNewElement('select', {
+        'id': `joins${maxId}.parentTable`,
+        'name': `joins[${maxId}].parentTable`
+    }, parentAndTargetJoinTables);
+
+    newJoinParentTable.onchange = function() {
+        // Get selected table from select element.
+        let selectedOption = getSelectedOption(this);
+
+        // Get all available columns that are from the selected table.
+        let tableColumns = getTableColumns(selectedOption);
+
+        // Add parent table columns to parent table select elements.
+        let parentJoinColumns = document.getElementsByName(newJoinParentColumn.name);
+        Array.from(parentJoinColumns).forEach(parentJoinColumn => syncSelectOptionsWithDataModel(parentJoinColumn, tableColumns));
+    };
+
+    let newJoinTargetTable = createNewElement('select', {
+        'id': `joins${maxId}.targetTable`,
+        'name': `joins[${maxId}].targetTable`
+    }, parentAndTargetJoinTables);
+    newJoinTargetTable.onchange = function() {
+        // Get selected table from select element.
+        let selectedOption = getSelectedOption(this);
+
+        // Get all available columns that are from the selected table.
+        let tableColumns = getTableColumns(selectedOption);
+
+        // Add target table columns to target table select elements.
+        let targetJoinColumns = document.getElementsByName(newJoinTargetColumn.name);
+        Array.from(targetJoinColumns).forEach(targetJoinColumn => syncSelectOptionsWithDataModel(targetJoinColumn, tableColumns));
+    };
+
+    let newJoinDeleteButton = createNewElement('button', {
+        'id': `joins${maxId}.deleteButton`,
+        'name': `joins[${maxId}].deleteButton`,
+        'class': 'delete-join-button',
+        'type': 'button'
+    });
+    newJoinDeleteButton.onclick = function() {
+        // Get the numerical id of this button.
+        let id = parseInt($(this)[0].id[5]);
+
+        $(`#join-row${id}`).remove();
+
+        // For each div in joinsDiv, change the id if it is greater than the id of the div that was deleted.
+        let divs = document.querySelectorAll('#joinsDiv div');
+        for (var i=0; i<divs.length; i++) {
+            let idLength = divs[i].id.length;
+            let id = parseInt(divs[i].id[idLength - 1]);
+            if (id > maxId) {
+                // Renumber div
+                divs[i].setAttribute('name', `join-row${id - 1}`);
+                divs[i].id = `join-row${id - 1}`;
+                // Renumber joinType
+                document.getElementById(`joins${id}.joinType`).name = `joins[${id - 1}].joinType`;
+                document.getElementById(`joins${id}.joinType`).id = `joins${id - 1}.joinType`;
+                // Renumber image
+                document.getElementById(`joins${id}.image`).name = `joins[${id - 1}].image`;
+                document.getElementById(`joins${id}.image`).id = `joins${id - 1}.image`;
+                // Renumber parentTable
+                document.getElementById(`joins${id}.parentTable`).name = `joins[${id - 1}].parentTable`;
+                document.getElementById(`joins${id}.parentTable`).id = `joins${id - 1}.parentTable`;
+                // Renumber targetTable
+                document.getElementById(`joins${id}.targetTable`).name = `joins[${id - 1}].targetTable`;
+                document.getElementById(`joins${id}.targetTable`).id = `joins${id - 1}.targetTable`;
+
+                // Renumber parentColumns
+                let parentJoinColumns = document.getElementsByName(`joins[${id}].parentJoinColumns`);
+                Array.from(parentJoinColumns).forEach(parentJoinColumn => {
+                    parentJoinColumn.name = `joins[${id - 1}].parentJoinColumns`;
+                    parentJoinColumn.id = `joins${id - 1}.parentJoinColumns`;
+                });
+
+                // Renumber targetColumns
+                let targetJoinColumns = document.getElementsByName(`joins[${id}].targetJoinColumns`);
+                Array.from(targetJoinColumns).forEach(targetJoinColumn => {
+                    targetJoinColumn.name = `joins[${id - 1}].targetJoinColumns`;
+                    targetJoinColumn.id = `joins${id - 1}.targetJoinColumns`;
+                });
+
+                // Renumber deleteButton
+                let deleteButtons = document.getElementsByName(`joins[${id}].deleteButton`);
+                Array.from(deleteButtons).forEach(deleteButton => {
+                    deleteButton.name = `joins[${id - 1}].deleteButton`;
+                    deleteButton.id = `joins${id - 1}.deleteButton`;
+                });
+
+                // Renumber addParentAndTargetColumn
+                let addParentAndTargetColumnButtons = document.getElementsByName(`joins[${id}].addParentAndTargetColumn`);
+                Array.from(addParentAndTargetColumnButtons).forEach(addParentAndTargetColumn => {
+                    addParentAndTargetColumn.name = `joins[${id - 1}].addParentAndTargetColumn`;
+                    addParentAndTargetColumn.id = `joins${id - 1}.addParentAndTargetColumn`;
+                });
+
+                // Renumber deleteJoinColumnsButtons
+                let deleteJoinColumnsButtons = document.getElementsByName(`joins[${id}].deleteJoinColumnsButton`);
+                Array.from(deleteJoinColumnsButtons).forEach(deleteJoinColumnsButton => {
+                    deleteJoinColumnsButton.name = `joins[${id - 1}].deleteJoinColumnsButton`;
+                    deleteJoinColumnsButton.id = `joins${id - 1}.deleteJoinColumnsButton`;
+                });
+            }
+        }
+    };
+    newJoinDeleteButton.innerHTML = 'X';
+
+    let newJoinAddParentAndTargetColumnButton = createNewElement('button', {
+        'id': `joins${maxId}.addParentAndTargetColumn`,
+        'name': `joins[${maxId}].addParentAndTargetColumn`,
+        'class': 'add-parent-and-target-column',
+        'type': 'button'
+    });
+    newJoinAddParentAndTargetColumnButton.innerHTML = '+';
+
+    // The onclick event should generate another parentAndTargetColumnPair with the data source identical to first parentAndTargetColumnPair.
+    // newJoinAddParentAndTargetColumnButton.onclick = function() {
+    //     let parentTableColumns = Array.from(document.getElementById(`joins${maxId}.parentJoinColumns`).options).map(option => option.value);
+    //     let targetTableColumns = Array.from(document.getElementById(`joins${maxId}.targetJoinColumns`).options).map(option => option.value);
+    //
+    //     let anotherParentColumn = createNewElement('select', {
+    //         'id': `joins${maxId}.parentJoinColumns`,
+    //         'name': `joins[${maxId}].parentJoinColumns`
+    //     }, parentTableColumns);
+    //
+    //     let anotherTargetColumn = createNewElement('select', {
+    //         'id': `joins${maxId}.targetJoinColumns`,
+    //         'name': `joins[${maxId}].targetJoinColumns`
+    //     }, targetTableColumns);
+    //
+    //     let equalSign = createNewElement('b');
+    //     equalSign.innerHTML = ' = ';
+    //
+    //     let joinColumnsDeleteButton = createNewElement('button', {
+    //         'id': `joins${maxId}.deleteJoinColumnsButton`,
+    //         'name': `joins[${maxId}].deleteJoinColumnsButton`,
+    //         'class': 'delete-join-columns-button',
+    //         'type': 'button'
+    //     });
+    //     joinColumnsDeleteButton.innerHTML = 'X';
+    //     joinColumnsDeleteButton.onclick = function() {
+    //         this.parentNode.remove();
+    //     };
+    //
+    //     let div = createNewElement('div');
+    //     div.appendChild(anotherParentColumn);
+    //     div.appendChild(equalSign);
+    //     div.appendChild(anotherTargetColumn);
+    //     div.appendChild(joinColumnsDeleteButton);
+    //     document.getElementById(`join-row${maxId}`).appendChild(div);
+    // };
+    newJoinAddParentAndTargetColumnButton.onclick = function() {
+        addParentAndColumnJoinColumns(maxId);
+    };
+
+    newJoinDiv.appendChild(newJoinDeleteButton);
+    newJoinDiv.appendChild(newJoinType);
+    newJoinDiv.appendChild(newJoinParentTable);
+    newJoinDiv.appendChild(newJoinImage);
+    newJoinDiv.appendChild(newJoinTargetTable);
+
+    let firstParentAndTargetColumnDiv = createNewElement('div');
+    firstParentAndTargetColumnDiv.appendChild(newJoinParentColumn);
+    let equalSign = createNewElement('b');
+    equalSign.innerHTML = ' = ';
+    firstParentAndTargetColumnDiv.appendChild(equalSign);
+    firstParentAndTargetColumnDiv.appendChild(newJoinTargetColumn);
+    firstParentAndTargetColumnDiv.appendChild(newJoinAddParentAndTargetColumnButton);
+    newJoinDiv.appendChild(firstParentAndTargetColumnDiv);
+
+    // Set elements' values if a join object was passed into the function.
+    if (join !== null) {
+        newJoinType.value = join.joinType;
+        newJoinParentTable.value = join.parentTable;
+        newJoinTargetTable.value = join.targetTable;
+    }
+
+    document.getElementById('joinsDiv').appendChild(newJoinDiv);
+
+    // If a join object was passed into the function, then add a new parent and target join for each parent column (parent
+    // and target column sizes should be the same and is checked on the server side).  Else, just add one new pair of parent
+    // and target columns.  This can only be done after the newJoinDiv has been appended to the DOM, because the addParentAndColumnJoinColumns()
+    // method will append it's elements to the newJoinDiv element.  The for loop starts with an index of 1 because the 0th
+    // element was added already when the newJoinParentColumn and newJoinTargetColumn elements were created in this method.
+    if (join !== null) {
+        for (let i=1; i<join.parentJoinColumns.length; i++) {
+            addParentAndColumnJoinColumns(maxId, join.parentJoinColumns[i], join.targetJoinColumns[i]);
+        }
+    }
+}
+
+function addParentAndColumnJoinColumns(maxId, parentJoinColumn=null, targetJoinColumn=null) {
+    let parentTableColumns;
+    let targetTableColumns;
+    if (parentJoinColumn === null && targetJoinColumn === null) {
+        parentTableColumns = Array.from(document.getElementById(`joins${maxId}.parentJoinColumns`).options).map(option => option.value);
+        targetTableColumns = Array.from(document.getElementById(`joins${maxId}.targetJoinColumns`).options).map(option => option.value);
+    } else {
+        parentTableColumns = getTableColumns(parentJoinColumn.split('.')[0]);
+        targetTableColumns = getTableColumns(targetJoinColumn.split('.')[0]);
+    }
+
+    let anotherParentColumn = createNewElement('select', {
+        'id': `joins${maxId}.parentJoinColumns`,
+        'name': `joins[${maxId}].parentJoinColumns`
+    }, parentTableColumns);
+    if (parentJoinColumn !== null) {
+        anotherParentColumn.value = parentJoinColumn;
+    }
+
+    let anotherTargetColumn = createNewElement('select', {
+        'id': `joins${maxId}.targetJoinColumns`,
+        'name': `joins[${maxId}].targetJoinColumns`
+    }, targetTableColumns);
+    if (targetJoinColumn !== null) {
+        anotherTargetColumn.value = targetJoinColumn;
+    }
+
+    let equalSign = createNewElement('b');
+    equalSign.innerHTML = ' = ';
+
+    let joinColumnsDeleteButton = createNewElement('button', {
+        'id': `joins${maxId}.deleteJoinColumnsButton`,
+        'name': `joins[${maxId}].deleteJoinColumnsButton`,
+        'class': 'delete-join-columns-button',
+        'type': 'button'
+    });
+    joinColumnsDeleteButton.innerHTML = 'X';
+    joinColumnsDeleteButton.onclick = function() {
+        this.parentNode.remove();
+    };
+
+    let div = createNewElement('div');
+    div.appendChild(anotherParentColumn);
+    div.appendChild(equalSign);
+    div.appendChild(anotherTargetColumn);
+    div.appendChild(joinColumnsDeleteButton);
+    document.getElementById(`join-row${maxId}`).appendChild(div);
 }
 
 function getSelectedOption(node) {
@@ -1405,7 +1655,7 @@ function getSelectedOption(node) {
 }
 
 function getTableColumns(table) {
-    return scriptVariables['availableColumns'].filter(column => column.split('.')[0] === table);
+    return scriptVariables.availableColumns.filter(column => column.split('.')[0] === table);
 }
 
 function renderAvailableColumnsHTML() {
@@ -1500,7 +1750,6 @@ function renderCriteriaHTML() {
         'id': 'criteriaPEl',
         'name': 'criteriaPEl'
     }, null);
-    //pEl.innerHTML = 'Criteria';
 
     let addRootCriteriaButton = createNewElement('button', {
         'id': 'addRootCriteriaButton',

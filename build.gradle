@@ -6,7 +6,7 @@ plugins {
 }
 
 group 'com.cj.QueryBuilderMVC'
-version '2.0'
+version '3.0'
 
 sourceCompatibility = 1.8
 
@@ -60,8 +60,11 @@ dependencies {
     // https://mvnrepository.com/artifact/com.amazonaws/aws-java-sdk-s3
     extraLibs group: 'com.amazonaws', name: 'aws-java-sdk-s3', version: '1.11.375'
 
+    // https://mvnrepository.com/artifact/com.amazonaws/aws-java-sdk-sns
+    compile group: 'com.amazonaws', name: 'aws-java-sdk-sns', version: '1.11.513'
+
     // https://mvnrepository.com/artifact/com.amazonaws/aws-java-sdk-dynamodb
-    extraLibs group: 'com.amazonaws', name: 'aws-java-sdk-dynamodb', version: '1.11.449'
+    //extraLibs group: 'com.amazonaws', name: 'aws-java-sdk-dynamodb', version: '1.11.449'
 
     configurations.compile.extendsFrom(configurations.extraLibs)
 

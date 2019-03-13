@@ -18,7 +18,6 @@ public class LoggingDaoImpl implements LoggingDao {
 
     @Override
     public boolean add(SelectStatement stmt, String sql, Map<String, Boolean> databaseAuditResults) {
-
         Timestamp timestamp = new Timestamp(System.currentTimeMillis());
 
         String insertSql = String.format("insert into log (timestamp, select_statement_to_string, select_statement_to_sql, database_still_exists, " +
@@ -42,15 +41,12 @@ public class LoggingDaoImpl implements LoggingDao {
         } catch (Exception ex) {
             return false;
         }
-
     }
 
     @Override
     public ResultSet getAllRecords() throws SQLException {
-
         String sql = "select * from log;";
         return dataSource.getConnection().createStatement().executeQuery(sql);
-
     }
 
 }

@@ -3,9 +3,8 @@ package com.cj.config;
 import com.amazonaws.auth.AWSStaticCredentialsProvider;
 import com.amazonaws.auth.BasicAWSCredentials;
 import com.amazonaws.regions.Regions;
-import com.amazonaws.services.dynamodbv2.AmazonDynamoDB;
-import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClientBuilder;
-import com.amazonaws.services.dynamodbv2.document.DynamoDB;
+import com.amazonaws.services.sns.AmazonSNS;
+import com.amazonaws.services.sns.AmazonSNSClient;
 import org.apache.tomcat.dbcp.dbcp2.BasicDataSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.*;
@@ -19,13 +18,12 @@ import java.util.Properties;
         @PropertySource("application.properties"),
         @PropertySource("logging_db.properties"),
         @PropertySource("querybuilder4j_db.properties"),
-        //@PropertySource("dynamo_db.properties")
+        @PropertySource("query_templates_db.properties")
 })
-//@PropertySource("application.properties")
 public class DataConfig {
 
     @Autowired
-    private Environment env; // application.properties values are stores here
+    private Environment env; // Properties values are stores here
 
     @Bean(name = "querybuilder4jdb_properties")
     public Properties queryBuilder4JDbProperties() {
@@ -73,18 +71,34 @@ public class DataConfig {
         return ds;
     }
 
-    @Bean(name = "dynamo.db")
-    public DynamoDB dataSource_dynamo() {
+    @Bean(name = "query_templates.db")
+    public DataSource dataSource_queryTemplates() {
+        BasicDataSource ds = new BasicDataSource();
+
+        // Driver class name
+        ds.setDriverClassName(env.getProperty("query_templates.datasource.driver-class-name"));
+
+        // Set URL
+        ds.setUrl(env.getProperty("query_templates.database.url"));
+
+        // Set username & password
+        ds.setUsername(env.getProperty("query_templates.database.username"));
+        ds.setPassword(env.getProperty("query_templates.database.password"));
+
+        return ds;
+    }
+
+    @Bean
+    public AmazonSNS getSnsClient() {
         String accessKey = env.getProperty("aws.accessKey");
         String secretKey = env.getProperty("aws.secretKey");
         BasicAWSCredentials awsCredentials = new BasicAWSCredentials(accessKey, secretKey);
 
-        AmazonDynamoDB client = AmazonDynamoDBClientBuilder.standard()
-                                                           .withCredentials(new AWSStaticCredentialsProvider(awsCredentials))
-                                                           .withRegion(Regions.US_EAST_2)
-                                                           .build();
-
-        return new DynamoDB(client);
+        return AmazonSNSClient
+                .builder()
+                .withRegion(Regions.US_EAST_1)
+                .withCredentials(new AWSStaticCredentialsProvider(awsCredentials))
+                .build();
     }
 
 }
