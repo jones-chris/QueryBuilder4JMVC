@@ -107,6 +107,19 @@ const scriptVariables = {
     selectedColumnMembers : []
 };
 
+// Do not change - INTERNAL USE ONLY.
+const internalUseVariables = {
+    joinImagesFilePaths:  [
+        {'name': 'LEFT_EXCLUDING',         'file_path': scriptVariables.joinImageBaseURL + 'left_join_excluding.png'},
+        {'name': 'LEFT',                   'file_path': scriptVariables.joinImageBaseURL + 'left_join.png'},
+        {'name': 'INNER',                  'file_path': scriptVariables.joinImageBaseURL + 'inner_join.png'},
+        {'name': 'RIGHT',                  'file_path': scriptVariables.joinImageBaseURL + 'right_join.png'},
+        {'name': 'RIGHT_EXCLUDING',        'file_path': scriptVariables.joinImageBaseURL + 'right_join_excluding.png'},
+        {'name': 'FULL_OUTER',             'file_path': scriptVariables.joinImageBaseURL + 'full_outer_join.png'},
+        {'name': 'FULL_OUTER_EXCLUDING',   'file_path': scriptVariables.joinImageBaseURL + 'full_outer_join_excluding.png'}
+    ]
+};
+
 //===============================================================================================
 // Column Members HTML fragment and JavaScript functions
 //===============================================================================================
@@ -320,13 +333,13 @@ function renderSubQueriesHTML() {
 // General JavaScript functions
 //===============================================================================================
 
-function sendAjaxRequest(endpoint, paramString, method, callbackFunction) {
+function sendAjaxRequest(endpoint, paramString, method, successCallbackFunction, doneCallbackFunction=function(){}) {
     $.ajax({
         method: method,
         url: endpoint,
         data: paramString,
         success: function(responseText) {
-            callbackFunction(responseText);
+            successCallbackFunction(responseText);
         },
         error: function(jqXHR, textStatus, errorThrown) {
             alert(jqXHR);
@@ -334,6 +347,8 @@ function sendAjaxRequest(endpoint, paramString, method, callbackFunction) {
             alert(errorThrown);
         },
         dataType: 'json'
+    }).done(function() {
+        doneCallbackFunction();
     });
 }
 
@@ -344,7 +359,8 @@ function getQueryTemplates() {
         function(queryTemplatesData) {
             fillArrayProperty('queryTemplates', queryTemplatesData);
             syncSelectOptionsWithDataModel('queryTemplates', scriptVariables['queryTemplates']);
-        });
+        }
+    );
 }
 
 function getQueryTemplatById(id) {
@@ -369,24 +385,7 @@ function getQueryTemplatById(id) {
                 child.selected = true;
             });
 
-            // Now that we have the tables, get the available columns.
-            //getAvailableColumns(document.getElementById('schemas').value, scriptVariables.tables);
-            let tableParamString = scriptVariables.tables.join('&');
-            $.ajax({
-                method: "GET",
-                url: scriptVariables['getColumnsEndpoint'] + 'null' + "/" + tableParamString,
-                data: null,
-                success: function (responseText) {
-                    fillArrayProperty('availableColumns', responseText);
-                    syncSelectOptionsWithDataModel('availableColumns', scriptVariables['availableColumns']);
-                },
-                error: function (jqXHR, textStatus, errorThrown) {
-                    alert(jqXHR);
-                    alert(textStatus);
-                    alert(errorThrown);
-                },
-                dataType: 'json'
-            }).done(function () {
+            function renderNewHTML() {
                 // table columns should update automatically after tables array is updated.  Update selected columns.
                 scriptVariables.selectedColumns = queryTemplate.columns;
                 syncSelectOptionsWithDataModel('columns', scriptVariables.selectedColumns);
@@ -413,7 +412,54 @@ function getQueryTemplatById(id) {
                 document.getElementById('offset').value = queryTemplate.offset;
 
                 // todo write logic to add subqueries.
-            });
+            }
+
+            // Now that we have the tables, get the available columns.
+            getAvailableColumns(document.getElementById('schemas').value, scriptVariables.tables, renderNewHTML);
+
+            // let tableParamString = scriptVariables.tables.join('&');
+            // $.ajax({
+            //     method: "GET",
+            //     url: scriptVariables['getColumnsEndpoint'] + 'null' + "/" + tableParamString,
+            //     data: null,
+            //     success: function (responseText) {
+            //         fillArrayProperty('availableColumns', responseText);
+            //         syncSelectOptionsWithDataModel('availableColumns', scriptVariables['availableColumns']);
+            //     },
+            //     error: function (jqXHR, textStatus, errorThrown) {
+            //         alert(jqXHR);
+            //         alert(textStatus);
+            //         alert(errorThrown);
+            //     },
+            //     dataType: 'json'
+            // }).done(function () {
+            //     // table columns should update automatically after tables array is updated.  Update selected columns.
+            //     scriptVariables.selectedColumns = queryTemplate.columns;
+            //     syncSelectOptionsWithDataModel('columns', scriptVariables.selectedColumns);
+            //
+            //     // update criteria...call reindent criteria method.
+            //     queryTemplate.criteria.forEach((criterion) => {
+            //         let parentCriteriaId = criterion.parentId;
+            //         let parentNode = null;
+            //         if (parentCriteriaId !== undefined && parentCriteriaId !== null) {
+            //             parentNode = document.getElementById(`row.${parentCriteriaId}`);
+            //         }
+            //         addCriteria(parentNode, criterion);
+            //     });
+            //
+            //     // get joins and add to joins array
+            //     queryTemplate.joins.forEach((join) => {
+            //         addJoin(join);
+            //     });
+            //
+            //     // Update other options.
+            //     document.getElementById('distinct').checked = queryTemplate.distinct;
+            //     document.getElementById('suppressNulls').checked = queryTemplate.suppressNulls;
+            //     document.getElementById('limit').value = queryTemplate.limit;
+            //     document.getElementById('offset').value = queryTemplate.offset;
+            //
+            //     // todo write logic to add subqueries.
+            // });
 
             //     // get joins and add to joins array
             //     queryTemplate.joins;
@@ -440,7 +486,8 @@ function getQueryTemplatById(id) {
             //
             //     // todo write logic to add subqueries.
             // });
-        })
+        }
+    );
 }
 
 function getSchemas() {
@@ -463,7 +510,7 @@ function getTables(schema) {
         });
 }
 
-function getAvailableColumns(schema, tablesArray) {
+function getAvailableColumns(schema, tablesArray, doneCallbackFunction=function(){}) {
     let tableParamString = tablesArray.join('&');
     sendAjaxRequest(scriptVariables['getColumnsEndpoint'] + schema + "/" + tableParamString,
         null,
@@ -471,7 +518,9 @@ function getAvailableColumns(schema, tablesArray) {
         function(columnsData) {
             fillArrayProperty('availableColumns', columnsData);
             syncSelectOptionsWithDataModel('availableColumns', scriptVariables['availableColumns']);
-        });
+        },
+        doneCallbackFunction
+    );
 }
 
 // members:  (JSON) JSON of members to add to data model.
@@ -1296,32 +1345,38 @@ function getJoinsDivMaxId() {
 }
 
 function getJoinImageFilePath(joinName) {
-    let images = [
-        {'name': 'LEFT_EXCLUDING',         'file_path': scriptVariables['joinImageBaseURL'] + 'left_join_excluding.png'},
-        {'name': 'LEFT',                   'file_path': scriptVariables['joinImageBaseURL'] + 'left_join.png'},
-        {'name': 'INNER',                  'file_path': scriptVariables['joinImageBaseURL'] + 'inner_join.png'},
-        {'name': 'RIGHT',                  'file_path': scriptVariables['joinImageBaseURL'] + 'right_join.png'},
-        {'name': 'RIGHT_EXCLUDING',        'file_path': scriptVariables['joinImageBaseURL'] + 'right_join_excluding.png'},
-        {'name': 'FULL_OUTER',             'file_path': scriptVariables['joinImageBaseURL'] + 'full_outer_join.png'},
-        {'name': 'FULL_OUTER_EXCLUDING',   'file_path': scriptVariables['joinImageBaseURL'] + 'full_outer_join_excluding.png'}
-    ];
-
+    let images = internalUseVariables.joinImagesFilePaths;
     for (let i in images) {
         if (images[i].name === joinName) {
             return images[i].file_path;
         }
     }
+    return null;
+}
+
+function getNextJoinImageFilePath(joinName) {
+    let returnObj = {};
+    let images = internalUseVariables.joinImagesFilePaths;
+    for (let i=0; i<images.length; i++) {
+        if (images[i].name === joinName) {
+            // If index is less than last index, then get file_path of index + 1.
+            // Else (if index is last index), then get first file_path in array.
+            if (i < images.length-1) {
+                returnObj.name = images[i+1].name;
+                returnObj.file_path = images[i+1].file_path;
+                return returnObj;
+            } else {
+                returnObj.name = images[0].name;
+                returnObj.file_path = images[0].file_path;
+                return returnObj;
+            }
+        }
+    }
+    return null;
 }
 
 function addJoin(join=null) {
     let maxId = getJoinsDivMaxId();
-    // $('#joinsDiv div').each(function() {
-    //     let idLength = $(this)[0].id.length;
-    //     let id = parseInt($(this)[0].id[idLength - 1]);
-    //     if (id >= maxId) {
-    //         maxId = id + 1;
-    //     }
-    // });
 
     let newJoinDiv = createNewElement('div', {
         'id': `join-row${maxId}`,
@@ -1342,40 +1397,32 @@ function addJoin(join=null) {
         'height': '80'
     });
     newJoinImage.onclick = function() {
-        // Note:  Names must match the case that the Java enum is in.  The Java enum is in all caaps, so the names
-        // here must be in all caps also or Spring will throw an exception.
-        let images = [
-            {'name': 'LEFT_EXCLUDING',         'file_path': scriptVariables['joinImageBaseURL'] + 'left_join_excluding.png'},
-            {'name': 'LEFT',                   'file_path': scriptVariables['joinImageBaseURL'] + 'left_join.png'},
-            {'name': 'INNER',                  'file_path': scriptVariables['joinImageBaseURL'] + 'inner_join.png'},
-            {'name': 'RIGHT',                  'file_path': scriptVariables['joinImageBaseURL'] + 'right_join.png'},
-            {'name': 'RIGHT_EXCLUDING',        'file_path': scriptVariables['joinImageBaseURL'] + 'right_join_excluding.png'},
-            {'name': 'FULL_OUTER',             'file_path': scriptVariables['joinImageBaseURL'] + 'full_outer_join.png'},
-            {'name': 'FULL_OUTER_EXCLUDING',   'file_path': scriptVariables['joinImageBaseURL'] + 'full_outer_join_excluding.png'}
-        ];
-
+        // Set newJoinType and newJoinImage to next join name and file_path in array.
         let joinType = document.getElementById(`joins${maxId}.joinType`);
         let currentJoinName = joinType.value;
         let joinImage = document.getElementById(`joins${maxId}.image`);
+        let imageAndFilePathObj = getNextJoinImageFilePath(currentJoinName);
+        joinType.value = imageAndFilePathObj.name;
+        joinImage.src = imageAndFilePathObj.file_path;
 
-        // Set newJoinType and newJoinImage to next join name and file_path in array.
-        for (let i=0; i<images.length; i++) {
-            if (images[i].name === currentJoinName) {
-                // If index is less than last index, then get file_path of index + 1.
-                // Else (if index is last index), then get first file_path in array.
-                if (i < images.length-1) {
-                    joinType.value = images[i+1].name;
-                    // joinType.setAttribute('value', images[i+1].name);
-                    joinImage.src = images[i+1].file_path;
-                    break;
-                } else {
-                    joinType.value = images[0].name;
-                    // joinType.setAttribute('value', images[0].name);
-                    joinImage.src = images[0].file_path;
-                    break;
-                }
-            }
-        }
+        // // Set newJoinType and newJoinImage to next join name and file_path in array.
+        // for (let i=0; i<images.length; i++) {
+        //     if (images[i].name === currentJoinName) {
+        //         // If index is less than last index, then get file_path of index + 1.
+        //         // Else (if index is last index), then get first file_path in array.
+        //         if (i < images.length-1) {
+        //             joinType.value = images[i+1].name;
+        //             // joinType.setAttribute('value', images[i+1].name);
+        //             joinImage.src = images[i+1].file_path;
+        //             break;
+        //         } else {
+        //             joinType.value = images[0].name;
+        //             // joinType.setAttribute('value', images[0].name);
+        //             joinImage.src = images[0].file_path;
+        //             break;
+        //         }
+        //     }
+        // }
     };
 
     let parentTableColumns = (join === null) ? null : getTableColumns(join.parentTable);
@@ -1517,42 +1564,6 @@ function addJoin(join=null) {
     });
     newJoinAddParentAndTargetColumnButton.innerHTML = '+';
 
-    // The onclick event should generate another parentAndTargetColumnPair with the data source identical to first parentAndTargetColumnPair.
-    // newJoinAddParentAndTargetColumnButton.onclick = function() {
-    //     let parentTableColumns = Array.from(document.getElementById(`joins${maxId}.parentJoinColumns`).options).map(option => option.value);
-    //     let targetTableColumns = Array.from(document.getElementById(`joins${maxId}.targetJoinColumns`).options).map(option => option.value);
-    //
-    //     let anotherParentColumn = createNewElement('select', {
-    //         'id': `joins${maxId}.parentJoinColumns`,
-    //         'name': `joins[${maxId}].parentJoinColumns`
-    //     }, parentTableColumns);
-    //
-    //     let anotherTargetColumn = createNewElement('select', {
-    //         'id': `joins${maxId}.targetJoinColumns`,
-    //         'name': `joins[${maxId}].targetJoinColumns`
-    //     }, targetTableColumns);
-    //
-    //     let equalSign = createNewElement('b');
-    //     equalSign.innerHTML = ' = ';
-    //
-    //     let joinColumnsDeleteButton = createNewElement('button', {
-    //         'id': `joins${maxId}.deleteJoinColumnsButton`,
-    //         'name': `joins[${maxId}].deleteJoinColumnsButton`,
-    //         'class': 'delete-join-columns-button',
-    //         'type': 'button'
-    //     });
-    //     joinColumnsDeleteButton.innerHTML = 'X';
-    //     joinColumnsDeleteButton.onclick = function() {
-    //         this.parentNode.remove();
-    //     };
-    //
-    //     let div = createNewElement('div');
-    //     div.appendChild(anotherParentColumn);
-    //     div.appendChild(equalSign);
-    //     div.appendChild(anotherTargetColumn);
-    //     div.appendChild(joinColumnsDeleteButton);
-    //     document.getElementById(`join-row${maxId}`).appendChild(div);
-    // };
     newJoinAddParentAndTargetColumnButton.onclick = function() {
         addParentAndColumnJoinColumns(maxId);
     };
