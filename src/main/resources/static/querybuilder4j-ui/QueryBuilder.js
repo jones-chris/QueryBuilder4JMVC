@@ -337,6 +337,12 @@ function getAvailableColumns(schema, tablesArray, doneCallbackFunction=function(
 }
 
 // members:  (JSON) JSON of members to add to data model.
+// htmlId:  (string) id of HTML select element to sync with dataModel.
+function addSelectedColumns(members, htmlId) {
+
+}
+
+// members:  (JSON) JSON of members to add to data model.
 // dataModel:  (string) Name of data model array to add members to.
 // HtmlId:  (boolean) Id of HTML select element to sync with dataModel.
 function addSelectedColumns(members, dataModel, HtmlId) {
@@ -863,8 +869,10 @@ function setTargetElementValueToSubQuery(subQueryHtmlId, targetHtmlId, targetHtm
         let paramValue = parameterValues[i].value;
         subQueryCall += `${paramName}=${paramValue},`;
     }
-    // Remove trialing ',' and add ')'
-    subQueryCall = subQueryCall.slice(0, subQueryCall.length - 1);
+    // Remove trialing ',' (only if parameters were added) and add ')'
+    if (parameterNames.length > 0) {
+        subQueryCall = subQueryCall.slice(0, subQueryCall.length - 1);
+    }
     subQueryCall += ')';
 
     // Set targetHtmlId's value.
