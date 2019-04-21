@@ -87,12 +87,19 @@ public class RestApiController {
         try {
             selectStatement.setName(name);
 
+            // Set the statement's criteria parameters if not done so already.
+            selectStatement.getCriteria().forEach((criterion) -> {
+                if (criterion.filter.charAt(0) == '@') {
+                    selectStatement.getCriteriaParameters().put(criterion.filter.substring(1), "Description placeholder");
+                }
+            });
+
             Gson gson = new Gson();
             String json = gson.toJson(selectStatement);
 
             queryTemplateService.save(name, json);
 
-            return new ResponseEntity<>("success", HttpStatus.OK);
+            return new ResponseEntity<>(HttpStatus.OK);
         } catch (Exception ex) {
             return new ResponseEntity<>(ex.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
         }

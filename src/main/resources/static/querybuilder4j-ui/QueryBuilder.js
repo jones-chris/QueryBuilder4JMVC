@@ -10,6 +10,10 @@ const scriptVariables = {
     criterionBodyHtmlURL : 'https://s3.amazonaws.com/qb4j-ui/html-templates/criteria/criterion-body.html',
     // The URL where the column members HTML fragment is located.
     columnMembersHtmlURL : 'https://s3.amazonaws.com/qb4j-ui/html-templates/modals/column-members.html',
+    // The URL where the subquery container HTML fragment is located.
+    subQueryContainerHtmlURL: 'https://s3.amazonaws.com/qb4j-ui/html-templates/modals/subquery-container.html',
+    // The URL where the subquery parameter HTML fragment is located.
+    subQueryParameterHtmlURL:  'https://s3.amazonaws.com/qb4j-ui/html-templates/modals/subquery-parameter.html',
     // Set contents of array to any of the following: 'queryTemplatesDiv', 'schemasDiv', 'tablesDiv', 'joinsDiv', 'columnsDiv',
     // 'criteriaDiv', or 'otherOptionsDiv' in order to show these divs when the page is rendered.
     landingDivs : ['schemasDiv', 'tablesDiv'],
@@ -132,21 +136,23 @@ const internalUseVariables = {
 //===============================================================================================
 
 // Sets all column members modal variables and elements back to their default state.
-function closeColumnMembers() {
-    $('#columnMembersModal').hide();
+function closeColumnMembers(modalId, parentId) {
+    //todo:  may be able to change this method to just the hide() call below?  Or should it be remove()?
+    $('#' + modalId).remove();
     internalUseVariables.activeCriteriaIdForColumnMembers = null;
     internalUseVariables.currentOffsetColumnMembers = null;
-    document.getElementById('priorPage').disabled = true;
-    document.getElementById('nextPage').disabled = false;
-    document.getElementById('search').value = null;
-    clearOptions('availableMembers');
-    clearOptions('selectedMembers');
+    // document.getElementById('priorPage').disabled = true;
+    // document.getElementById('nextPage').disabled = false;
+    // document.getElementById('search').value = null;
+    // clearOptions('availableMembers');
+    // clearOptions('selectedMembers');
     scriptVariables.availableColumnMembers = [];
     scriptVariables.selectedColumnMembers = [];
+    $('#' + parentId).show();
 }
 
 // priorOrNext parameter should be either true (get prior page) or false (get next page).
-function getPageMembers(isPrior) {
+function getPageMembers(modalId, isPrior) {
     // Create endpoint
     let schema = null;
     let table = document.getElementById(`criteria${internalUseVariables.activeCriteriaIdForColumnMembers}.column`).value.split('.')[0];
@@ -154,7 +160,7 @@ function getPageMembers(isPrior) {
     let endpoint = scriptVariables.columnMembersEndpoint + `${schema}/${table}/${column}/`;
 
     // Create query string
-    let limit = parseInt(document.getElementById('columnMembersLimit').value);
+    let limit = parseInt(document.getElementById(`${modalId}-limit`).value);
     // If current offset is null, then the Column Members modal has been displayed for the fist time, so set current offset to 0.
     if (internalUseVariables.currentOffsetColumnMembers === null) {
         internalUseVariables.currentOffsetColumnMembers = 0;
@@ -165,8 +171,8 @@ function getPageMembers(isPrior) {
         }
     }
     let offset = internalUseVariables.currentOffsetColumnMembers;
-    let ascending = document.getElementById('columnMembersAscending').value;
-    let search = document.getElementById('search').value;
+    let ascending = document.getElementById(`${modalId}-ascending`).value;
+        let search = document.getElementById(`${modalId}-search`).value;
     let queryString = `limit=${limit}&offset=${offset}&ascending=${ascending}`;
     if (search !== '') {
         queryString += `&search=${search}`;
@@ -181,19 +187,19 @@ function getPageMembers(isPrior) {
             // Else if data's length is less than the limit, then we have reached the end of the column members.  We do want to update the select options.
             // Else there is likely still more data to get.  We do want to update the select options and current offset if we retrieved the next page.
             if (data.length === 0) {
-                document.getElementById('nextPage').disabled = true;
-                document.getElementById('priorPage').disabled = false;
+                document.getElementById(`${modalId}-nextPage`).disabled = true;
+                document.getElementById(`${modalId}-priorPage`).disabled = false;
                 alert('You have reached the last page.  There are no additional column members to retrieve.');
             } else if (data.length < limit) {
-                document.getElementById('nextPage').disabled = true;
-                document.getElementById('priorPage').disabled = false;
+                document.getElementById(`${modalId}-nextPage`).disabled = true;
+                document.getElementById(`${modalId}-priorPage`).disabled = false;
                 fillArrayProperty('availableColumnMembers', data);
-                syncSelectOptionsWithDataModel('availableMembers', scriptVariables['availableColumnMembers']);
+                syncSelectOptionsWithDataModel(`${modalId}-availableMembers`, scriptVariables['availableColumnMembers']);
                 alert('You have reached the last page.  There are no additional column members to retrieve.');
             } else {
-                document.getElementById('nextPage').disabled = false;
+                document.getElementById(`${modalId}-nextPage`).disabled = false;
                 fillArrayProperty('availableColumnMembers', data);
-                syncSelectOptionsWithDataModel('availableMembers', scriptVariables['availableColumnMembers']);
+                syncSelectOptionsWithDataModel(`${modalId}-availableMembers`, scriptVariables['availableColumnMembers']);
                 if (! isPrior){
                     adjustColumnMembersCurrentOffset(limit);
                 }
@@ -201,9 +207,9 @@ function getPageMembers(isPrior) {
 
             // Disable or enable prior page button based on whether current offset is 0 or not.
             if (internalUseVariables.currentOffsetColumnMembers === 0) {
-                document.getElementById('priorPage').disabled = true;
+                document.getElementById(`${modalId}-priorPage`).disabled = true;
             } else {
-                document.getElementById('priorPage').disabled = false;
+                document.getElementById(`${modalId}-priorPage`).disabled = false;
             }
         }
     );
@@ -216,8 +222,12 @@ function adjustColumnMembersCurrentOffset(adjustment) {
     }
 }
 
-function setCriteriaFilterWithColumnMembers() {
-    let options = document.getElementById('selectedMembers').options;
+// selectedMembersModalId:  The HTML id of the modal's selectedMembers.
+// modalParentId:  The HTML id of the modal's parent reference.
+function setCriteriaFilterWithColumnMembers(selectedMembersModalId, modalParentId) {
+    // Get modal's selectedMembers and stringify.
+    // let options = document.getElementById('selectedMembers').options;
+    let options = document.getElementById(selectedMembersModalId).options;
     let stringifiedMembers = "";
     for (let i=0; i<options.length; i++) {
         stringifiedMembers += options[i].value + ',';
@@ -227,15 +237,25 @@ function setCriteriaFilterWithColumnMembers() {
     stringifiedMembers = stringifiedMembers.substring(0, stringifiedMembers.length - 1);
 
     // Set criterion's filter to stringifiedMembers.
-    document.getElementById(`criteria${internalUseVariables.activeCriteriaIdForColumnMembers}.filter`).value = stringifiedMembers;
+    // document.getElementById(`criteria${internalUseVariables.activeCriteriaIdForColumnMembers}.filter`).value = stringifiedMembers;
+    document.getElementById(modalParentId).value = stringifiedMembers;
 }
 
 //===============================================================================================
 // SubQueries HTML fragment and JavaScript functions
 //===============================================================================================
 
-function renderSubQueriesHTML() {
+// htmlId:  The HTML id of the element to add the data to.
+// data:  The variable in the "scriptVariables" object that contains the data to be added as "option" elements.
+function addSelectOptions(htmlId, data) {
+    let select = document.getElementById(htmlId);
+    for (var item in scriptVariables[data]) {
+        let option = document.createElement('option');
+        option.value = scriptVariables[data][item];
+        option.innerHTML = scriptVariables[data][item];
 
+        select.add(option);
+    }
 }
 
 //===============================================================================================
@@ -272,13 +292,14 @@ function getQueryTemplates() {
     );
 }
 
-function getQueryTemplatById(id) {
+function getQueryTemplateById(id, successCallbackFunction) {
     sendAjaxRequest(scriptVariables['getQueryTemplateEndpoint'] + '/' + id,
         null,
         "GET",
-        function(queryTemplate) {
-            renderHTML(scriptVariables.renderHtmlAnchorElement, queryTemplate);
-        }
+        successCallbackFunction
+        // function(queryTemplate) {
+        //     renderHTML(scriptVariables.renderHtmlAnchorElement, queryTemplate);
+        // }
     );
 }
 
@@ -546,153 +567,18 @@ async function addCriteria(parentNode, criterion=null) {
 
     // Now that we have determined the id and parentId variables, get the criterion html fragments and run eval to interpolate them.
     let htmlTemplate = document.createElement('template');
-    //let criterionDiv = await loadHtmlFragment(scriptVariables.criterionDivHtmlURL);
-    //criterionDiv = eval(criterionDiv);
     let criterionBody = await loadHtmlFragment(scriptVariables.criterionBodyHtmlURL);
     criterionBody = eval(criterionBody);
     htmlTemplate.innerHTML = criterionBody;
-    //criterionDiv.innerHTML = criterionBody;
-    //parentHtmlFrag.append(criterionDiv);
 
-    // //inserts new row after row where 'Add Criteria' button was clicked.
-    // let newDiv = createNewElement('div', {
-    //     'id': 'row.' + id,
-    //     'class': 'criteria-row'
-    // }, null);
-    //
-    // // create id input element
-    // let idInput = createNewElement('input', {
-    //     'type': 'hidden',
-    //     'id': 'criteria' + id + '.id',
-    //     'name': 'criteria[' + id + '].id',
-    //     'value': id
-    //
-    // }, null);
-    // newDiv.appendChild(idInput);
-    //
-    // // create parentId input element
-    // let parentInputId = createNewElement('input', {
-    //     'type': 'hidden',
-    //     'id': 'criteria' + id + '.parentId',
-    //     'name': 'criteria[' + id + '].parentId',
-    //     'value': parentId
-    // }, null);
-    // newDiv.appendChild(parentInputId);
-    //
-    // // create conjunction select element
-    // let optionAnd = createNewElement('option', {
-    //     'value': 'And'
-    // }, null);
-    // optionAnd.innerHTML = 'And';
-    // let optionOr = createNewElement('option', {
-    //     'value': 'Or'
-    // }, null);
-    // optionOr.innerHTML = 'Or';
-    // let conjunctionEl = createNewElement('select', {
-    //     'id': `criteria${id}.conjunction`,
-    //     'name': `criteria[${id}].conjunction`,
-    //     'class': 'criteria-conjuction-and-operator'
-    // }, null);
-    // conjunctionEl.appendChild(optionAnd);
-    // conjunctionEl.appendChild(optionOr);
-    // newDiv.appendChild(conjunctionEl);
-    //
-    // // create front parenthesis input element
-    // let frontParenInput = createNewElement('input', {
-    //     'type': 'hidden',
-    //     'id': 'criteria' + id + '.frontParenthesis',
-    //     'name': 'criteria[' + id + '].frontParenthesis'
-    // }, null);
-    // newDiv.appendChild(frontParenInput);
-
-    // create column select element
-    // let columnEl = createNewElement('select', {
-    //     'id': `criteria${id}.column`,
-    //     'name': `criteria[${id}].column`,
-    //     'class': 'criteria-column-and-filter'
-    // }, scriptVariables['availableColumns']);
     syncSelectOptionsWithDataModel(htmlTemplate.content.getElementById(`criteria${id}.column`), scriptVariables.availableColumns);
-    // newDiv.appendChild(columnEl);
 
-    // // create operator select element
-    // let optionEqual = createNewElement('option', {'value': 'equalTo'}, null, '=');
-    // let optionNotEqualTo = createNewElement('option', {'value': 'notEqualTo'}, null, '<>');
-    // let optionGreaterThanOrEquals = createNewElement('option', {'value': 'greaterThanOrEquals'}, null, '>=');
-    // let optionLessThanOrequals = createNewElement('option', {'value': 'lessThanOrEquals'}, null, '<=');
-    // let optionGreaterThan = createNewElement('option', {'value': 'greaterThan'}, null, '>');
-    // let optionLessThan = createNewElement('option', {'value': 'lessThan'}, null, '<');
-    // let optionLike = createNewElement('option', {'value': 'like'}, null, 'like');
-    // let optionNotLike = createNewElement('option', {'value': 'notLike'}, null, 'not like');
-    // let optionIn = createNewElement('option', {'value': 'in'}, null, 'in');
-    // let optionNotIn = createNewElement('option', {'value': 'notIn'}, null, 'not in');
-    // let optionIsNull = createNewElement('option', {'value': 'isNull'}, null, 'is null');
-    // let optionIsNotNull = createNewElement('option', {'value': 'isNotNull'}, null, 'is not null');
-    //
-    // let operatorEl = createNewElement('select', {
-    //     'id': `criteria${id}.operator`,
-    //     'name': `criteria[${id}].operator`,
-    //     'class': 'criteria-conjuction-and-operator'
-    // }, null);
-    // operatorEl.appendChild(optionEqual);
-    // operatorEl.appendChild(optionNotEqualTo);
-    // operatorEl.appendChild(optionGreaterThanOrEquals);
-    // operatorEl.appendChild(optionLessThanOrequals);
-    // operatorEl.appendChild(optionGreaterThan);
-    // operatorEl.appendChild(optionLessThan);
-    // operatorEl.appendChild(optionLike);
-    // operatorEl.appendChild(optionNotLike);
-    // operatorEl.appendChild(optionIn);
-    // operatorEl.appendChild(optionNotIn);
-    // operatorEl.appendChild(optionIsNull);
-    // operatorEl.appendChild(optionIsNotNull);
-    //
-    // newDiv.appendChild(operatorEl);
-    //
-    // // create filter input element
-    // let filterInput = createNewElement('input', {
-    //     'id': 'criteria' + id + '.filter',
-    //     'name': 'criteria[' + id + '].filter',
-    //     'class': 'criteria-column-and-filter'
-    // }, null);
-    // newDiv.appendChild(filterInput);
-    //
-    // // create end parenthesis input element
-    // let endParenInput = createNewElement('input', {
-    //     'type': 'hidden',
-    //     'id': 'criteria' + id + '.endParenthesis',
-    //     'name': 'criteria[' + id + '].endParenthesis'
-    // }, null);
-    // newDiv.appendChild(endParenInput);
-    //
-    // // create 'Add Criteria' button
-    // let addCriteriaButton = createNewElement('input', {
-    //     'type': 'button',
-    //     'value': '+',
-    //     'class': 'criteria-add-remove-buttons'
-    // }, null);
-
-    // addCriteriaButton.onclick = function () {
-    //     addCriteria(newDiv);
-    // };
-    // newDiv.appendChild(addCriteriaButton);
     htmlTemplate.content.getElementById(`addCriteria-${id}`).onclick = function() {
-        // addCriteria(htmlTemplate.content.firstChild.nextSibling);
         let thisCriteriaId = this.id.slice(-1);
         let thisCriteriaDiv = document.getElementById('row.' + thisCriteriaId);
         addCriteria(thisCriteriaDiv);
     };
 
-    // // create 'Remove Criteria' button
-    // let removeCriteriaButton = createNewElement('input', {
-    //     'type': 'button',
-    //     'value': 'X',
-    //     'class': 'criteria-add-remove-buttons'
-    // }, null);
-    // removeCriteriaButton.onclick = function () {
-    //     newDiv.remove();
-    //     renumberCriteria(newDiv.id.slice(-1), 'remove');
-    //     reindentCriteria();
-    // };
     htmlTemplate.content.getElementById(`removeCriteria-${id}`).onclick = function() {
         let criteriaId = this.parentNode.id.slice(-1);
         document.getElementById(`row.${criteriaId}`).remove();
@@ -700,26 +586,7 @@ async function addCriteria(parentNode, criterion=null) {
         renumberCriteria(criteriaId, 'remove');
         reindentCriteria();
     };
-    // newDiv.appendChild(removeCriteriaButton);
 
-    // // create Column Members button
-    // let columnMembersButton = createNewElement('input', {
-    //     'type': 'button',
-    //     'value': 'Column Members',
-    //     'class': 'criteria-add-remove-buttons'
-    // }, null);
-    // columnMembersButton.onclick = function () {
-    //     let criteriaId = parseInt(this.parentElement.id.slice(-1));
-    //     let tableAndColumn = document.getElementById(`criteria${criteriaId}.column`).value;
-    //     if (tableAndColumn === null) {
-    //         alert('Please choose a column before choosing Column Members');
-    //     }
-    //
-    //     //$('#columnMembersModal').show();
-    //     addColumnMembersHTML('queryBuilder');
-    //     internalUseVariables.activeCriteriaIdForColumnMembers = criteriaId;
-    // };
-    // newDiv.appendChild(columnMembersButton);
     htmlTemplate.content.getElementById(`columnMembers-${id}`).onclick = function() {
         let criteriaId = parseInt(this.parentElement.id.slice(-1));
         let tableAndColumn = document.getElementById(`criteria${criteriaId}.column`).value;
@@ -727,18 +594,12 @@ async function addCriteria(parentNode, criterion=null) {
             alert('Please choose a column before choosing Column Members');
         }
 
-        addColumnMembersHTML('queryBuilder');
+        addColumnMembersHTML(`criteria${id}.filter`);
         internalUseVariables.activeCriteriaIdForColumnMembers = criteriaId;
     };
 
     // If a criteria object was passed to this method, then set HTML element values now that div is finished,
     // but not attached to DOM yet.
-    // if (criterion !== null) {
-    //     conjunctionEl.value = criterion.conjunction;
-    //     columnEl.value = criterion.column;
-    //     operatorEl.value = criterion.operator;
-    //     filterInput.value = criterion.filter;
-    // }
     if (criterion !== null) {
         htmlTemplate.content.getElementById(`criteria${id}.conjunction`).value = criterion.conjunction;
         htmlTemplate.content.getElementById(`criteria${id}.column`).value = criterion.column;
@@ -746,12 +607,7 @@ async function addCriteria(parentNode, criterion=null) {
         htmlTemplate.content.getElementById(`criteria${id}.filter`).value = criterion.filter;
     }
 
-    // insert newDiv into the DOM
-    // if (parentNode === null) {
-    //     document.getElementById('criteriaAnchor').prepend(newDiv);
-    // } else {
-    //     parentNode.insertAdjacentElement('afterend', newDiv);
-    // }
+    // Insert template into the DOM
     if (parentNode === null) {
         document.getElementById('criteriaAnchor').prepend(htmlTemplate.content);
     } else {
@@ -830,16 +686,10 @@ function renderHTML(beforeNode, queryTemplate=null) {
     if (el !== undefined)
         form.appendChild(el);
 
-    //Sub Queries (hidden)
-    // el = renderSubQueriesHTML();
-    // form.appendChild(el);
-
     if (beforeNode === undefined || beforeNode === null) {
         document.body.appendChild(form);
-        // addColumnMembersHTML(document.getElementById('queryBuilder'));
     } else {
         document.getElementById(beforeNode).appendChild(form);
-        // addColumnMembersHTML(document.getElementById('queryBuilder'));
     }
 
     // Now that the new form has been rendered, hide all divs except the landing divs listed in scriptVariables.
@@ -912,12 +762,129 @@ async function loadHtmlFragment(filePath) {
     }
 }
 
-async function addColumnMembersHTML(htmlId) {
-    //todo:  create modal wrapper element first, which will contain id and parentId for
-    let element = document.getElementById(htmlId);
+// htmlId:  the id of the element to add the column members HTML fragment after.
+// parentId:  the id of the parent element to be used in eval() interpolation.
+async function addColumnMembersHTML(parentId=null) {
+    // Get id to use in eval() interpolation.
+    let id = 0;
+    $('#modals div').each(function() {
+        if (this.id.includes('cm-modal-')) {
+            let idLength = $(this)[0].id.length;
+            let thisId = parseInt($(this)[0].id[idLength - 1]);
+            if (thisId >= id) {
+                id = thisId + 1;
+            }
+        }
+    });
+
+    // let element = document.getElementById(htmlId);
+    let element = document.getElementById('modals');
     let columnMembersHTML = await loadHtmlFragment(scriptVariables.columnMembersHtmlURL);
+    columnMembersHTML = eval(columnMembersHTML);
     element.insertAdjacentHTML('afterend', columnMembersHTML);
-    $('#columnMembersModal').show();
+    // $('#columnMembersModal').show();
+    $(`#cm-modal-${id}`).show();
+}
+
+// parentId:  The id of the parent HTML element to be used in eval() interpolation.
+// htmlElToHide:  The id of the HTML element to hide.  Defaults to null, which will not hide an element.
+async function addSubQueryHTML(parentId, htmlElToHide=null) {
+    // Get id to use in eval() interpolation.
+    let id = 0;
+    $('#modals div').each(function() {
+        if (this.id.includes('cm-modal-') || this.id.includes('sq-modal-')) {
+            let idLength = $(this)[0].id.length;
+            let thisId = parseInt($(this)[0].id[idLength - 1]);
+            if (thisId >= id) {
+                id = thisId + 1;
+            }
+        }
+    });
+
+    // Get subQuery Container div.
+    let element = document.getElementById('modals');
+    let subQueryHTML = await loadHtmlFragment(scriptVariables.subQueryContainerHtmlURL);
+    subQueryHTML = eval(subQueryHTML);
+    element.insertAdjacentHTML('afterend', subQueryHTML);
+
+    // Add query template options to select element.
+    addSelectOptions(`sq-modal-${id}-query-templates`, 'queryTemplates');
+
+    if (htmlElToHide != null) {
+        // $('#' + parentId).hide();
+        $('#' + htmlElToHide).hide();
+    }
+
+    $(`#sq-modal-${id}`).show();
+}
+
+// htmlId:  The HTML id of the subQuery modal to be used in the id of the new subQuery parameters.
+// parentHtmlId:  The HTML id of the subQuery modal that the subQuery parameters should be added to.
+// subQueryId:  The id of the query template that will be used to retrieve the query template and it's parameters.
+function renderSubQueryParameters(htmlId, parentHtmlId, subQueryId) {
+    getQueryTemplateById(subQueryId, async function(queryTemplate) {
+        let criteriaParameterKeys = Object.keys(queryTemplate.criteriaParameters);
+        let criteriaParameterValues = Object.values(queryTemplate.criteriaParameters);
+        if (criteriaParameterKeys.length > 0) {
+            let parameterHtml = await loadHtmlFragment(scriptVariables.subQueryParameterHtmlURL);
+            let parentHtmlElement = document.getElementById(parentHtmlId);
+
+            for (let i=0; i<criteriaParameterKeys.length; i++) {
+                // Renamed htmlId to id just so that interpolation works when eval() is called.
+                let id = htmlId;
+                let parameterId = i;
+                let parameterName = criteriaParameterKeys[i];
+                let parameterDescription = criteriaParameterValues[i];
+                let parameterHtmlEvaled = eval(parameterHtml);
+
+                parentHtmlElement.insertAdjacentHTML('beforeend', parameterHtmlEvaled);
+            }
+        } else {
+            alert("This query template does not contain any criteria parameters.")
+        }
+    });
+}
+
+// subQueryHtmlId:  The HTML id of the subQuery modal to create the subQuery call string.
+// targetHtmlId:  The HTML id of the element who's value should be set to the subQuery call string.
+// targetHtmlParentId:  The HTML id of the element that contains the targetHtmlId.  If non null, this parameter is used to show the container element.
+function setTargetElementValueToSubQuery(subQueryHtmlId, targetHtmlId, targetHtmlParentId=null) {
+    // get name of subQuery
+    let subQueryName = document.getElementById(subQueryHtmlId + '-query-templates').value;
+
+    // get all parameters (name and value)
+    // let criteriaNames = $(`label[id^="${subQueryHtmlId}-parameter-"]`);
+    let parameterNames = $(`[id^="${subQueryHtmlId}-parameter-name"]`);
+    let parameterValues = $(`[id^="${subQueryHtmlId}-parameter-value"]`);
+    let subQueryCall = `$${subQueryName}(`;
+
+    for (var i=0; i<parameterNames.length; i++) {
+        let paramName = parameterNames[i].innerHTML;
+        let paramValue = parameterValues[i].value;
+        subQueryCall += `${paramName}=${paramValue},`;
+    }
+    // Remove trialing ',' and add ')'
+    subQueryCall = subQueryCall.slice(0, subQueryCall.length - 1);
+    subQueryCall += ')';
+
+    // Set targetHtmlId's value.
+    let target = document.getElementById(targetHtmlId);
+    if (target.nodeName.toUpperCase() === 'INPUT') {
+        target.value = subQueryCall;
+    } else if (target.nodeName.toUpperCase() === 'SELECT') {
+        let newOptionEl = document.createElement('option');
+        newOptionEl.value = subQueryCall;
+        newOptionEl.innerHTML = subQueryCall;
+        target.append(newOptionEl);
+    } else {
+        console.error('Unrecognized target element node name of ' + target.nodeName);
+    }
+
+    $('#' + subQueryHtmlId).remove();
+
+    if (targetHtmlParentId != null) {
+        $('#' + targetHtmlParentId).show();
+    }
 }
 
 // This method assumes you are feeding it a JSON object with key-value pairs.
@@ -1151,11 +1118,12 @@ function renderQueryTemplatesHTML() {
         let select = createNewElement('select', attributesMap, scriptVariables['queryTemplates']);
         select.onchange = function() {
             let queryTemplateId = document.getElementById('queryTemplates').value;
-            getQueryTemplatById(queryTemplateId);
+            getQueryTemplateById(queryTemplateId, function(queryTemplate) {
+                renderHTML(scriptVariables.renderHtmlAnchorElement, queryTemplate);
+            });
         };
 
         let div = createNewElement('div', {'id': 'queryTemplatesDiv', 'class': 'query-templates-div'});
-        // div.appendChild(label);
         div.appendChild(select);
 
         return div;
@@ -1683,12 +1651,18 @@ function renderCriteriaHTML() {
         'name': 'criteria',
         'class': 'criteria-div'
     };
-    let div = createNewElement('div', attributesMap, null);
-    div.appendChild(pEl);
-    div.appendChild(addRootCriteriaButton);
-    div.appendChild(pCriteriaAnchorEl);
 
-    return div;
+    let modalsDiv = createNewElement('div', {'id': 'modals',
+                                             'name': 'modals',
+                                             'class': 'modals-div'}, null);
+
+    let criteriaDiv = createNewElement('div', attributesMap, null);
+    criteriaDiv.appendChild(pEl);
+    criteriaDiv.appendChild(addRootCriteriaButton);
+    criteriaDiv.appendChild(pCriteriaAnchorEl);
+    criteriaDiv.appendChild(modalsDiv);
+
+    return criteriaDiv;
 }
 
 function renderOtherOptionsHTML() {

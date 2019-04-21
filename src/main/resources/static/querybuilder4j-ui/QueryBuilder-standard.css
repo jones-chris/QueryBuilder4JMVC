@@ -1,3 +1,12 @@
+.sub-query-modal-parameter-description {
+    font-size: 10px;
+    margin-left: 200px;
+}
+
+.sub-query-modal-query-template {
+    margin-bottom: 20px;
+}
+
 .column-members-modal {
     clear: both;
     text-align: center;
