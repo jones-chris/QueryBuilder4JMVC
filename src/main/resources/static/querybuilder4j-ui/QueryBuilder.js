@@ -14,6 +14,8 @@ const scriptVariables = {
     subQueryContainerHtmlURL: 'https://s3.amazonaws.com/qb4j-ui/html-templates/modals/subquery-container.html',
     // The URL where the subquery parameter HTML fragment is located.
     subQueryParameterHtmlURL:  'https://s3.amazonaws.com/qb4j-ui/html-templates/modals/subquery-parameter.html',
+    // The URL where the "save as query template" HTML fragment is located.
+    saveAsQueryTemplateHtmlURL: 'https://s3.amazonaws.com/qb4j-ui/v1/query-templates-save-button.html',
     // Set contents of array to any of the following: 'queryTemplatesDiv', 'schemasDiv', 'tablesDiv', 'joinsDiv', 'columnsDiv',
     // 'criteriaDiv', or 'otherOptionsDiv' in order to show these divs when the page is rendered.
     landingDivs : ['schemasDiv', 'tablesDiv'],
@@ -33,6 +35,8 @@ const scriptVariables = {
     columnMembersEndpoint : '/columns-members/',
     // set to your query endpoint
     formSubmissionEndpoint : "/query",
+    // set to your save query template endpoint
+    saveAsQueryTemplateEndpoint : "/saveQueryTemplate",
     // set to the HTTP method that your query endpoint above accepts
     formMethod : "POST",
     // set to [] to render or null to not render.
@@ -55,6 +59,8 @@ const scriptVariables = {
     orderByColumns : null,
     // set to [] to render
     groupByColumns : null,
+    // set to true to render
+    saveAsQueryTemplate : true,
     //set to true to render
     suppressNulls : true,
     // set to [] to render
@@ -86,6 +92,7 @@ const scriptVariables = {
             type: 'POST',
             url: scriptVariables['formSubmissionEndpoint'],
             data: requestData,
+            contentType: 'application/json',
             success: function (data) {
                 console.log(data);
                 document.getElementById('ajaxError').innerHTML = null;
@@ -172,7 +179,7 @@ function getPageMembers(modalId, isPrior) {
     }
     let offset = internalUseVariables.currentOffsetColumnMembers;
     let ascending = document.getElementById(`${modalId}-ascending`).value;
-        let search = document.getElementById(`${modalId}-search`).value;
+    let search = document.getElementById(`${modalId}-search`).value;
     let queryString = `limit=${limit}&offset=${offset}&ascending=${ascending}`;
     if (search !== '') {
         queryString += `&search=${search}`;
@@ -262,18 +269,20 @@ function addSelectOptions(htmlId, data) {
 // General JavaScript functions
 //===============================================================================================
 
-function sendAjaxRequest(endpoint, paramString, method, successCallbackFunction, doneCallbackFunction=function(){}) {
+function sendAjaxRequest(endpoint, paramString, method, successCallbackFunction, doneCallbackFunction=function(){},
+                         contentType='application/x-www-form-urlencoded;charset=UTF-8') {
     $.ajax({
         method: method,
         url: endpoint,
         data: paramString,
+        contentType: contentType,
         success: function(responseText) {
             successCallbackFunction(responseText);
         },
         error: function(jqXHR, textStatus, errorThrown) {
-            alert(jqXHR);
+            alert(jqXHR.responseText);
             alert(textStatus);
-            alert(errorThrown);
+            //alert(errorThrown);
         },
         dataType: 'json'
     }).done(function() {
@@ -334,12 +343,6 @@ function getAvailableColumns(schema, tablesArray, doneCallbackFunction=function(
         },
         doneCallbackFunction
     );
-}
-
-// members:  (JSON) JSON of members to add to data model.
-// htmlId:  (string) id of HTML select element to sync with dataModel.
-function addSelectedColumns(members, htmlId) {
-
 }
 
 // members:  (JSON) JSON of members to add to data model.
@@ -867,7 +870,7 @@ function setTargetElementValueToSubQuery(subQueryHtmlId, targetHtmlId, targetHtm
     for (var i=0; i<parameterNames.length; i++) {
         let paramName = parameterNames[i].innerHTML;
         let paramValue = parameterValues[i].value;
-        subQueryCall += `${paramName}=${paramValue},`;
+        subQueryCall += `${paramName}=${paramValue};`;
     }
     // Remove trialing ',' (only if parameters were added) and add ')'
     if (parameterNames.length > 0) {
@@ -1004,6 +1007,7 @@ function renderStatementButtonsHTML() {
     let columnsButton = null;
     let criteriaButton = null;
     let otherOptionsButton = null;
+    let saveAsQueryTemplateButton = null;
 
     if (scriptVariables['queryTemplates'] !== null) {
         let attributesMap = {
@@ -1102,6 +1106,35 @@ function renderStatementButtonsHTML() {
         scriptVariables['formSubmissionFunction']();
     };
 
+    if (scriptVariables.saveAsQueryTemplate) {
+        let attributesMap = {
+            'id': 'saveAsQueryTemplate',
+            'name': 'saveAsQueryTemplate',
+            'type': 'button',
+            'class': 'save-as-query-template-button'
+        };
+        saveAsQueryTemplateButton = createNewElement('button', attributesMap, null);
+        saveAsQueryTemplateButton.innerHTML = 'Save As Query Template';
+        saveAsQueryTemplateButton.onclick = function () {
+            let requestData;
+            try {
+                requestData = buildRequestData();
+            } catch (ex) {
+                alert(ex);
+                return;
+            }
+
+            sendAjaxRequest(scriptVariables.saveAsQueryTemplateEndpoint,
+                requestData,
+                "POST",
+                function() {
+                    alert('Query Saved Successfully!');
+                },
+                null,
+                'application/json');
+        };
+    }
+
     let div = createNewElement('div', {
         'id': 'statementButtonsDiv',
         'class': 'statement-buttons-div'
@@ -1112,6 +1145,7 @@ function renderStatementButtonsHTML() {
     if (columnsButton !== null) div.appendChild(columnsButton);
     if (criteriaButton !== null) div.appendChild(criteriaButton);
     if (otherOptionsButton !== null) div.appendChild(otherOptionsButton);
+    if (saveAsQueryTemplateButton !== null) div.appendChild(saveAsQueryTemplateButton);
     div.appendChild(runQueryButton);
 
     return div;
@@ -1181,7 +1215,7 @@ function renderTablesHTML() {
         let select = createNewElement('select', attributesMap, scriptVariables['tables']);
         select.onchange = function() {
             let schema = document.getElementById('schemas').value;
-            let tables = getSelectedOptionsAsArray('table');
+            let tables = getOptionsAsArray('table', 'text', true);
             if (schema !== "" && tables !== "") {
                 getAvailableColumns(schema, tables);
             } else {
@@ -1830,11 +1864,15 @@ function getSelectedOptionsAsJSON(HtmlId, textOrIndeces='text') {
     return results;
 }
 
-function getSelectedOptionsAsArray(HtmlId, textOrIndeces='text') {
+function getOptionsAsArray(HtmlId, textOrIndeces='text', selectedOptionsOnly=false) {
     let results = [];
     let select = document.getElementById(HtmlId);
     for (var i=0; i<select.options.length; i++) {
-        if (select.options[i].selected) {
+        if (selectedOptionsOnly) {
+            if (select.options[i].selected) {
+                (textOrIndeces === 'text') ? results.push(select.options[i].text) : results.push(i);
+            }
+        } else {
             (textOrIndeces === 'text') ? results.push(select.options[i].text) : results.push(i);
         }
     }
@@ -1875,21 +1913,85 @@ function getParentTable() {
     }
 }
 
+// returnJson:  true (the default) to return the form data as JSON.  False to return the form data as x-www-form-urlencoded.
 // Throws exception if getParentTable throws exception.
-function buildRequestData() {
-    // Serialize form's select and input elements except for table select element, which is added manually below.
-    let requestData = $('#queryBuilder select, #queryBuilder input').not('#table').serialize()
+function buildRequestData(returnJson=true) {
+    if (returnJson) {
+        let json = {};
+        json.table = getParentTable();
+        json.columns = getOptionsAsArray('columns', 'text', false);
 
-    // Add selected columns manually to request data.
-    let selectedColumns = document.getElementById('columns').options;
-    for (var i=0; i<selectedColumns.length; i++) {
-        requestData += '&columns=' + selectedColumns[i].value;
+        // Criteria
+        let criteriaDivs = document.getElementsByClassName('criteria-row');
+        let criteriaArray = [];
+        if (criteriaDivs !== undefined) {
+            for (let i=0; i<criteriaDivs.length; i++) {
+                let divId = criteriaDivs[i].id.slice(-1);
+                let criteriaJson = {};
+                criteriaJson.id = document.getElementById(`criteria${divId}.id`).value;
+                criteriaJson.parentId = document.getElementById(`criteria${divId}.parentId`).value;
+                criteriaJson.conjunction = document.getElementById(`criteria${divId}.conjunction`).value;
+                criteriaJson.column = document.getElementById(`criteria${divId}.column`).value;
+                criteriaJson.operator = document.getElementById(`criteria${divId}.operator`).value;
+                criteriaJson.filter = document.getElementById(`criteria${divId}.filter`).value;
+                criteriaArray.push(criteriaJson);
+            }
+        }
+        json.criteria = criteriaArray;
+
+        // Joins
+        let joinsDivs = document.getElementsByClassName('join-row');
+        let joinsArray = [];
+        if (joinsDivs !== undefined) {
+            for (let i=0; i<joinsDivs.length; i++) {
+                let joinId = joinsDivs[i].id.slice(-1);
+                let joinJson = {};
+                joinJson.joinType = document.getElementById(`joins${joinId}.joinType`).value;
+                joinJson.parentTable = document.getElementById(`joins${joinId}.parentTable`).value;
+                joinJson.targetTable = document.getElementById(`joins${joinId}.targetTable`).value;
+
+                let parentJoinColumns = [];
+                let parentJoinColumnsEls = document.getElementsByName(`joins[${joinId}].parentJoinColumns`);
+                parentJoinColumnsEls.forEach((element) => {
+                    parentJoinColumns.push(element.value);
+                });
+                joinJson.parentJoinColumns = parentJoinColumns;
+
+                let targetJoinColumns = [];
+                let targetJoinColumnsEls = document.getElementsByName(`joins[${joinId}].targetJoinColumns`);
+                targetJoinColumnsEls.forEach((element) => {
+                    targetJoinColumns.push(element.value);
+                });
+                joinJson.targetJoinColumns = targetJoinColumns;
+
+                joinsArray.push(joinJson);
+            }
+
+            json.joins = joinsArray;
+        }
+
+        // Other Options
+        json.distinct = document.getElementById('distinct').checked;
+        json.suppressNulls = document.getElementById('suppressNulls').checked;
+        json.limit = document.getElementById('limit').value;
+        json.offset = document.getElementById('offset').value;
+
+        return JSON.stringify(json);
+    } else {
+        // Serialize form's select and input elements except for table select element, which is added manually below.
+        let requestData = $('#queryBuilder select, #queryBuilder input').not('#table').serialize();
+
+        // Add selected columns manually to request data.
+        let selectedColumns = document.getElementById('columns').options;
+        for (var i=0; i<selectedColumns.length; i++) {
+            requestData += '&columns=' + selectedColumns[i].value;
+        }
+
+        // Add parent table as 'table' request attribute.
+        let parentTable = getParentTable();
+        requestData += '&table=' + parentTable;
+        return requestData;
     }
-
-    // Add parent table as 'table' request attribute.
-    let parentTable = getParentTable();
-    requestData += '&table=' + parentTable;
-    return requestData;
 }
 
 //===========================================================================

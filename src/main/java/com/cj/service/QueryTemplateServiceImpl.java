@@ -1,6 +1,8 @@
 package com.cj.service;
 
-import com.cj.dao.QueryTemplateDao;
+import com.google.gson.Gson;
+import com.querybuilder4j.sqlbuilders.dao.QueryTemplateDao;
+import com.querybuilder4j.sqlbuilders.statements.SelectStatement;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -21,7 +23,8 @@ public class QueryTemplateServiceImpl implements QueryTemplateService {
 
     @Override
     public String findByName(String name) {
-        return queryTemplateDao.findByName(name);
+        SelectStatement stmt = queryTemplateDao.getQueryTemplateByName(name);
+        return new Gson().toJson(stmt);
     }
 
     @Override

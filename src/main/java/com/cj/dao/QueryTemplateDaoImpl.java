@@ -1,5 +1,8 @@
 package com.cj.dao;
 
+import com.google.gson.Gson;
+import com.querybuilder4j.sqlbuilders.dao.QueryTemplateDao;
+import com.querybuilder4j.sqlbuilders.statements.SelectStatement;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -27,15 +30,15 @@ public class QueryTemplateDaoImpl implements QueryTemplateDao {
         return numRowsInserted > 0;
     }
 
-    @Override
-    public String findByName(String name) {
-        String sql = "select query_json " +
-                     "from query_templates " +
-                     "where name = ? ";
-
-        jdbcTemplate = new JdbcTemplate(dataSource);
-        return jdbcTemplate.queryForObject(sql, new Object[] {name}, String.class);
-    }
+//    @Override
+//    public String findByName(String name) {
+//        String sql = "select query_json " +
+//                     "from query_templates " +
+//                     "where name = ? ";
+//
+//        jdbcTemplate = new JdbcTemplate(dataSource);
+//        return jdbcTemplate.queryForObject(sql, new Object[] {name}, String.class);
+//    }
 
     @Override
     public List<String> getNames(Integer limit, Integer offset, boolean ascending) throws Exception {
@@ -72,4 +75,14 @@ public class QueryTemplateDaoImpl implements QueryTemplateDao {
         return jdbcTemplate.queryForList(sql, params, String.class);
     }
 
+    @Override
+    public SelectStatement getQueryTemplateByName(String s) {
+        String sql = "select query_json " +
+                "from query_templates " +
+                "where name = ? ";
+
+        jdbcTemplate = new JdbcTemplate(dataSource);
+        String json = jdbcTemplate.queryForObject(sql, new Object[] {s}, String.class);
+        return new Gson().fromJson(json, SelectStatement.class);
+    }
 }

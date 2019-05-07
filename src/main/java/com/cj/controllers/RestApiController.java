@@ -5,6 +5,7 @@ import com.amazonaws.services.sns.model.PublishRequest;
 import com.cj.service.*;
 import com.cj.utils.Converter;
 import com.google.gson.Gson;
+import com.querybuilder4j.sqlbuilders.dao.QueryTemplateDao;
 import com.querybuilder4j.sqlbuilders.statements.SelectStatement;
 import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -29,6 +30,8 @@ public class RestApiController {
     private DatabaseMetaDataService databaseMetaDataService;
     @Autowired
     private QueryTemplateService queryTemplateService;
+    @Autowired
+    private QueryTemplateDao queryTemplateDao;
     @Autowired
     private AmazonSNS snsClient;
     @Qualifier("querybuilder4jdb_properties")
@@ -77,15 +80,16 @@ public class RestApiController {
      * Save a SelectStatement.
      *
      * @param selectStatement
-     * @param name
      * @return
      */
-    @RequestMapping(value = "/saveQueryTemplate/{name}", method = RequestMethod.POST)
+    @RequestMapping(value = "/saveQueryTemplate", method = RequestMethod.POST)
     @ResponseBody
-    public ResponseEntity<String> saveQueryTemplate(SelectStatement selectStatement,
-                                                    @PathVariable(value = "name") String name) {
+    public ResponseEntity<String> saveQueryTemplate(@RequestBody SelectStatement selectStatement) {
         try {
-            selectStatement.setName(name);
+            if (selectStatement.getName() == null) {
+                throw new RuntimeException("The name of the select statement cannot be null when saving the statement " +
+                        "as a query template");
+            }
 
             // Set the statement's criteria parameters if not done so already.
             selectStatement.getCriteria().forEach((criterion) -> {
@@ -97,7 +101,7 @@ public class RestApiController {
             Gson gson = new Gson();
             String json = gson.toJson(selectStatement);
 
-            queryTemplateService.save(name, json);
+            queryTemplateService.save(selectStatement.getName(), json);
 
             return new ResponseEntity<>(HttpStatus.OK);
         } catch (Exception ex) {
@@ -206,13 +210,17 @@ public class RestApiController {
      */
     @RequestMapping(value = "/query", method = RequestMethod.POST)
     @ResponseBody
-    public ResponseEntity<String> getQueryResults(SelectStatement selectStatement) {
+    public ResponseEntity<String> getQueryResults(@RequestBody SelectStatement selectStatement) {
         try {
+            selectStatement.setQueryTemplateDao(queryTemplateDao);
             String sql = selectStatement.toSql(queryBuilder4JDatabaseProperties);
             String queryResults = databaseMetaDataService.executeQuery(sql);
 
             // Log the SelectStatement and the database audit results to logging.db
             Map<String, Boolean> databaseAuditResults = databaseAuditService.runAllChecks(3, 1, new String[1], 1);
+
+            // Set QueryTemplateDao to null before persisting SelectStatement.
+            selectStatement.setQueryTemplateDao(null);
             loggingService.add(selectStatement, sql, databaseAuditResults);
 
             Map<String, Runnable> healerFunctions;

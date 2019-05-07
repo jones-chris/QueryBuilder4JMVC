@@ -239,6 +239,14 @@
     text-align: center;
 }
 
+.save-query-templates-div {
+    text-align: center;
+}
+
+.save-as-query-template-button {
+    margin-top: 30px;
+}
+
 #criteriaPEl {
     margin-left: 30px;
 }
