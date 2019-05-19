@@ -92,11 +92,11 @@ public class RestApiController {
             }
 
             // Set the statement's criteria parameters if not done so already.
-            selectStatement.getCriteria().forEach((criterion) -> {
-                if (criterion.filter.charAt(0) == '@') {
-                    selectStatement.getCriteriaParameters().put(criterion.filter.substring(1), "Description placeholder");
-                }
-            });
+//            selectStatement.getCriteria().forEach((criterion) -> {
+//                if (criterion.filter.charAt(0) == '@') {
+//                    selectStatement.getCriteriaParameters().put(criterion.filter.substring(1), "Description placeholder");
+//                }
+//            });
 
             Gson gson = new Gson();
             String json = gson.toJson(selectStatement);

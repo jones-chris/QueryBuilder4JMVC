@@ -97,8 +97,8 @@ public class DatabaseMetaDataDaoImpl implements DatabaseMetaDataDao {
             criterion.setFilter(search);
             selectStatement.getCriteria().add(criterion);
         }
-//        selectStatement.setLimit(limit);
-//        selectStatement.setOffset(offset);
+        selectStatement.setLimit(Integer.toUnsignedLong(limit));
+        selectStatement.setOffset(Integer.toUnsignedLong(offset));
         selectStatement.setOrderBy(true);
         selectStatement.setAscending(ascending);
         selectStatement.setDatabaseType(DatabaseType.Sqlite);
