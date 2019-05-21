@@ -224,7 +224,8 @@
 
 #otherOptionsDiv * {
     text-align: center;
-    margin-bottom: 20px;
+    /*margin-bottom: 20px;*/
+    margin-top: 5px;
 }
 
 #statementButtonsDiv * {

@@ -25,34 +25,20 @@ const scriptVariables = {
     saveAsQueryTemplateEndpoint : "/saveQueryTemplate",
     // set to the HTTP method that your query endpoint above accepts
     formMethod : "POST",
-    // set to [] to render or null to not render.
-    queryTemplates : [],
-    // set to [] to render
-    schemas : [],
-    // set to [] to render
+    createQueryTemplates : true,
+    createSchemas : true,
     createTables : true,
-    // set to true to render
-    allowJoins : true,
-    // set to [] to render
-    availableColumns : [],
-    // set to [] to render
+    createJoins : true,
+    createAvailableCollumns : true,
     selectedColumns : [],
-    // set to [] to render
-    criteria : [],
-    // set to true to render
-    distinct : true,
-    // set to [] to render
+    createCriteria : true,
+    createDistinct : true,
     orderByColumns : null,
-    // set to [] to render
     groupByColumns : null,
-    // set to true to render
     saveAsQueryTemplate : true,
-    //set to true to render
-    suppressNulls : true,
-    // set to [] to render
-    limitChoices : ['', 5, 10, 50, 500],
-    // set to [] to render
-    offsetChoices : ['', 5, 10, 50, 500],
+    createSuppressNulls : true,
+    limitChoices : ['', 5, 10, 50, 500], // Set to non-empty [] to render.
+    offsetChoices : ['', 5, 10, 50, 500], // Set to non-empty [] to render.
     queryTemplatesSize : 5,
     schemasSize : 5,
     tablesSize : 5,
@@ -119,214 +105,119 @@ const internalUseVariables = {
 };
 
 //===============================================================================================
-// Column Members HTML fragment and JavaScript functions
-//===============================================================================================
-
-// Sets all column members modal variables and elements back to their default state.
-function closeColumnMembers(modalId, parentId) {
-    $('#' + modalId).remove();
-    $('#' + parentId).show();
-}
-
-// modalHtmlId:  the HTML id of the modal.
-function getModalCurrentOffset(modalHtmlId) {
-    return document.getElementById(modalHtmlId + '-currentOffset');
-}
-
-// modalHtmlId:  the HTML id of the modal.
-function setModalCurrentOffset(modalHtmlId, newValue) {
-    return document.getElementById(modalHtmlId + '-currentOffset').setAttribute('value', newValue);
-}
-
-// modalHtmlId:  the HTML id of the modal.
-function getModalAscending(modalHtmlId) {
-    return document.getElementById(`${modalHtmlId}-ascending`).value;
-}
-
-// modalHtmlId:  the HTML id of the modal.
-function getModalSearch(modalHtmlId) {
-    return document.getElementById(`${modalHtmlId}-search`).value;
-}
-
-// modalHtmlId:  the HTML id of the modal.
-function getModalPriorPageButton(modalHtmlId) {
-    return document.getElementById(`${modalHtmlId}-priorPage`);
-}
-
-// modalHtmlId:  the HTML id of the modal.
-function getModalNextPageButton(modalHtmlId) {
-    return document.getElementById(`${modalHtmlId}-nextPage`);
-}
-
-// priorOrNext parameter should be either true (get prior page) or false (get next page).
-function getPageMembers(modalId, isPrior) {
-    // Create endpoint
-    let schema = null;
-    let parentElementId = document.getElementById(`${modalId}-parentId`).value;
-    let parentElementColumn = document.getElementById(parentElementId.split('.')[0] + '.column').value;
-    let table = parentElementColumn.split('.')[0];
-    let column = parentElementColumn.split('.')[1];
-    let endpoint = scriptVariables.columnMembersEndpoint + `${schema}/${table}/${column}/`;
-
-    // Create query string
-    let limit = parseInt(document.getElementById(`${modalId}-limit`).value);
-    if (isPrior === true) {
-        adjustColumnMembersCurrentOffset(-limit);
-    }
-    let offset = getModalCurrentOffset(modalId).getAttribute('value');
-    let ascending = getModalAscending(modalId);
-    let search = getModalSearch(modalId);
-    let queryString = `limit=${limit}&offset=${offset}&ascending=${ascending}`;
-    if (search !== '') {
-        queryString += `&search=${search}`;
-    }
-
-    // Call endpoint
-    sendAjaxRequest(endpoint,
-        queryString,
-        'GET',
-        function (data) {
-            // If data's length less than the limit, we have reached the end of the column members.  We do NOT want to update the select options.
-            // Else if data's length is less than the limit, then we have reached the end of the column members.  We do want to update the select options.
-            // Else there is likely still more data to get.  We do want to update the select options and current offset if we retrieved the next page.
-            if (data.length === 0) {
-                getModalNextPageButton(modalId).disabled = true;
-                getModalPriorPageButton(modalId).disabled = false;
-                alert('You have reached the last page.  There are no additional column members to retrieve.');
-            } else if (data.length < limit) {
-                getModalNextPageButton(modalId).disabled = true;
-                getModalPriorPageButton(modalId).disabled = false;
-                syncSelectOptionsWithDataModel(`${modalId}-availableMembers`, data);
-                alert('You have reached the last page.  There are no additional column members to retrieve.');
-            } else {
-                getModalNextPageButton(modalId).disabled = false;
-                syncSelectOptionsWithDataModel(`${modalId}-availableMembers`, data);
-                if (! isPrior){
-                    adjustColumnMembersCurrentOffset(limit, modalId);
-                }
-            }
-
-            // Disable or enable prior page button based on whether current offset is 0 or not.
-            if (getModalCurrentOffset(modalId).getAttribute('value') === 0) {
-                document.getElementById(`${modalId}-priorPage`).disabled = true;
-            } else {
-                document.getElementById(`${modalId}-priorPage`).disabled = false;
-            }
-        }
-    );
-}
-
-function adjustColumnMembersCurrentOffset(adjustment, modalHtmlId) {
-    let currentOffsetElement = getModalCurrentOffset(modalHtmlId);
-    let currentOffsetValue = parseInt(currentOffsetElement.value);
-    let newOffsetValue = currentOffsetValue += adjustment;
-    if (newOffsetValue < 0) {
-        newOffsetValue = 0;
-    }
-    setModalCurrentOffset(modalHtmlId, newOffsetValue);
-}
-
-// selectedMembersModalId:  The HTML id of the modal's selectedMembers.
-// modalParentId:  The HTML id of the modal's parent reference.
-function setCriteriaFilterWithColumnMembers(selectedMembersModalId, modalParentId) {
-    // Get modal's selectedMembers and stringify.
-    let options = document.getElementById(selectedMembersModalId).options;
-    let stringifiedMembers = "";
-    for (let i=0; i<options.length; i++) {
-        stringifiedMembers += options[i].value + ',';
-    }
-
-    // Remove trailing ','
-    stringifiedMembers = stringifiedMembers.substring(0, stringifiedMembers.length - 1);
-
-    // Set criterion's filter to stringifiedMembers.
-    // document.getElementById(`criteria${internalUseVariables.activeCriteriaIdForColumnMembers}.filter`).value = stringifiedMembers;
-    document.getElementById(modalParentId).value = stringifiedMembers;
-}
-
-// htmlId:  The HTML id of the element to add the data to.
-// data:  The variable in the "scriptVariables" object that contains the data to be added as "option" elements.
-function addSelectOptions(htmlId, data) {
-    let select = document.getElementById(htmlId);
-    for (let i in data) {
-        let option = document.createElement('option');
-        option.value = data[i];
-        option.innerHTML = data[i];
-
-        select.add(option);
-    }
-}
-
-//===============================================================================================
 // General JavaScript functions
 //===============================================================================================
 
 function sendAjaxRequest(endpoint, data, method, successCallbackFunction, doneCallbackFunction=function(){},
                          contentType='application/x-www-form-urlencoded;charset=UTF-8') {
-    $.ajax({
-        method: method,
-        url: endpoint,
-        data: data,
-        contentType: contentType,
-        success: function(responseText) {
-            successCallbackFunction(responseText);
-        },
-        error: function(jqXHR, textStatus) {
-            alert(jqXHR.responseText);
-            console.log(textStatus);
-        },
-        dataType: 'json'
-    }).done(function() {
-        doneCallbackFunction();
-    });
+    fetch(endpoint, {
+      method: method,
+      body: (data === null) ? null : JSON.stringify(data),
+      headers: {
+          'Content-Type': contentType
+      }
+    }).then(response => response.json())
+    .then((data) => successCallbackFunction(data))
+    .catch((error) => console.log(error))
+    .finally(doneCallbackFunction());
+
+    // $.ajax({
+    //     method: method,
+    //     url: endpoint,
+    //     data: data,
+    //     contentType: contentType,
+    //     success: function(responseText) {
+    //         successCallbackFunction(responseText);
+    //     },
+    //     error: function(jqXHR, textStatus) {
+    //         alert(jqXHR.responseText);
+    //         console.log(textStatus);
+    //     },
+    //     dataType: 'json'
+    // }).done(function() {
+    //     doneCallbackFunction();
+    // });
 }
 
 function getQueryTemplates() {
-    sendAjaxRequest(scriptVariables['getQueryTemplateEndpoint'],
-        null,
-        "GET",
-        function(queryTemplatesData) {
-            syncSelectOptionsWithDataModel('queryTemplates', queryTemplatesData);
-        }
-    );
+    fetch(scriptVariables.getQueryTemplateEndpoint, {
+        method: 'GET',
+    }).then(response => response.json())
+    .then(data => syncSelectOptionsWithDataModel('queryTemplates', data))
+    .catch(error => console.log(error));
+
+    // sendAjaxRequest(scriptVariables['getQueryTemplateEndpoint'],
+    //     null,
+    //     "GET",
+    //     function(queryTemplatesData) {
+    //         syncSelectOptionsWithDataModel('queryTemplates', queryTemplatesData);
+    //     }
+    // );
 }
 
 function getQueryTemplateById(id, successCallbackFunction) {
-    sendAjaxRequest(scriptVariables['getQueryTemplateEndpoint'] + '/' + id,
-        null,
-        "GET",
-        successCallbackFunction
-    );
+    fetch(scriptVariables.getQueryTemplateEndpoint + '/' + id, {
+        method: 'GET'
+    }).then(response => response.json())
+        .then(data => successCallbackFunction(data))
+        .catch(error => console.log(error));
+
+    // sendAjaxRequest(scriptVariables['getQueryTemplateEndpoint'] + '/' + id,
+    //     null,
+    //     "GET",
+    //     successCallbackFunction
+    // );
 }
 
+// htmlElement:  the HTML Element object to add the schemas to.
 function getSchemas() {
-    sendAjaxRequest(scriptVariables['getSchemaEndpoint'],
-        null,
-        "GET",
-        function(schemasData) {
-            syncSelectOptionsWithDataModel('schemas', schemasData);
-        });
+    fetch(scriptVariables.getSchemaEndpoint, {
+        method: 'GET'
+    }).then(response => response.json())
+        .then(data => syncSelectOptionsWithDataModel('schemas', data))
+        .catch(error => console.log(error));
+
+    // sendAjaxRequest(scriptVariables['getSchemaEndpoint'],
+    //     null,
+    //     "GET",
+    //     function(schemasData) {
+    //         syncSelectOptionsWithDataModel('schemas', schemasData);
+    //     });
 }
 
 function getTables(schema) {
-    sendAjaxRequest(scriptVariables['getTablesEndpoint'] + schema,
-        null,
-        "GET",
-        function (tablesData) {
-            syncSelectOptionsWithDataModel('table', tablesData);
-        });
+    fetch(scriptVariables.getTablesEndpoint + schema, {
+        method: 'GET'
+    }).then(response => response.json())
+        .then(data => syncSelectOptionsWithDataModel('table', data))
+        .catch(error => console.log(error));
+
+    // sendAjaxRequest(scriptVariables['getTablesEndpoint'] + schema,
+    //     null,
+    //     "GET",
+    //     function (tablesData) {
+    //         syncSelectOptionsWithDataModel('table', tablesData);
+    //     });
 }
 
 function getAvailableColumns(schema, tablesArray, doneCallbackFunction=function(){}) {
     let tableParamString = tablesArray.join('&');
-    sendAjaxRequest(scriptVariables['getColumnsEndpoint'] + '/' + schema + "/" + tableParamString,
-        null,
-        "GET",
-        function(columnsData) {
-            syncSelectOptionsWithDataModel('availableColumns', columnsData);
-        },
-        doneCallbackFunction
-    );
+
+    fetch(scriptVariables.getColumnsEndpoint + '/' + schema + '/' + tableParamString, {
+        method: 'GET'
+    }).then(response => response.json())
+        .then(data => syncSelectOptionsWithDataModel('availableColumns', data))
+        .catch(error => console.log(error))
+        .finally(doneCallbackFunction());
+
+    // sendAjaxRequest(scriptVariables['getColumnsEndpoint'] + '/' + schema + "/" + tableParamString,
+    //     null,
+    //     "GET",
+    //     function(columnsData) {
+    //         syncSelectOptionsWithDataModel('availableColumns', columnsData);
+    //     },
+    //     doneCallbackFunction
+    // );
 }
 
 // members:  (JSON) JSON of members to add to data model.
@@ -609,18 +500,21 @@ async function addCriteria(parentNode, criterion=null) {
     reindentCriteria();
 }
 
-function renderHTML(beforeNode, queryTemplate=null) {
+// Acts as the main method and controller.
+async function renderHTML(beforeNode, queryTemplate=null) {
     // If queryTemplate is not null, then we are wiping the current queryBuilder form so that it can be rendered again
     // with the queryTemplate data.
     if (queryTemplate !== null) {
-        $('#queryBuilder').remove();
+        let qbForm = document.getElementById('queryBuilder');
+        qbForm.parentNode.removeChild(qbForm);
+        // $('#queryBuilder').remove();
     }
 
     var form = document.createElement('form');
     form.setAttribute('id', 'queryBuilder');
     form.setAttribute('name', 'queryBuilder');
-    form.setAttribute('action', scriptVariables['formSubmissionEndpoint']);
-    form.setAttribute('method', scriptVariables['formMethod']);
+    form.setAttribute('action', scriptVariables.formSubmissionEndpoint);
+    form.setAttribute('method', scriptVariables.formMethod);
 
     var el = null;
 
@@ -629,46 +523,51 @@ function renderHTML(beforeNode, queryTemplate=null) {
         form.appendChild(el);
     }
 
-    el = renderQueryTemplatesHTML();
-    if (el !== undefined) {
-        form.appendChild(el);
-        let brEl = createNewElement('br');
-        form.appendChild(brEl);
+    // Query Templates
+    if (scriptVariables.createQueryTemplates) {
+        let queryTemplatesHtml = await renderQueryTemplatesHTML();
+        form.appendChild(queryTemplatesHtml.content.firstElementChild);
     }
 
-    //Available Columns
-    el = renderAvailableColumnsHTML();
-    if (el !== undefined) {
-        form.appendChild(el);
-        let brEl = createNewElement('br');
-        form.appendChild(brEl);
+    // Available Columns
+    if (scriptVariables.createAvailableCollumns) {
+        let columnsHtml = await renderAvailableColumnsHTML();
+        form.appendChild(columnsHtml.content.firstElementChild);
     }
 
-    //Schemas
-    el = renderSchemaHTML();
-    if (el !== undefined) {
-        form.appendChild(el);
+    // Schemas
+    if (scriptVariables.createSchemas) {
+        let schemaHtml = await renderSchemaHTML();
+        form.appendChild(schemaHtml.content.firstElementChild);
     }
 
-    //Tables
-    el = renderTablesHTML();
-    if (el !== undefined)
-        form.appendChild(el);
+    // Tables
+    if (scriptVariables.createTables) {
+        let tablesHtml = await renderTablesHTML();
+        form.appendChild(tablesHtml.content.firstElementChild);
+    }
 
-    //Joins
-    el = renderJoinsHTML();
-    if (el !== undefined)
-        form.appendChild(el);
+    // Joins
+    if (scriptVariables.createJoins) {
+        let joinsHtml = await renderJoinsHTML();
+        form.appendChild(joinsHtml.content.firstElementChild);
+    }
 
-    //Criteria
-    el = renderCriteriaHTML();
-    if (el !== undefined)
-        form.appendChild(el);
+    // Criteria
+    if (scriptVariables.createCriteria) {
+        let criteriaHtml = await renderCriteriaHTML();
+        form.appendChild(criteriaHtml.content.firstElementChild);
+    }
 
-    //Other Options
-    el = renderOtherOptionsHTML();
-    if (el !== undefined)
-        form.appendChild(el);
+    // Other Options
+    if (scriptVariables.createDistinct || scriptVariables.createSuppressNulls ||
+        scriptVariables.limitChoices.length > 0 || scriptVariables.offsetChoices.length > 0) {
+        let otherOptionsHtml = await renderOtherOptionsHTML();
+        form.appendChild(otherOptionsHtml.content.firstElementChild);
+    }
+    // el = renderOtherOptionsHTML();
+    // if (el !== undefined)
+    //     form.appendChild(el);
 
     if (beforeNode === undefined || beforeNode === null) {
         document.body.appendChild(form);
@@ -888,7 +787,7 @@ function fillArrayProperty(arrayPropertyName, data, clearPropertyArray=true) {
 }
 
 function deleteArrayPropertyMembers(arrayPropertyName, indecesToDelete) {
-    newArray = scriptVariables[arrayPropertyName].slice();
+    let newArray = scriptVariables[arrayPropertyName].slice();
     for (var i in indecesToDelete) {
         for (var key in indecesToDelete[i]) {
             let indexToDelete = indecesToDelete[i][key];
@@ -999,7 +898,7 @@ function renderStatementButtonsHTML() {
         };
     }
 
-    if (scriptVariables['schemas'] !== null || scriptVariables.createTables) {
+    if (scriptVariables.createSchemas || scriptVariables.createTables) {
         let attributesMap = {
             'id': 'schemasButton',
             'name': 'schemasButton',
@@ -1013,7 +912,7 @@ function renderStatementButtonsHTML() {
         };
     }
 
-    if (scriptVariables['allowJoins'] !== null) {
+    if (scriptVariables.createJoins) {
         let attributesMap = {
             'id': 'joinsButton',
             'name': 'joinsButton',
@@ -1041,7 +940,7 @@ function renderStatementButtonsHTML() {
         };
     }
 
-    if (scriptVariables['criteria'] !== null) {
+    if (scriptVariables.createCriteria) {
         let attributesMap = {
             'id': 'criteriaButton',
             'name': 'criteriaButton',
@@ -1055,8 +954,8 @@ function renderStatementButtonsHTML() {
         };
     }
 
-    if (scriptVariables['distinct'] !== null || scriptVariables['orderByColumns'] !== null || scriptVariables['groupByColumns'] !== null
-        || scriptVariables['limitChoices'] !== null || scriptVariables['offsetChoices'] !== null || scriptVariables['suppressNulls'] !== null) {
+    if (scriptVariables.createDistinct !== null || scriptVariables['orderByColumns'] !== null || scriptVariables['groupByColumns'] !== null
+        || scriptVariables['limitChoices'] !== null || scriptVariables['offsetChoices'] !== null || scriptVariables.createSuppressNulls !== null) {
         let attributesMap = {
             'id': 'criteriaButton',
             'name': 'criteriaButton',
@@ -1127,116 +1026,72 @@ function renderStatementButtonsHTML() {
     return div;
 }
 
-function renderQueryTemplatesHTML() {
-    if (scriptVariables['queryTemplates'] !== null) {
-        let attributesMap = {
-            'id': 'queryTemplates',
-            'name': 'queryTemplates'
-        };
-        let select = createNewElement('select', attributesMap, scriptVariables['queryTemplates']);
-        select.onchange = function() {
-            let queryTemplateId = document.getElementById('queryTemplates').value;
-            getQueryTemplateById(queryTemplateId, function(queryTemplate) {
-                renderHTML(scriptVariables.renderHtmlAnchorElement, queryTemplate);
-            });
-        };
+async function renderQueryTemplatesHTML() {
+    let htmlTemplate = document.createElement('template');
+    let queryTemplatesHtml = await loadHtmlFragment(scriptVariables.htmlFragmentUrl + 'query-templates.html');
+    queryTemplatesHtml = eval(queryTemplatesHtml);
+    htmlTemplate.innerHTML = queryTemplatesHtml;
 
-        let div = createNewElement('div', {'id': 'queryTemplatesDiv', 'class': 'query-templates-div'});
-        div.appendChild(select);
+    htmlTemplate.content.getElementById('queryTemplates').onchange = function () {
+        let queryTemplateId = document.getElementById('queryTemplates').value;
 
-        return div;
-    }
+        getQueryTemplateById(queryTemplateId, async function(queryTemplate) {
+            await renderHTML(scriptVariables.renderHtmlAnchorElement, queryTemplate);
+        });
+    };
+
+    return htmlTemplate;
 }
 
-function renderSchemaHTML() {
-    if (scriptVariables['schemas'] !== null) {
-        let attributesMap = {
-            'id': 'schemas',
-            'name': 'schemas',
-            'size': scriptVariables['schemasSize']
-        };
+async function renderSchemaHTML() {
+    let htmlTemplate = document.createElement('template');
+    let schemasHtml = await loadHtmlFragment(scriptVariables.htmlFragmentUrl + 'schemas.html');
+    schemasHtml = eval(schemasHtml);
+    htmlTemplate.innerHTML = schemasHtml;
 
-        let select = createNewElement('select', attributesMap, scriptVariables['schemas']);
-        select.onchange = function () {
-            let schema = document.getElementById('schemas').value;
-            if (schema !== "") {
-                getTables(schema);
-            } else {
-                alert('Please select a schema before retrieving tables');
-            }
-        };
+    htmlTemplate.content.getElementById('schemasDiv').onchange = function () {
+        let schema = document.getElementById('schemas').value;
+        if (schema !== "") {
+            getTables(schema);
+        } else {
+            alert('Please select a schema before retrieving tables');
+        }
+    };
 
-        let label = createNewElement('label', {'for': 'schemas'});
-        label.innerHTML = 'Database Schemas';
-
-        let div = createNewElement('div', {
-            'id': 'schemasDiv',
-            'class': 'schemas-div'
-        });
-        div.appendChild(label);
-        div.appendChild(select);
-
-        return div;
-    }
+    return htmlTemplate;
 }
 
-function renderTablesHTML() {
-    if (scriptVariables.createTables) {
-        let attributesMap = {
-            'id': 'table', //TODO change this back to 'tables' once qb4j can handle multiple tables.
-            'name': 'table',
-            'multiple': 'true',
-            'size': scriptVariables['tablesSize']
-        };
-        let select = createNewElement('select', attributesMap, getTables('null'));
-        select.onchange = function() {
-            let schema = document.getElementById('schemas').value;
-            let tables = getOptionsAsArray('table', 'text', true);
-            if (schema !== "" && tables !== "") {
-                getAvailableColumns(schema, tables);
-            } else {
-                alert('Please select a schema before retrieving tables');
-            }
-        };
+async function renderTablesHTML() {
+    let htmlTemplate = document.createElement('template');
+    let tablesHtml = await loadHtmlFragment(scriptVariables.htmlFragmentUrl + 'tables.html');
+    let tablesSize = scriptVariables.tablesSize;
+    tablesHtml = eval(tablesHtml);
+    htmlTemplate.innerHTML = tablesHtml;
 
-        let label = createNewElement('label', {
-            'for': 'table'
-        });
-        label.innerHTML = 'Database Tables';
+    htmlTemplate.content.getElementById('table').onchange = function () {
+        let schema = document.getElementById('schemas').value;
+        let tables = getOptionsAsArray('table', 'text', true);
+        if (schema !== "" && tables.length !== 0) {
+            getAvailableColumns(schema, tables);
+        } else {
+            alert('Please select a schema before retrieving tables');
+        }
+    };
 
-        let div = createNewElement('div', {
-            'id': 'tablesDiv',
-            'class': 'tables-div'
-        });
-        div.appendChild(label);
-        div.appendChild(select);
-
-        return div;
-    }
+    return htmlTemplate;
 }
 
-function renderJoinsHTML() {
-    if (scriptVariables['allowJoins']) {
-        // Create parent div for all joins.
-        let joinsDiv = createNewElement('div', {
-            'id': 'joinsDiv',
-            'class': 'joins-div'
-        });
+async function renderJoinsHTML() {
+    let htmlTemplate = document.createElement('template');
+    let joinsHtml = await loadHtmlFragment(scriptVariables.htmlFragmentUrl + 'joins-container.html');
+    joinsHtml = eval(joinsHtml);
+    htmlTemplate.innerHTML = joinsHtml;
 
-        let addJoinButton = createNewElement('button', {
-            'id': 'addJoin',
-            'name': 'addJoin',
-            'type': 'button'
-        });
-        addJoinButton.innerHTML = 'Add Join';
-        addJoinButton.onclick = function() {
-            addJoin();
-        };
+    htmlTemplate.content.getElementById('addJoin').onclick = function () {
+        addJoin();
+    };
 
-        joinsDiv.appendChild(addJoinButton);
-
-        return joinsDiv;
-    }
+    return htmlTemplate;
 }
 
 function getJoinsDivMaxId() {
@@ -1283,69 +1138,33 @@ function getNextJoinImageFilePath(joinName) {
     return null;
 }
 
-function addJoin(join=null) {
-    let maxId = getJoinsDivMaxId();
+async function addJoin(join=null) {
+    let htmlTemplate = document.createElement('template');
+    let joinRowHtml = await loadHtmlFragment(scriptVariables.htmlFragmentUrl + 'join-row.html');
+    let id = getJoinsDivMaxId();
+    let joinImageUrl = (join === null) ? scriptVariables.htmlFragmentUrl + 'left_join_excluding.png' : getJoinImageFilePath(join.joinType);
+    let joinType = (join === null) ? 'LEFT_EXCLUDING' : join.joinType;
+    joinRowHtml = eval(joinRowHtml);
+    htmlTemplate.innerHTML = joinRowHtml;
 
-    let newJoinDiv = createNewElement('div', {
-        'id': `join-row${maxId}`,
-        'name': `join-row${maxId}`,
-        'class': 'join-row'
-    });
-    let newJoinType = createNewElement('input', {
-        'id': `joins${maxId}.joinType`,
-        'name': `joins[${maxId}].joinType`,
-        'hidden': 'true',
-        'value': (join === null) ? 'LEFT_EXCLUDING' : join.joinType // Note: The name must match the case of the Java enum class.
-    });
-    let newJoinImage = createNewElement('img', {
-        'id': `joins${maxId}.image`,
-        'name': `joins[${maxId}].image`,
-        'src': (join === null) ? scriptVariables.htmlFragmentUrl + 'left_join_excluding.png' : getJoinImageFilePath(join.joinType),
-        'width': '100',
-        'height': '80'
-    });
-    newJoinImage.onclick = function() {
+    htmlTemplate.content.getElementById(`joins${id}.image`).onclick = function () {
         // Set newJoinType and newJoinImage to next join name and file_path in array.
-        let joinType = document.getElementById(`joins${maxId}.joinType`);
+        let joinType = document.getElementById(`joins${id}.joinType`);
         let currentJoinName = joinType.value;
-        let joinImage = document.getElementById(`joins${maxId}.image`);
+        let joinImage = document.getElementById(`joins${id}.image`);
         let imageAndFilePathObj = getNextJoinImageFilePath(currentJoinName);
         joinType.value = imageAndFilePathObj.name;
         joinImage.src = imageAndFilePathObj.file_path;
     };
 
-    let parentTableColumns = (join === null) ? null : getTableColumns(join.parentTable);
-    let newJoinParentColumn = createNewElement('select', {
-        'id': `joins${maxId}.parentJoinColumns`,
-        'name': `joins[${maxId}].parentJoinColumns`
-    }, parentTableColumns);
+    let joinParentTable = htmlTemplate.content.getElementById(`joins${id}.parentTable`);
+    let tables = getOptionsAsArray('table', 'text', true).slice(0);
+    // tables.splice(0, 0, null); // splice() is to add null as first item in array so that a blank choice is displayed first in resulting select element.
+    addOptionsToSelectElement(joinParentTable, tables);
     if (join !== null) {
-        // Set the mandatory parent column element's value to the join's first parent column.
-        newJoinParentColumn.value = join.parentJoinColumns[0];
+        joinParentTable.value = join.parentTable;
     }
-
-    let targetTableColumns = (join === null) ? null : getTableColumns(join.targetTable);
-    let newJoinTargetColumn = createNewElement('select', {
-        'id': `joins${maxId}.targetJoinColumns`,
-        'name': `joins[${maxId}].targetJoinColumns`
-    }, targetTableColumns);
-    if (join !== null) {
-        // Set the mandatory target column element's value to the join's first target column.
-        newJoinTargetColumn.value = join.targetJoinColumns[0];
-    }
-
-    // slice() is to copy the 'tables' array.
-    // let parentAndTargetJoinTables = scriptVariables['tables'].slice(0);
-    let parentAndTargetJoinTables = getOptionsAsArray('table', 'text', true).slice(0);
-    // splice() is to add null as first item in array so that a blank choice is displayed first in resulting select element.
-    parentAndTargetJoinTables.splice(0, 0, null);
-
-    let newJoinParentTable = createNewElement('select', {
-        'id': `joins${maxId}.parentTable`,
-        'name': `joins[${maxId}].parentTable`
-    }, parentAndTargetJoinTables);
-
-    newJoinParentTable.onchange = function() {
+    joinParentTable.onchange = function () {
         // Get selected table from select element.
         let selectedOption = getSelectedOption(this);
 
@@ -1353,15 +1172,13 @@ function addJoin(join=null) {
         let tableColumns = getTableColumns(selectedOption);
 
         // Add parent table columns to parent table select elements.
-        let parentJoinColumns = document.getElementsByName(newJoinParentColumn.name);
+        let parentJoinColumns = document.getElementsByName(`joins[${id}].parentJoinColumns`);
         Array.from(parentJoinColumns).forEach(parentJoinColumn => syncSelectOptionsWithDataModel(parentJoinColumn, tableColumns));
     };
 
-    let newJoinTargetTable = createNewElement('select', {
-        'id': `joins${maxId}.targetTable`,
-        'name': `joins[${maxId}].targetTable`
-    }, parentAndTargetJoinTables);
-    newJoinTargetTable.onchange = function() {
+    let joinTargetTable = htmlTemplate.content.getElementById(`joins${id}.targetTable`);
+    addOptionsToSelectElement(joinTargetTable, tables);
+    joinTargetTable.onchange = function() {
         // Get selected table from select element.
         let selectedOption = getSelectedOption(this);
 
@@ -1369,129 +1186,43 @@ function addJoin(join=null) {
         let tableColumns = getTableColumns(selectedOption);
 
         // Add target table columns to target table select elements.
-        let targetJoinColumns = document.getElementsByName(newJoinTargetColumn.name);
+        let targetJoinColumns = document.getElementsByName(`joins[${id}].targetJoinColumns`);
         Array.from(targetJoinColumns).forEach(targetJoinColumn => syncSelectOptionsWithDataModel(targetJoinColumn, tableColumns));
     };
 
-    let newJoinDeleteButton = createNewElement('button', {
-        'id': `joins${maxId}.deleteButton`,
-        'name': `joins[${maxId}].deleteButton`,
-        'class': 'delete-join-button',
-        'type': 'button'
-    });
-    newJoinDeleteButton.onclick = function() {
-        // Get the numerical id of this button.
-        let id = parseInt($(this)[0].id[5]);
-
-        $(`#join-row${id}`).remove();
-
-        // For each div in joinsDiv, change the id if it is greater than the id of the div that was deleted.
-        let divs = document.querySelectorAll('#joinsDiv div');
-        for (var i=0; i<divs.length; i++) {
-            let idLength = divs[i].id.length;
-            let id = parseInt(divs[i].id[idLength - 1]);
-            if (id > maxId) {
-                // Renumber div
-                divs[i].setAttribute('name', `join-row${id - 1}`);
-                divs[i].id = `join-row${id - 1}`;
-                // Renumber joinType
-                document.getElementById(`joins${id}.joinType`).name = `joins[${id - 1}].joinType`;
-                document.getElementById(`joins${id}.joinType`).id = `joins${id - 1}.joinType`;
-                // Renumber image
-                document.getElementById(`joins${id}.image`).name = `joins[${id - 1}].image`;
-                document.getElementById(`joins${id}.image`).id = `joins${id - 1}.image`;
-                // Renumber parentTable
-                document.getElementById(`joins${id}.parentTable`).name = `joins[${id - 1}].parentTable`;
-                document.getElementById(`joins${id}.parentTable`).id = `joins${id - 1}.parentTable`;
-                // Renumber targetTable
-                document.getElementById(`joins${id}.targetTable`).name = `joins[${id - 1}].targetTable`;
-                document.getElementById(`joins${id}.targetTable`).id = `joins${id - 1}.targetTable`;
-
-                // Renumber parentColumns
-                let parentJoinColumns = document.getElementsByName(`joins[${id}].parentJoinColumns`);
-                Array.from(parentJoinColumns).forEach(parentJoinColumn => {
-                    parentJoinColumn.name = `joins[${id - 1}].parentJoinColumns`;
-                    parentJoinColumn.id = `joins${id - 1}.parentJoinColumns`;
-                });
-
-                // Renumber targetColumns
-                let targetJoinColumns = document.getElementsByName(`joins[${id}].targetJoinColumns`);
-                Array.from(targetJoinColumns).forEach(targetJoinColumn => {
-                    targetJoinColumn.name = `joins[${id - 1}].targetJoinColumns`;
-                    targetJoinColumn.id = `joins${id - 1}.targetJoinColumns`;
-                });
-
-                // Renumber deleteButton
-                let deleteButtons = document.getElementsByName(`joins[${id}].deleteButton`);
-                Array.from(deleteButtons).forEach(deleteButton => {
-                    deleteButton.name = `joins[${id - 1}].deleteButton`;
-                    deleteButton.id = `joins${id - 1}.deleteButton`;
-                });
-
-                // Renumber addParentAndTargetColumn
-                let addParentAndTargetColumnButtons = document.getElementsByName(`joins[${id}].addParentAndTargetColumn`);
-                Array.from(addParentAndTargetColumnButtons).forEach(addParentAndTargetColumn => {
-                    addParentAndTargetColumn.name = `joins[${id - 1}].addParentAndTargetColumn`;
-                    addParentAndTargetColumn.id = `joins${id - 1}.addParentAndTargetColumn`;
-                });
-
-                // Renumber deleteJoinColumnsButtons
-                let deleteJoinColumnsButtons = document.getElementsByName(`joins[${id}].deleteJoinColumnsButton`);
-                Array.from(deleteJoinColumnsButtons).forEach(deleteJoinColumnsButton => {
-                    deleteJoinColumnsButton.name = `joins[${id - 1}].deleteJoinColumnsButton`;
-                    deleteJoinColumnsButton.id = `joins${id - 1}.deleteJoinColumnsButton`;
-                });
-            }
-        }
-    };
-    newJoinDeleteButton.innerHTML = 'X';
-
-    let newJoinAddParentAndTargetColumnButton = createNewElement('button', {
-        'id': `joins${maxId}.addParentAndTargetColumn`,
-        'name': `joins[${maxId}].addParentAndTargetColumn`,
-        'class': 'add-parent-and-target-column',
-        'type': 'button'
-    });
-    newJoinAddParentAndTargetColumnButton.innerHTML = '+';
-
-    newJoinAddParentAndTargetColumnButton.onclick = function() {
-        addParentAndColumnJoinColumns(maxId);
+    htmlTemplate.content.getElementById(`joins${id}.deleteButton`).onclick = function () {
+        let id = this.id[5];
+        let joinRow = document.getElementById(`join-row${id}`);
+        joinRow.parentNode.removeChild(joinRow);
     };
 
-    newJoinDiv.appendChild(newJoinDeleteButton);
-    newJoinDiv.appendChild(newJoinType);
-    newJoinDiv.appendChild(newJoinParentTable);
-    newJoinDiv.appendChild(newJoinImage);
-    newJoinDiv.appendChild(newJoinTargetTable);
+    htmlTemplate.content.getElementById(`joins${id}.addParentAndTargetColumn`).onclick = function() {
+        addParentAndColumnJoinColumns(id);
+    };
 
-    let firstParentAndTargetColumnDiv = createNewElement('div');
-    firstParentAndTargetColumnDiv.appendChild(newJoinParentColumn);
-    let equalSign = createNewElement('b');
-    equalSign.innerHTML = ' = ';
-    firstParentAndTargetColumnDiv.appendChild(equalSign);
-    firstParentAndTargetColumnDiv.appendChild(newJoinTargetColumn);
-    firstParentAndTargetColumnDiv.appendChild(newJoinAddParentAndTargetColumnButton);
-    newJoinDiv.appendChild(firstParentAndTargetColumnDiv);
-
-    // Set elements' values if a join object was passed into the function.
-    if (join !== null) {
-        newJoinType.value = join.joinType;
-        newJoinParentTable.value = join.parentTable;
-        newJoinTargetTable.value = join.targetTable;
-    }
-
-    document.getElementById('joinsDiv').appendChild(newJoinDiv);
-
-    // If a join object was passed into the function, then add a new parent and target join for each parent column (parent
-    // and target column sizes should be the same and is checked on the server side).  Else, just add one new pair of parent
-    // and target columns.  This can only be done after the newJoinDiv has been appended to the DOM, because the addParentAndColumnJoinColumns()
-    // method will append it's elements to the newJoinDiv element.  The for loop starts with an index of 1 because the 0th
-    // element was added already when the newJoinParentColumn and newJoinTargetColumn elements were created in this method.
     if (join !== null) {
         for (let i=1; i<join.parentJoinColumns.length; i++) {
-            addParentAndColumnJoinColumns(maxId, join.parentJoinColumns[i], join.targetJoinColumns[i]);
+            addParentAndColumnJoinColumns(id, join.parentJoinColumns[i], join.targetJoinColumns[i]);
         }
     }
+
+    // if (join !== null) {
+    //     //newJoinType.value = join.joinType; // already happens when initializing value of joinType variable.
+    //     newJoinParentTable.value = join.parentTable;
+    //     newJoinTargetTable.value = join.targetTable;
+    //
+    //     // If a join object was passed into the function, then add a new parent and target join for each parent column (parent
+    //     // and target column sizes should be the same and is checked on the server side).  Else, just add one new pair of parent
+    //     // and target columns.  This can only be done after the newJoinDiv has been appended to the DOM, because the addParentAndColumnJoinColumns()
+    //     // method will append it's elements to the newJoinDiv element.  The for loop starts with an index of 1 because the 0th
+    //     // element was added already when the newJoinParentColumn and newJoinTargetColumn elements were created in this method.
+    //     for (let i=1; i<join.parentJoinColumns.length; i++) {
+    //         addParentAndColumnJoinColumns(maxId, join.parentJoinColumns[i], join.targetJoinColumns[i]);
+    //     }
+    // }
+
+    document.getElementById('joinsDiv').appendChild(htmlTemplate.content.firstElementChild);
+
 }
 
 function addParentAndColumnJoinColumns(maxId, parentJoinColumn=null, targetJoinColumn=null) {
@@ -1556,226 +1287,82 @@ function getSelectedOption(node) {
 }
 
 function getTableColumns(table) {
-    return scriptVariables.availableColumns.filter(column => column.split('.')[0] === table);
+    // return scriptVariables.availableColumns.filter(column => column.split('.')[0] === table);
+    return Array.from(document.getElementById('availableColumns').options)
+        .map(obj => obj.value) // Get column names
+        .filter(column => column.split('.')[0] === table); // Check if column's table is same as the table parameter
 }
 
-function renderAvailableColumnsHTML() {
-    if (scriptVariables['availableColumns'] !== null) {
-        // Create Available Columns Div, Label, and Select elements
-        let attributesMapAvailableColumns = {
-            'id': 'availableColumns',
-            'name': 'availableColumns',
-            'multiple': 'true',
-            'size': scriptVariables['availableColumnsSize']
-        };
+async function renderAvailableColumnsHTML() {
+    let htmlTemplate = document.createElement('template');
+    let queryTemplatesHtml = await loadHtmlFragment(scriptVariables.htmlFragmentUrl + 'columns.html');
+    let availableColumnSize = scriptVariables.availableColumnsSize;
+    let selectedColumnsSize = scriptVariables.selectedColumnsSize;
+    queryTemplatesHtml = eval(queryTemplatesHtml);
+    htmlTemplate.innerHTML = queryTemplatesHtml;
 
-        let selectAvailableColumns = createNewElement('select', attributesMapAvailableColumns, scriptVariables['availableColumns']);
-        let labelAvailableColumns = createNewElement('label', {'for': 'availableColumns'});
-        labelAvailableColumns.innerHTML = 'Table Columns';
+    htmlTemplate.content.getElementById('addColumnsButton').onclick = function () {
+        let selectedColumns = getSelectedOptionsAsJSON('availableColumns');
+        addSelectedColumns(selectedColumns, 'selectedColumns', 'columns');
+    };
 
-        let availableColumnsDiv = createNewElement('div', {
-            'id': 'availableColumnsDiv',
-            'class': 'available-columns-div'
-        });
-        availableColumnsDiv.appendChild(labelAvailableColumns);
-        availableColumnsDiv.appendChild(selectAvailableColumns);
+    htmlTemplate.content.getElementById('removeColumnsButton').onclick = function() {
+        let selectedColumns = getSelectedOptionsAsJSON('columns', 'indeces');
+        removeSelectedColumn(selectedColumns, 'selectedColumns', 'columns');
+    };
 
-        // Create Add and Remove Columns Div and Button elements
-        let addColumnButton = createNewElement('button', {
-            'id': 'addColumnsButton',
-            'name': 'addColumnsButton',
-            'type': 'button',
-            'class': 'available-columns-add-button'
-        }, null);
-        addColumnButton.innerHTML = 'Add';
-        addColumnButton.onclick = function() {
-            let selectedColumns = getSelectedOptionsAsJSON('availableColumns');
-            addSelectedColumns(selectedColumns, 'selectedColumns', 'columns');
-        };
-
-        let removeColumnButton = createNewElement('button', {
-            'id': 'removeColumnsButton',
-            'name': 'removeColumnsButton',
-            'type': 'button', 'class':
-                'available-columns-remove-button'
-        }, null);
-        removeColumnButton.innerHTML = 'Remove';
-        removeColumnButton.onclick = function() {
-            let selectedColumns = getSelectedOptionsAsJSON('columns', 'indeces');
-            removeSelectedColumn(selectedColumns, 'selectedColumns', 'columns');
-        };
-
-        let addRemoveButtonsDiv = createNewElement('div', {
-            'id': 'addRemoveColumns',
-            'class': 'available-columns-buttons-div'
-        });
-        addRemoveButtonsDiv.appendChild(addColumnButton);
-        addRemoveButtonsDiv.appendChild(createNewElement('br'));
-        addRemoveButtonsDiv.appendChild(removeColumnButton);
-
-        // Create Selected Columns Div, Label, and Select elements.
-        let attributesMapSelectedColumns = {
-            'id': 'columns', // This is the selectedColumns select box, but the id has to be 'columns' so that Spring MVC binds the request parameter to the Java object automatically.
-            'name': 'columns',
-            'size': scriptVariables['selectedColumnsSize']
-        };
-
-        let selectSelectedColumns = createNewElement('select', attributesMapSelectedColumns, scriptVariables['selectedColumns']);
-        let labelSelectedColumns = createNewElement('label', {'for': 'selectedColumns'});
-        labelSelectedColumns.innerHTML = 'Selected Columns';
-
-        let selectedColumnsDiv = createNewElement('div', {
-            'id': 'selectedColumnsDiv',
-            'class': 'selected-columns-div'
-        });
-        selectedColumnsDiv.appendChild(labelSelectedColumns);
-        selectedColumnsDiv.appendChild(selectSelectedColumns);
-
-        let parentDiv = createNewElement('div', {
-            'id': 'tableColumns',
-            'name': 'tableColumns',
-            'class': 'table-columns',
-            'width': '600px',
-            'height': '191px'
-        }, null);
-        parentDiv.appendChild(availableColumnsDiv);
-        parentDiv.insertAdjacentElement('beforeend', addRemoveButtonsDiv);
-        parentDiv.insertAdjacentElement('beforeend', selectedColumnsDiv);
-
-        return parentDiv;
-    }
+    return htmlTemplate;
 }
 
-function renderCriteriaHTML() {
-    let pEl = createNewElement('p', {
-        'id': 'criteriaPEl',
-        'name': 'criteriaPEl'
-    }, null);
+async function renderCriteriaHTML() {
+    let htmlTemplate = document.createElement('template');
+    let criteriaRootHtml = await loadHtmlFragment(scriptVariables.htmlFragmentUrl + 'criteria-root.html');
+    criteriaRootHtml = eval(criteriaRootHtml);
+    htmlTemplate.innerHTML = criteriaRootHtml;
 
-    let addRootCriteriaButton = createNewElement('button', {
-        'id': 'addRootCriteriaButton',
-        'name': 'addRootCriteriaButton',
-        'type': 'button',
-        'class': 'add-root-criteria-button'
-    }, null);
-    addRootCriteriaButton.innerHTML = 'Add Root Criteria';
-    addRootCriteriaButton.onclick = function () {
+    htmlTemplate.content.getElementById('addRootCriteriaButton').onclick = function() {
         addCriteria(null);
     };
 
-    let pCriteriaAnchorEl = createNewElement('p', {'id': 'criteriaAnchor'}, null);
-
-    let attributesMap = {
-        'id': 'criteria',
-        'name': 'criteria',
-        'class': 'criteria-div'
-    };
-
-    let modalsDiv = createNewElement('div', {'id': 'modals',
-                                             'name': 'modals',
-                                             'class': 'modals-div'}, null);
-
-    let criteriaDiv = createNewElement('div', attributesMap, null);
-    criteriaDiv.appendChild(pEl);
-    criteriaDiv.appendChild(addRootCriteriaButton);
-    criteriaDiv.appendChild(pCriteriaAnchorEl);
-    criteriaDiv.appendChild(modalsDiv);
-
-    return criteriaDiv;
+    return htmlTemplate;
 }
 
-function renderOtherOptionsHTML() {
-    let distinctEl = null;
-    let orderByEl = null;
-    let groupByEl = null;
-    let suppressNullsEl = null;
-    let limitEl = null;
-    let offsetEl = null;
-    let parentDiv = createNewElement('div', {'id': 'otherOptionsDiv', 'name': 'otherOptioinsDiv', 'class': 'other-options-div'}, null);
+async function renderOtherOptionsHTML() {
+    let htmlTemplate = document.createElement('template');
+    let otherOptionsHtml = await loadHtmlFragment(scriptVariables.htmlFragmentUrl + 'other-options-container.html');
+    otherOptionsHtml = eval(otherOptionsHtml);
+    htmlTemplate.innerHTML = otherOptionsHtml;
 
-    if (scriptVariables['distinct']) {
-        let attributesMap = {
-            'id': 'distinct',
-            'name': 'distinct',
-            'type': 'checkbox',
-            'class': 'custom-control-input'
-        };
-        distinctEl = createNewElement('input', attributesMap, null);
-        let labelDistinct = createNewElement('label', {'for': 'distinct'}, null);
-        labelDistinct.innerHTML = 'Distinct';
-        parentDiv.appendChild(labelDistinct);
-        parentDiv.appendChild(distinctEl);
-        parentDiv.appendChild(createNewElement('br', {}, null));
+    // Now remove any divs.  This is more efficient than making each of these divs HTML fragments and loading them based
+    // on scriptVariables config, because it results in only one AJAX call, rather than many AJAX calls.
+    if (! scriptVariables.createDistinct) {
+        let distinctDiv = htmlTemplate.content.getElementById('qb-distinctDiv');
+        distinctDiv.parentNode.removeChild(distinctDiv);
     }
 
-    if (scriptVariables['orderByColumns'] !== null) {
-        let attributesMap = {
-            'id': 'orderBy',
-            'name': 'orderBy'
-        };
-        orderByEl = createNewElement('select', attributesMap,  scriptVariables['orderByColumns']);
-        let labelOrderBy = createNewElement('label', {'for': 'orderBy'}, null);
-        labelOrderBy.innerHTML = 'Order By';
-        parentDiv.appendChild(labelOrderBy);
-        parentDiv.appendChild(orderByEl);
-        parentDiv.appendChild(createNewElement('br', {}, null));
+    if (! scriptVariables.createSuppressNulls) {
+        let suppressNullsDiv = htmlTemplate.content.getElementById('qb-suppressNullsDiv');
+        suppressNullsDiv.parentNode.removeChild(suppressNullsDiv);
     }
 
-    if (scriptVariables['groupByColumns'] !== null) {
-        let attributesMap = {
-            'id': 'groupBy',
-            'name': 'groupBy'
-        };
-        groupByEl = createNewElement('select', attributesMap,  scriptVariables['groupByColumns']);
-        let labelGroupBy = createNewElement('label', {'for': 'groupBy'}, null);
-        labelGroupBy.innerHTML = 'Group By';
-        parentDiv.appendChild(labelGroupBy);
-        parentDiv.appendChild(groupByEl);
-        parentDiv.appendChild(createNewElement('br', {}, null));
+
+    if (scriptVariables.limitChoices.length === 0) {
+        let limitDiv = htmlTemplate.content.getElementById('qb-limitDiv');
+        limitDiv.parentNode.removeChild(limitDiv);
+    } else {
+        let limitEl = htmlTemplate.content.getElementById('limit');
+        addOptionsToSelectElement(limitEl, scriptVariables.limitChoices);
     }
 
-    if (scriptVariables['suppressNulls']) {
-        let attributesMap = {
-            'id': 'suppressNulls',
-            'name': 'suppressNulls',
-            'type': 'checkbox',
-            'class': 'custom-control-input'
-        };
-        suppressNullsEl = createNewElement('input', attributesMap, null);
-        let labelSuppressNulls = createNewElement('label', {'for': 'suppressNulls'}, null);
-        labelSuppressNulls.innerHTML = 'Suppress Null Records';
-        parentDiv.appendChild(labelSuppressNulls);
-        parentDiv.appendChild(suppressNullsEl);
-        parentDiv.appendChild(createNewElement('br', {}, null));
+    if (scriptVariables.offsetChoices.length === 0) {
+        let offsetDiv = htmlTemplate.content.getElementById('qb-offsetDiv');
+        offsetDiv.parentNode.removeChild(offsetDiv);
+    } else {
+        let offsetEl = htmlTemplate.content.getElementById('offset');
+        addOptionsToSelectElement(offsetEl, scriptVariables.offsetChoices);
     }
 
-    if (scriptVariables['limitChoices'] !== null) {
-        let attributesMap = {
-            'id': 'limit',
-            'name': 'limit'
-        };
-        limitEl = createNewElement('select', attributesMap, scriptVariables['limitChoices']);
-        let labelLimit = createNewElement('label', {'for': 'limit'}, null);
-        labelLimit.innerHTML = 'Limit  ';
-        parentDiv.appendChild(labelLimit);
-        parentDiv.appendChild(limitEl);
-        parentDiv.appendChild(createNewElement('br', {}, null));
-    }
-
-    if (scriptVariables['offsetChoices'] !== null) {
-        let attributesMap = {
-            'id': 'offset',
-            'name': 'offset'
-        };
-        offsetEl = createNewElement('select', attributesMap, scriptVariables['offsetChoices']);
-        let labelOffset = createNewElement('label', {'for': 'offset'}, null);
-        labelOffset.innerHTML = 'Offset  ';
-        parentDiv.appendChild(labelOffset);
-        parentDiv.appendChild(offsetEl);
-        parentDiv.appendChild(createNewElement('br', {}, null));
-    }
-
-    return parentDiv;
+    return htmlTemplate;
 }
 
 function syncSelectOptionsWithDataModel(HtmlId, dataProperty) {
@@ -1806,7 +1393,7 @@ function clearOptions(HtmlId) {
 // htmlId:  either 1) the HTML id of the select element to add options to or 2) the select element object.
 // data:  either 1) a flat array or 2) an array of flat objects (no nesting).
 function addOptionsToSelectElement(htmlId, data) {
-    if (data !== null) {
+    if (data !== null && data !== undefined) {
         let selectElement = (typeof(htmlId) === 'object') ? htmlId : document.getElementById(htmlId);
         for (let i=0; i<data.length; i++) {
             let option = document.createElement("option");
@@ -1983,6 +1570,154 @@ function buildRequestData(returnJson=true) {
         return requestData;
     }
 }
+
+
+//===========================================================================
+//                     HTML Fragment JavaScript Functions
+//===========================================================================
+
+    //===========================================================================
+    //                     Column Members
+    //===========================================================================
+
+    // Sets all column members modal variables and elements back to their default state.
+    function closeColumnMembers(modalId, parentId) {
+        let modalEl = document.getElementById(modalId);
+        modalEl.parentNode.removeChild(modalEl);
+
+        let parentEl = document.getElementById(parentId);
+        parentEl.parentNode.removeChild(parentEl);
+        // $('#' + modalId).remove();
+        // $('#' + parentId).show();
+    }
+
+    // modalHtmlId:  the HTML id of the modal.
+    function getModalCurrentOffset(modalHtmlId) {
+        return document.getElementById(modalHtmlId + '-currentOffset');
+    }
+
+    // modalHtmlId:  the HTML id of the modal.
+    function setModalCurrentOffset(modalHtmlId, newValue) {
+        return document.getElementById(modalHtmlId + '-currentOffset').setAttribute('value', newValue);
+    }
+
+    // modalHtmlId:  the HTML id of the modal.
+    function getModalAscending(modalHtmlId) {
+        return document.getElementById(`${modalHtmlId}-ascending`).value;
+    }
+
+    // modalHtmlId:  the HTML id of the modal.
+    function getModalSearch(modalHtmlId) {
+        return document.getElementById(`${modalHtmlId}-search`).value;
+    }
+
+    // modalHtmlId:  the HTML id of the modal.
+    function getModalPriorPageButton(modalHtmlId) {
+        return document.getElementById(`${modalHtmlId}-priorPage`);
+    }
+
+    // modalHtmlId:  the HTML id of the modal.
+    function getModalNextPageButton(modalHtmlId) {
+        return document.getElementById(`${modalHtmlId}-nextPage`);
+    }
+
+    // priorOrNext parameter should be either true (get prior page) or false (get next page).
+    function getPageMembers(modalId, isPrior) {
+        // Create endpoint
+        let schema = null;
+        let parentElementId = document.getElementById(`${modalId}-parentId`).value;
+        let parentElementColumn = document.getElementById(parentElementId.split('.')[0] + '.column').value;
+        let table = parentElementColumn.split('.')[0];
+        let column = parentElementColumn.split('.')[1];
+        let endpoint = scriptVariables.columnMembersEndpoint + `${schema}/${table}/${column}/`;
+
+        // Create query string
+        let limit = parseInt(document.getElementById(`${modalId}-limit`).value);
+        if (isPrior === true) {
+            adjustColumnMembersCurrentOffset(-limit);
+        }
+        let offset = getModalCurrentOffset(modalId).getAttribute('value');
+        let ascending = getModalAscending(modalId);
+        let search = getModalSearch(modalId);
+        let queryString = `limit=${limit}&offset=${offset}&ascending=${ascending}`;
+        if (search !== '') {
+            queryString += `&search=${search}`;
+        }
+
+        // Call endpoint
+        sendAjaxRequest(endpoint,
+            queryString,
+            'GET',
+            function (data) {
+                // If data's length less than the limit, we have reached the end of the column members.  We do NOT want to update the select options.
+                // Else if data's length is less than the limit, then we have reached the end of the column members.  We do want to update the select options.
+                // Else there is likely still more data to get.  We do want to update the select options and current offset if we retrieved the next page.
+                if (data.length === 0) {
+                    getModalNextPageButton(modalId).disabled = true;
+                    getModalPriorPageButton(modalId).disabled = false;
+                    alert('You have reached the last page.  There are no additional column members to retrieve.');
+                } else if (data.length < limit) {
+                    getModalNextPageButton(modalId).disabled = true;
+                    getModalPriorPageButton(modalId).disabled = false;
+                    syncSelectOptionsWithDataModel(`${modalId}-availableMembers`, data);
+                    alert('You have reached the last page.  There are no additional column members to retrieve.');
+                } else {
+                    getModalNextPageButton(modalId).disabled = false;
+                    syncSelectOptionsWithDataModel(`${modalId}-availableMembers`, data);
+                    if (! isPrior){
+                        adjustColumnMembersCurrentOffset(limit, modalId);
+                    }
+                }
+
+                // Disable or enable prior page button based on whether current offset is 0 or not.
+                if (getModalCurrentOffset(modalId).getAttribute('value') === 0) {
+                    document.getElementById(`${modalId}-priorPage`).disabled = true;
+                } else {
+                    document.getElementById(`${modalId}-priorPage`).disabled = false;
+                }
+            }
+        );
+    }
+
+    function adjustColumnMembersCurrentOffset(adjustment, modalHtmlId) {
+        let currentOffsetElement = getModalCurrentOffset(modalHtmlId);
+        let currentOffsetValue = parseInt(currentOffsetElement.value);
+        let newOffsetValue = currentOffsetValue += adjustment;
+        if (newOffsetValue < 0) {
+            newOffsetValue = 0;
+        }
+        setModalCurrentOffset(modalHtmlId, newOffsetValue);
+    }
+
+    // selectedMembersModalId:  The HTML id of the modal's selectedMembers.
+    // modalParentId:  The HTML id of the modal's parent reference.
+    function setCriteriaFilterWithColumnMembers(selectedMembersModalId, modalParentId) {
+        // Get modal's selectedMembers and stringify.
+        let options = document.getElementById(selectedMembersModalId).options;
+        let stringifiedMembers = "";
+        for (let i=0; i<options.length; i++) {
+            stringifiedMembers += options[i].value + ',';
+        }
+
+        // Remove trailing ','
+        stringifiedMembers = stringifiedMembers.substring(0, stringifiedMembers.length - 1);
+
+        // Set criterion's filter to stringifiedMembers.
+        document.getElementById(modalParentId).value = stringifiedMembers;
+    }
+
+    // htmlId:  The HTML id of the element to add the data to.
+    // data:  The variable in the "scriptVariables" object that contains the data to be added as "option" elements.
+    function addSelectOptions(htmlId, data) {
+        let select = document.getElementById(htmlId);
+        for (let i in data) {
+            let option = document.createElement('option');
+            option.value = data[i];
+            option.innerHTML = data[i];
+
+            select.add(option);
+        }
+    }
 
 //===========================================================================
 //                     START OF SCRIPT
