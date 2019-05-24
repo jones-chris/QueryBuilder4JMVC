@@ -33,8 +33,8 @@ const scriptVariables = {
     selectedColumns : [],
     createCriteria : true,
     createDistinct : true,
-    orderByColumns : null,
-    groupByColumns : null,
+    // orderByColumns : null,
+    // groupByColumns : null,
     saveAsQueryTemplate : true,
     createSuppressNulls : true,
     limitChoices : ['', 5, 10, 50, 500], // Set to non-empty [] to render.
@@ -46,7 +46,6 @@ const scriptVariables = {
     selectedColumnsSize : 30,
     orderByColumnsSize : 10,
     groupByColumnsSize : 10,
-    // assign a function here to handle form submission.
     formSubmissionFunction : function () {
         let requestData;
         try {
@@ -56,12 +55,14 @@ const scriptVariables = {
             return;
         }
 
-        $.ajax({
-            type: 'POST',
-            url: scriptVariables['formSubmissionEndpoint'],
-            data: requestData,
-            contentType: 'application/json',
-            success: function (data) {
+        fetch(scriptVariables.formSubmissionEndpoint, {
+            method: scriptVariables.formMethod,
+            body: requestData,
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        }).then(response => response.json())
+            .then((data) => {
                 console.log(data);
                 document.getElementById('ajaxError').innerHTML = null;
                 document.getElementById('queryResults').innerHTML = data.queryResults[0];
@@ -72,11 +73,10 @@ const scriptVariables = {
                 document.getElementById('numOfColumnsIsSame').innerHTML = data.numOfTableColumnsAreSame;
                 document.getElementById('numOfRowsIsSame').innerHTML = data.numOfTableRowsAreSame;
                 document.getElementById('tableDataIsSame').innerHTML = data.tableDataIsSame;
-            },
-            error: function (textStatus, errorThrown) {
-                console.log(textStatus);
-                console.log(errorThrown);
-                document.getElementById('ajaxError').innerHTML = errorThrown + ':  ' + textStatus.responseText;
+            })
+            .catch(error => {
+                console.log(error);
+                document.getElementById('ajaxError').innerHTML = error;
                 document.getElementById('queryResults').innerHTML = null;
                 document.getElementById('sqlResult').innerHTML = null;
                 document.getElementById('databaseExists').innerHTML = null;
@@ -85,9 +85,7 @@ const scriptVariables = {
                 document.getElementById('numOfColumnsIsSame').innerHTML = null;
                 document.getElementById('numOfRowsIsSame').innerHTML = null;
                 document.getElementById('tableDataIsSame').innerHTML = null;
-            },
-            dataType: 'json'
-        });
+            });
     }
 };
 
@@ -105,7 +103,302 @@ const internalUseVariables = {
 };
 
 //===============================================================================================
-// General JavaScript functions
+// Main JavaScript Methods
+//===============================================================================================
+
+// Acts as the main method and controller.
+async function renderHTML(beforeNode, queryTemplate=null) {
+    document.addEventListener('DOMContentLoaded', function() {
+        setTimeout(function() {
+            if (scriptVariables.getQueryTemplateEndpoint !== null) {
+                getQueryTemplates();
+            }
+
+            if (scriptVariables.getSchemaEndpoint !== null) {
+                getSchemas();
+            } else if (scriptVariables.getTablesEndpoint !== null) {
+                getTables();
+            }
+        }, scriptVariables.phaseOutMilliseconds + 200);
+    });
+
+    // If queryTemplate is not null, then we are wiping the current queryBuilder form so that it can be rendered again
+    // with the queryTemplate data.
+    if (queryTemplate !== null) {
+        let qbForm = document.getElementById('queryBuilder');
+        qbForm.parentNode.removeChild(qbForm);
+    }
+
+    let form = document.createElement('form');
+    form.setAttribute('id', 'queryBuilder');
+    form.setAttribute('name', 'queryBuilder');
+
+    let buttonsHtml = await renderStatementButtonsHTML();
+    form.appendChild(buttonsHtml.content.firstElementChild);
+
+    // Query Templates
+    if (scriptVariables.createQueryTemplates) {
+        let queryTemplatesHtml = await renderQueryTemplatesHTML();
+        form.appendChild(queryTemplatesHtml.content.firstElementChild);
+    }
+
+    // Available Columns
+    if (scriptVariables.createAvailableCollumns) {
+        let columnsHtml = await renderAvailableColumnsHTML();
+        form.appendChild(columnsHtml.content.firstElementChild);
+    }
+
+    // Schemas
+    if (scriptVariables.createSchemas) {
+        let schemaHtml = await renderSchemaHTML();
+        form.appendChild(schemaHtml.content.firstElementChild);
+    }
+
+    // Tables
+    if (scriptVariables.createTables) {
+        let tablesHtml = await renderTablesHTML();
+        form.appendChild(tablesHtml.content.firstElementChild);
+    }
+
+    // Joins
+    if (scriptVariables.createJoins) {
+        let joinsHtml = await renderJoinsHTML();
+        form.appendChild(joinsHtml.content.firstElementChild);
+    }
+
+    // Criteria
+    if (scriptVariables.createCriteria) {
+        let criteriaHtml = await renderCriteriaHTML();
+        form.appendChild(criteriaHtml.content.firstElementChild);
+    }
+
+    // Other Options
+    if (scriptVariables.createDistinct || scriptVariables.createSuppressNulls ||
+        scriptVariables.limitChoices.length > 0 || scriptVariables.offsetChoices.length > 0) {
+        let otherOptionsHtml = await renderOtherOptionsHTML();
+        form.appendChild(otherOptionsHtml.content.firstElementChild);
+    }
+
+    if (beforeNode === undefined || beforeNode === null) {
+        document.body.appendChild(form);
+    } else {
+        document.getElementById(beforeNode).appendChild(form);
+    }
+
+    // Now that the new form has been rendered, hide all divs except the landing divs listed in scriptVariables.
+    if (scriptVariables.landingDivs.length > 0) {
+        hideAllDivsExcept(scriptVariables.landingDivs);
+    }
+
+    // Now that the new form has been rendered, populate the form with the queryTemplate data if the queryTemplate is not
+    // null.
+    if (queryTemplate !== null) {
+        Array.from(document.getElementById('queryTemplates').children).forEach((child) => {
+            child.selected = (child.value === queryTemplate.name);
+        });
+
+        // todo add schema into the SelectStatement class so that it can be added here based on the queryTemplate data.
+        document.getElementById('schemas').value = 'null';
+
+        // get table and all unique join target tables...add them to the tables array.
+        let tables = [];
+        tables.push(queryTemplate.table);
+        queryTemplate.joins.forEach((join) => {
+            if (! tables.includes(join.targetTable)) {
+                tables.push(join.targetTable);
+            }
+        });
+        syncSelectOptionsWithDataModel('table', tables);
+        Array.from(document.getElementById('table').children).forEach((child) => {
+            child.selected = true;
+        });
+
+        function populateFormWithQueryTemplateData() {
+            getQueryTemplates();
+            syncSelectOptionsWithDataModel('schemas', ['null']);
+            // table columns should update automatically after tables array is updated.  Update selected columns.
+            // scriptVariables.selectedColumns = queryTemplate.columns;
+            // syncSelectOptionsWithDataModel('columns', scriptVariables.selectedColumns);
+            syncSelectOptionsWithDataModel('columns', queryTemplate.columns);
+
+            // update criteria...call reindent criteria method.
+            queryTemplate.criteria.forEach((criterion) => {
+                let parentCriteriaId = criterion.parentId;
+                let parentNode = null;
+                if (parentCriteriaId !== undefined && parentCriteriaId !== null) {
+                    parentNode = document.getElementById(`row.${parentCriteriaId}`);
+                }
+                addCriteria(parentNode, criterion);
+            });
+
+            // Get joins and add to joins array
+            queryTemplate.joins.forEach((join) => {
+                addJoin(join);
+            });
+
+            // Update other options.
+            document.getElementById('distinct').checked = queryTemplate.distinct;
+            document.getElementById('suppressNulls').checked = queryTemplate.suppressNulls;
+            document.getElementById('limit').value = queryTemplate.limit;
+            document.getElementById('offset').value = queryTemplate.offset;
+        }
+
+        // Now that we have the tables, get the available columns.
+        getAvailableColumns('null', tables, populateFormWithQueryTemplateData);
+    }
+}
+
+//=================================================================
+//     HTML Render Functions
+//=================================================================
+
+async function renderStatementButtonsHTML() {
+    let htmlTemplate = document.createElement('template');
+    let buttonsHtml = await loadHtmlFragment(scriptVariables.htmlFragmentUrl + 'statement-buttons-div.html');
+    buttonsHtml = eval(buttonsHtml);
+    htmlTemplate.innerHTML = buttonsHtml;
+
+    if (scriptVariables.createQueryTemplates) {
+        htmlTemplate.content.getElementById('queryTemplatesButton').onclick = function() {
+            hideAllDivsExcept(['queryTemplatesDiv']);
+        }
+    } else {
+        let queryTemplatesButton = htmlTemplate.content.getElementById('queryTemplatesButton');
+        queryTemplatesButton.parentNode.removeChild(queryTemplatesButton);
+    }
+
+    if (scriptVariables.createSchemas || scriptVariables.createTables) {
+        htmlTemplate.content.getElementById('schemasButton').onclick = function() {
+            hideAllDivsExcept(['schemasDiv', 'tablesDiv']);
+        }
+    } else {
+        let schemasButton = htmlTemplate.content.getElementById('schemasButton');
+        schemasButton.parentNode.removeChild(schemasButton);
+    }
+
+    if (scriptVariables.createJoins) {
+        htmlTemplate.content.getElementById('joinsButton').onclick = function() {
+            hideAllDivsExcept(['joinsDiv']);
+        }
+    } else {
+        let joinsButton = htmlTemplate.content.getElementById('joinsButton');
+        joinsButton.parentNode.removeChild(joinsButton);
+    }
+
+    if (scriptVariables.createAvailableCollumns) {
+        htmlTemplate.content.getElementById('columnsButton').onclick = function() {
+            hideAllDivsExcept(['tableColumns']);
+        }
+    } else {
+        let columnsButton = htmlTemplate.content.getElementById('columnsButton');
+        columnsButton.parentNode.removeChild(columnsButton);
+    }
+
+    if (scriptVariables.createCriteria) {
+        htmlTemplate.content.getElementById('criteriaButton').onclick = function() {
+            hideAllDivsExcept(['criteria']);
+        }
+    } else {
+        let criteriaButton = htmlTemplate.content.getElementById('criteriaButton');
+        criteriaButton.parentNode.removeChild(criteriaButton);
+    }
+
+    if (scriptVariables.createDistinct !== null || scriptVariables.limitChoices.length > 0 ||
+        scriptVariables.offsetChoices.length > 0 || scriptVariables.createSuppressNulls) {
+        htmlTemplate.content.getElementById('otherOptionsButton').onclick = function() {
+            hideAllDivsExcept(['otherOptionsDiv']);
+        }
+    } else {
+        let otherOptionsButton = htmlTemplate.content.getElementById('otherOptionsButton');
+        otherOptionsButton.parentNode.removeChild(otherOptionsButton);
+    }
+
+    htmlTemplate.content.getElementById('runQuery').onclick = function() {
+        scriptVariables.formSubmissionFunction();
+    };
+
+    if (scriptVariables.saveAsQueryTemplate) {
+        htmlTemplate.content.getElementById('saveAsQueryTemplate').onclick = function () {
+            saveStatementAsQueryTemplate();
+        };
+    } else {
+        let saveAsQueryTemplateButton = htmlTemplate.content.getElementById('saveAsQueryTemplate');
+        saveAsQueryTemplateButton.parentNode.removeChild(saveAsQueryTemplateButton);
+    }
+
+    return htmlTemplate;
+}
+
+async function renderQueryTemplatesHTML() {
+    let htmlTemplate = document.createElement('template');
+    let queryTemplatesHtml = await loadHtmlFragment(scriptVariables.htmlFragmentUrl + 'query-templates.html');
+    queryTemplatesHtml = eval(queryTemplatesHtml);
+    htmlTemplate.innerHTML = queryTemplatesHtml;
+
+    htmlTemplate.content.getElementById('queryTemplates').onchange = function () {
+        let queryTemplateId = document.getElementById('queryTemplates').value;
+
+        getQueryTemplateById(queryTemplateId, async function(queryTemplate) {
+            await renderHTML(scriptVariables.renderHtmlAnchorElement, queryTemplate);
+        });
+    };
+
+    return htmlTemplate;
+}
+
+async function renderSchemaHTML() {
+    let htmlTemplate = document.createElement('template');
+    let schemasHtml = await loadHtmlFragment(scriptVariables.htmlFragmentUrl + 'schemas.html');
+    schemasHtml = eval(schemasHtml);
+    htmlTemplate.innerHTML = schemasHtml;
+
+    htmlTemplate.content.getElementById('schemasDiv').onchange = function () {
+        let schema = document.getElementById('schemas').value;
+        if (schema !== "") {
+            getTables(schema);
+        } else {
+            alert('Please select a schema before retrieving tables');
+        }
+    };
+
+    return htmlTemplate;
+}
+
+async function renderTablesHTML() {
+    let htmlTemplate = document.createElement('template');
+    let tablesHtml = await loadHtmlFragment(scriptVariables.htmlFragmentUrl + 'tables.html');
+    let tablesSize = scriptVariables.tablesSize;
+    tablesHtml = eval(tablesHtml);
+    htmlTemplate.innerHTML = tablesHtml;
+
+    htmlTemplate.content.getElementById('table').onchange = function () {
+        let schema = document.getElementById('schemas').value;
+        let tables = getOptionsAsArray('table', 'text', true);
+        if (schema !== "" && tables.length !== 0) {
+            getAvailableColumns(schema, tables);
+        } else {
+            alert('Please select a schema before retrieving tables');
+        }
+    };
+
+    return htmlTemplate;
+}
+
+async function renderJoinsHTML() {
+    let htmlTemplate = document.createElement('template');
+    let joinsHtml = await loadHtmlFragment(scriptVariables.htmlFragmentUrl + 'joins-container.html');
+    joinsHtml = eval(joinsHtml);
+    htmlTemplate.innerHTML = joinsHtml;
+
+    htmlTemplate.content.getElementById('addJoin').onclick = function () {
+        addJoin();
+    };
+
+    return htmlTemplate;
+}
+
+//===============================================================================================
+// Helper Functions
 //===============================================================================================
 
 function sendAjaxRequest(endpoint, data, method, successCallbackFunction, doneCallbackFunction=function(){},
@@ -120,23 +413,6 @@ function sendAjaxRequest(endpoint, data, method, successCallbackFunction, doneCa
     .then((data) => successCallbackFunction(data))
     .catch((error) => console.log(error))
     .finally(doneCallbackFunction());
-
-    // $.ajax({
-    //     method: method,
-    //     url: endpoint,
-    //     data: data,
-    //     contentType: contentType,
-    //     success: function(responseText) {
-    //         successCallbackFunction(responseText);
-    //     },
-    //     error: function(jqXHR, textStatus) {
-    //         alert(jqXHR.responseText);
-    //         console.log(textStatus);
-    //     },
-    //     dataType: 'json'
-    // }).done(function() {
-    //     doneCallbackFunction();
-    // });
 }
 
 function getQueryTemplates() {
@@ -145,14 +421,6 @@ function getQueryTemplates() {
     }).then(response => response.json())
     .then(data => syncSelectOptionsWithDataModel('queryTemplates', data))
     .catch(error => console.log(error));
-
-    // sendAjaxRequest(scriptVariables['getQueryTemplateEndpoint'],
-    //     null,
-    //     "GET",
-    //     function(queryTemplatesData) {
-    //         syncSelectOptionsWithDataModel('queryTemplates', queryTemplatesData);
-    //     }
-    // );
 }
 
 function getQueryTemplateById(id, successCallbackFunction) {
@@ -161,12 +429,6 @@ function getQueryTemplateById(id, successCallbackFunction) {
     }).then(response => response.json())
         .then(data => successCallbackFunction(data))
         .catch(error => console.log(error));
-
-    // sendAjaxRequest(scriptVariables['getQueryTemplateEndpoint'] + '/' + id,
-    //     null,
-    //     "GET",
-    //     successCallbackFunction
-    // );
 }
 
 // htmlElement:  the HTML Element object to add the schemas to.
@@ -176,13 +438,6 @@ function getSchemas() {
     }).then(response => response.json())
         .then(data => syncSelectOptionsWithDataModel('schemas', data))
         .catch(error => console.log(error));
-
-    // sendAjaxRequest(scriptVariables['getSchemaEndpoint'],
-    //     null,
-    //     "GET",
-    //     function(schemasData) {
-    //         syncSelectOptionsWithDataModel('schemas', schemasData);
-    //     });
 }
 
 function getTables(schema) {
@@ -191,13 +446,6 @@ function getTables(schema) {
     }).then(response => response.json())
         .then(data => syncSelectOptionsWithDataModel('table', data))
         .catch(error => console.log(error));
-
-    // sendAjaxRequest(scriptVariables['getTablesEndpoint'] + schema,
-    //     null,
-    //     "GET",
-    //     function (tablesData) {
-    //         syncSelectOptionsWithDataModel('table', tablesData);
-    //     });
 }
 
 function getAvailableColumns(schema, tablesArray, doneCallbackFunction=function(){}) {
@@ -209,15 +457,6 @@ function getAvailableColumns(schema, tablesArray, doneCallbackFunction=function(
         .then(data => syncSelectOptionsWithDataModel('availableColumns', data))
         .catch(error => console.log(error))
         .finally(doneCallbackFunction());
-
-    // sendAjaxRequest(scriptVariables['getColumnsEndpoint'] + '/' + schema + "/" + tableParamString,
-    //     null,
-    //     "GET",
-    //     function(columnsData) {
-    //         syncSelectOptionsWithDataModel('availableColumns', columnsData);
-    //     },
-    //     doneCallbackFunction
-    // );
 }
 
 // members:  (JSON) JSON of members to add to data model.
@@ -268,7 +507,6 @@ function moveSelectedColumn(htmlId, dataModel, isUp) {
 
         // get destination item
         let itemToDelete = options[index + 1];
-        // var itemToDelete = scriptVariables[dataModel][index + 1];
 
         // set destination item to current item
         let itemToMove = options[index];
@@ -279,53 +517,12 @@ function moveSelectedColumn(htmlId, dataModel, isUp) {
     }
 }
 
-function addOrderByColumns(members) {
-    fillArrayProperty('orderByColumns', members);
-    syncSelectOptionsWithDataModel('orderBy', scriptVariables['orderByColumns']);
-}
-
-function removeOrderByColumns(memberIndeces) {
-    deleteArrayPropertyMembers('orderByColumns', memberIndeces);
-    syncSelectOptionsWithDataModel('orderBy', scriptVariables['orderByColumns']);
-}
-
-function moveOrderByColumnUp(index) {
-    moveArrayPropertyItem('orderByColumns', index, 'up');
-    syncSelectOptionsWithDataModel('orderBy', scriptVariables['orderByColumns']);
-}
-
-function moveOrderByColumnDown(index) {
-    moveArrayPropertyItem('orderByColumns', index, 'down');
-    syncSelectOptionsWithDataModel('orderBy', scriptVariables['orderByColumns']);
-}
-
-function addGroupByColumns(members) {
-
-    fillArrayProperty('groupByColumns', members);
-    syncSelectOptionsWithDataModel('groupBy', scriptVariables['groupByColumns']);
-}
-
-function removeGroupByColumns(memberIndeces) {
-    deleteArrayPropertyMembers('groupByColumns', memberIndeces);
-    syncSelectOptionsWithDataModel('groupBy', scriptVariables['groupByColumns']);
-}
-
-function moveGroupByColumnUp(index) {
-    moveArrayPropertyItem('groupByColumns', index, 'up');
-    syncSelectOptionsWithDataModel('groupBy', scriptVariables['groupByColumns']);
-}
-
-function moveGroupByColumnDown(index) {
-    moveArrayPropertyItem('groupByColumns', index, 'down');
-    syncSelectOptionsWithDataModel('groupBy', scriptVariables['groupByColumns']);
-}
-
 // id:  The criteria row that is being added or was removed
 // addOrRemove:  A string (either 'add' or 'remove')
 function renumberCriteria(id, addOrRemove) {
     let criteria = document.getElementsByClassName('criteria-row');
 
-    for (var i=0; i<criteria.length; i++) {
+    for (let i=0; i<criteria.length; i++) {
 
         // get new id
         let currentId = parseInt(criteria[i].id.slice(-1));
@@ -337,7 +534,7 @@ function renumberCriteria(id, addOrRemove) {
         }
 
         // get new parent id
-        let currentParentId = criteria[i].children[1].value;;
+        let currentParentId = criteria[i].children[1].value;
         let newParentId = (currentParentId === null) ? '' : currentParentId;
         if (currentId >= id && addOrRemove === 'add') {
             if (currentParentId !== "") {
@@ -415,19 +612,19 @@ function renumberCriteria(id, addOrRemove) {
 function reindentCriteria() {
     let criteria = document.getElementsByClassName('criteria-row');
 
-    for (var i=0; i<criteria.length; i++) {
-        //remove indenting
+    for (let i=0; i<criteria.length; i++) {
+        // Remove indenting
         criteria[i].style.paddingLeft = "0px";
 
-        //get parentId
+        // Get parentId
         let parentId = criteria[i].children[1].value;
         if (parentId !== "") {
-            //find parentId row's padding left indent
+            // Find parentId row's padding left indent
             let parentRowIndent = document.getElementById('row.' + parseInt(parentId)).style.paddingLeft;
             if (parentRowIndent === "") {
                 parentRowIndent = "0px";
             }
-            //set this rows padding left indent + 20px
+            // Set this rows padding left indent + 20px
             let newPaddingLeft = parseInt(parentRowIndent) + 100;
             criteria[i].style.paddingLeft = newPaddingLeft + 'px';
         }
@@ -500,144 +697,6 @@ async function addCriteria(parentNode, criterion=null) {
     reindentCriteria();
 }
 
-// Acts as the main method and controller.
-async function renderHTML(beforeNode, queryTemplate=null) {
-    // If queryTemplate is not null, then we are wiping the current queryBuilder form so that it can be rendered again
-    // with the queryTemplate data.
-    if (queryTemplate !== null) {
-        let qbForm = document.getElementById('queryBuilder');
-        qbForm.parentNode.removeChild(qbForm);
-        // $('#queryBuilder').remove();
-    }
-
-    var form = document.createElement('form');
-    form.setAttribute('id', 'queryBuilder');
-    form.setAttribute('name', 'queryBuilder');
-    form.setAttribute('action', scriptVariables.formSubmissionEndpoint);
-    form.setAttribute('method', scriptVariables.formMethod);
-
-    var el = null;
-
-    el = renderStatementButtonsHTML();
-    if (el !== undefined) {
-        form.appendChild(el);
-    }
-
-    // Query Templates
-    if (scriptVariables.createQueryTemplates) {
-        let queryTemplatesHtml = await renderQueryTemplatesHTML();
-        form.appendChild(queryTemplatesHtml.content.firstElementChild);
-    }
-
-    // Available Columns
-    if (scriptVariables.createAvailableCollumns) {
-        let columnsHtml = await renderAvailableColumnsHTML();
-        form.appendChild(columnsHtml.content.firstElementChild);
-    }
-
-    // Schemas
-    if (scriptVariables.createSchemas) {
-        let schemaHtml = await renderSchemaHTML();
-        form.appendChild(schemaHtml.content.firstElementChild);
-    }
-
-    // Tables
-    if (scriptVariables.createTables) {
-        let tablesHtml = await renderTablesHTML();
-        form.appendChild(tablesHtml.content.firstElementChild);
-    }
-
-    // Joins
-    if (scriptVariables.createJoins) {
-        let joinsHtml = await renderJoinsHTML();
-        form.appendChild(joinsHtml.content.firstElementChild);
-    }
-
-    // Criteria
-    if (scriptVariables.createCriteria) {
-        let criteriaHtml = await renderCriteriaHTML();
-        form.appendChild(criteriaHtml.content.firstElementChild);
-    }
-
-    // Other Options
-    if (scriptVariables.createDistinct || scriptVariables.createSuppressNulls ||
-        scriptVariables.limitChoices.length > 0 || scriptVariables.offsetChoices.length > 0) {
-        let otherOptionsHtml = await renderOtherOptionsHTML();
-        form.appendChild(otherOptionsHtml.content.firstElementChild);
-    }
-    // el = renderOtherOptionsHTML();
-    // if (el !== undefined)
-    //     form.appendChild(el);
-
-    if (beforeNode === undefined || beforeNode === null) {
-        document.body.appendChild(form);
-    } else {
-        document.getElementById(beforeNode).appendChild(form);
-    }
-
-    // Now that the new form has been rendered, hide all divs except the landing divs listed in scriptVariables.
-    if (scriptVariables['landingDivs'] !== null) {
-        hideAllDivsExcept(scriptVariables['landingDivs']);
-    }
-
-    // Now that the new form has been rendered, populate the form with the queryTemplate data if the queryTemplate is not
-    // null.
-    if (queryTemplate !== null) {
-        Array.from(document.getElementById('queryTemplates').children).forEach((child) => {
-            child.selected = (child.value === queryTemplate.name);
-        });
-
-        // todo add schema into the SelectStatement class so that it can be added here based on the queryTemplate data.
-        document.getElementById('schemas').value = 'null';
-
-        // get table and all unique join target tables...add them to the tables array.
-        let tables = [];
-        tables.push(queryTemplate.table);
-        queryTemplate.joins.forEach((join) => {
-            if (! tables.includes(join.targetTable)) {
-                tables.push(join.targetTable);
-            }
-        });
-        syncSelectOptionsWithDataModel('table', tables);
-        Array.from(document.getElementById('table').children).forEach((child) => {
-            child.selected = true;
-        });
-
-        function populateFormWithQueryTemplateData() {
-            getQueryTemplates();
-            syncSelectOptionsWithDataModel('schemas', ['null']);
-            // table columns should update automatically after tables array is updated.  Update selected columns.
-            // scriptVariables.selectedColumns = queryTemplate.columns;
-            // syncSelectOptionsWithDataModel('columns', scriptVariables.selectedColumns);
-            syncSelectOptionsWithDataModel('columns', queryTemplate.columns);
-
-            // update criteria...call reindent criteria method.
-            queryTemplate.criteria.forEach((criterion) => {
-                let parentCriteriaId = criterion.parentId;
-                let parentNode = null;
-                if (parentCriteriaId !== undefined && parentCriteriaId !== null) {
-                    parentNode = document.getElementById(`row.${parentCriteriaId}`);
-                }
-                addCriteria(parentNode, criterion);
-            });
-
-            // Get joins and add to joins array
-            queryTemplate.joins.forEach((join) => {
-                addJoin(join);
-            });
-
-            // Update other options.
-            document.getElementById('distinct').checked = queryTemplate.distinct;
-            document.getElementById('suppressNulls').checked = queryTemplate.suppressNulls;
-            document.getElementById('limit').value = queryTemplate.limit;
-            document.getElementById('offset').value = queryTemplate.offset;
-        }
-
-        // Now that we have the tables, get the available columns.
-        getAvailableColumns('null', tables, populateFormWithQueryTemplateData);
-    }
-}
-
 async function loadHtmlFragment(filePath) {
     let result = await fetch(filePath);
     if (result.ok) {
@@ -645,60 +704,58 @@ async function loadHtmlFragment(filePath) {
     }
 }
 
-// parentId:  the id of the parent element to be used in eval() interpolation.  This is the element that will receive the
-//            user choices from the child modal.
-// parentModal:  the id of the parent modal that contains the parentId to be used in eval() interpolation.  This is only
-//               interpolated so that the parentModal can be shown when the child modal is closed.
-async function addColumnMembersHTML(parentId=null) {
-    // Get id to use in eval() interpolation.
+// Returns the next modal id based on the QueryBuilder modals already existing in the DOM.
+function getNextModalId() {
     let id = 0;
-    $('#modals div').each(function() {
-        if (this.id.includes('cm-modal-')) {
-            let idLength = $(this)[0].id.length;
-            let thisId = parseInt($(this)[0].id[idLength - 1]);
+    let modalDivs = document.getElementById('modals').querySelectorAll('div');
+    modalDivs.forEach((div) => {
+        if (div.id.includes('cm-modal-') || div.id.includes('sq-modal-')) {
+            let idLength = div.id.length;
+            let thisId = parseInt(div.id[idLength - 1]);
             if (thisId >= id) {
                 id = thisId + 1;
             }
         }
     });
 
-    // let element = document.getElementById(htmlId);
+    return id;
+}
+
+// parentId:  the HTML id of the parent of this column members' div that will be used in eval() for interpolation.
+async function addColumnMembersHTML(parentId=null) {
+    // Get id to use in eval() interpolation.
+    let id = getNextModalId();
+
     let element = document.getElementById('modals');
+
     let columnMembersHTML = await loadHtmlFragment(scriptVariables.htmlFragmentUrl + 'column-members.html');
     columnMembersHTML = eval(columnMembersHTML);
-    element.insertAdjacentHTML('afterend', columnMembersHTML);
-    $(`#cm-modal-${id}`).show();
+    element.insertAdjacentHTML('beforeend', columnMembersHTML);
+
+    document.getElementById(`#cm-modal-${id}`).style.display = '';
 }
 
 // parentId:  The id of the parent HTML element to be used in eval() interpolation.
-// htmlElToHide:  The id of the HTML element to hide.  Defaults to null, which will not hide an element.
+// parentModalId:  The id of the HTML element to hide.  Defaults to null, which will not hide an element.
 async function addSubQueryHTML(parentId, parentModalId=null) {
     // Get id to use in eval() interpolation.
-    let id = 0;
-    $('#modals div').each(function() {
-        if (this.id.includes('cm-modal-') || this.id.includes('sq-modal-')) {
-            let idLength = $(this)[0].id.length;
-            let thisId = parseInt($(this)[0].id[idLength - 1]);
-            if (thisId >= id) {
-                id = thisId + 1;
-            }
-        }
-    });
+    let id = getNextModalId();
 
-    // Get subQuery Container div.
+    let subQueryContainerHTML = await loadHtmlFragment(scriptVariables.htmlFragmentUrl + 'subquery-container.html');
+    subQueryContainerHTML = eval(subQueryContainerHTML);
     let element = document.getElementById('modals');
-    let subQueryHTML = await loadHtmlFragment(scriptVariables.htmlFragmentUrl + 'subquery-container.html');
-    subQueryHTML = eval(subQueryHTML);
-    element.insertAdjacentHTML('afterend', subQueryHTML);
+    element.insertAdjacentHTML('beforeend', subQueryContainerHTML);
 
     // Add query template options to select element.
     addSelectOptions(`sq-modal-${id}-query-templates`, getOptionsAsArray('queryTemplates'));
 
+    // Hide parent modal (if it exists)
     if (parentModalId != null) {
-        $('#' + parentModalId).hide();
+        document.getElementById(parentModalId).style.display = 'none';
     }
 
-    $(`#sq-modal-${id}`).show();
+    // Show this subquery modal
+    document.getElementById(`sq-modal-${id}`).style.display = '';
 }
 
 // htmlId:  The HTML id of the subQuery modal to be used in the id of the new subQuery parameters.
@@ -737,12 +794,11 @@ function setTargetElementValueToSubQuery(subQueryHtmlId, targetHtmlId, targetHtm
     let subQueryName = document.getElementById(subQueryHtmlId + '-query-templates').value;
 
     // get all parameters (name and value)
-    // let criteriaNames = $(`label[id^="${subQueryHtmlId}-parameter-"]`);
-    let parameterNames = $(`[id^="${subQueryHtmlId}-parameter-name"]`);
-    let parameterValues = $(`[id^="${subQueryHtmlId}-parameter-value"]`);
+    let parameterNames = document.getElementsByName(`${subQueryHtmlId}-parameter-name`);
+    let parameterValues = document.getElementsByName(`${subQueryHtmlId}-parameter-value`);
     let subQueryCall = `$${subQueryName}(`;
 
-    for (var i=0; i<parameterNames.length; i++) {
+    for (let i=0; i<parameterNames.length; i++) {
         let paramName = parameterNames[i].innerHTML;
         let paramValue = parameterValues[i].value;
         subQueryCall += `${paramName}=${paramValue};`;
@@ -766,10 +822,11 @@ function setTargetElementValueToSubQuery(subQueryHtmlId, targetHtmlId, targetHtm
         console.error('Unrecognized target element node name of ' + target.nodeName);
     }
 
-    $('#' + subQueryHtmlId).remove();
+    let subQueryEl = document.getElementById(subQueryHtmlId);
+    subQueryEl.parentNode.removeChild(subQueryEl);
 
     if (targetHtmlParentId != null) {
-        $('#' + targetHtmlParentId).show();
+        document.getElementById(targetHtmlParentId).style.display = '';
     }
 }
 
@@ -779,8 +836,8 @@ function fillArrayProperty(arrayPropertyName, data, clearPropertyArray=true) {
         scriptVariables[arrayPropertyName] = [];
     }
 
-    for (var i=0; i<data.length; i++) {
-        for (var key in data[i]) {
+    for (let i=0; i<data.length; i++) {
+        for (let key in data[i]) {
             scriptVariables[arrayPropertyName].push(data[i][key]);
         }
     }
@@ -788,8 +845,8 @@ function fillArrayProperty(arrayPropertyName, data, clearPropertyArray=true) {
 
 function deleteArrayPropertyMembers(arrayPropertyName, indecesToDelete) {
     let newArray = scriptVariables[arrayPropertyName].slice();
-    for (var i in indecesToDelete) {
-        for (var key in indecesToDelete[i]) {
+    for (let i in indecesToDelete) {
+        for (let key in indecesToDelete[i]) {
             let indexToDelete = indecesToDelete[i][key];
             newArray.splice(indexToDelete, 1);
         }
@@ -803,7 +860,7 @@ function moveArrayPropertyItem(arrayPropertyName, index, direction) {
         if (index === 0) return null;
 
         // get destination item
-        var itemToDelete = this[arrayPropertyName][index - 1];
+        let itemToDelete = this[arrayPropertyName][index - 1];
 
         // set destination item to current item
         this[arrayPropertyName][index - 1] = this[arrayPropertyName][index];
@@ -814,10 +871,10 @@ function moveArrayPropertyItem(arrayPropertyName, index, direction) {
         if (index === this[arrayPropertyName].length - 1) return null;
 
         // get destination item
-        var itemToDelete = this[arrayPropertyName][index + 1];
+        let itemToDelete = this[arrayPropertyName][index + 1];
 
         // set destination item to current item
-        this[arrayPropertyName][index + 1] = this[arrayPropertyNames][index];
+        this[arrayPropertyName][index + 1] = this[arrayPropertyName][index];
 
         // insert destination item at current item's index
         this[arrayPropertyName][index] = itemToDelete;
@@ -828,14 +885,14 @@ function createNewElement(type, attributesMap, dataProperty=null, innerHtml=null
     if (this[dataProperty] === null) return null;
 
     let select = document.createElement(type);
-    for (var key in attributesMap) {
+    for (let key in attributesMap) {
         let attributeName = key;
         let attributeValue = attributesMap[key];
         select.setAttribute(attributeName, attributeValue);
     }
 
     if (dataProperty !== null) {
-        for (var item in dataProperty) {
+        for (let item in dataProperty) {
             let option = document.createElement('option');
             option.value = dataProperty[item];
             option.innerHTML = dataProperty[item];
@@ -865,240 +922,49 @@ function hideAllDivsExcept(divsToShow) {
 
     // Todo:  condense these two for loops into one for loop.
     // Hide all divs in array above.
-    for (var i=0; i<divs.length; i++) {
-        $('#' + divs[i]).hide(scriptVariables['phaseOutMilliseconds'])
+    for (let i=0; i<divs.length; i++) {
+        document.getElementById(divs[i]).style.display = 'none';
     }
 
     // Show all divs in divsToShow array.
-    for (var i=0; i<divsToShow.length; i++) {
-        $('#' + divsToShow[i]).show(scriptVariables['phaseOutMilliseconds']);
+    for (let i=0; i<divsToShow.length; i++) {
+        document.getElementById(divsToShow[i]).style.display = '';
     }
 }
 
-function renderStatementButtonsHTML() {
-    let queryTemplatesButton = null;
-    let schemasAndTablesButton = null;
-    let joinsButton = null;
-    let columnsButton = null;
-    let criteriaButton = null;
-    let otherOptionsButton = null;
-    let saveAsQueryTemplateButton = null;
-
-    if (scriptVariables['queryTemplates'] !== null) {
-        let attributesMap = {
-            'id': 'queryTemplatesButton',
-            'name': 'queryTemplatesButton',
-            'class': 'query-template-button',
-            'type': 'button'
-        };
-        queryTemplatesButton = createNewElement('button', attributesMap);
-        queryTemplatesButton.innerHTML = 'Query Templates';
-        queryTemplatesButton.onclick = function() {
-            hideAllDivsExcept(['queryTemplatesDiv']);
-        };
+function saveStatementAsQueryTemplate() {
+    // Try building JSON to be added to request's body.
+    // If there is an exception, display message and return.
+    let requestData;
+    try {
+        requestData = buildRequestData();
+    } catch (ex) {
+        alert(ex);
+        return;
     }
 
-    if (scriptVariables.createSchemas || scriptVariables.createTables) {
-        let attributesMap = {
-            'id': 'schemasButton',
-            'name': 'schemasButton',
-            'class': 'schemas-button',
-            'type': 'button'
-        };
-        schemasAndTablesButton = createNewElement('button', attributesMap);
-        schemasAndTablesButton.innerHTML = 'Schemas & Tables';
-        schemasAndTablesButton.onclick = function() {
-            hideAllDivsExcept(['schemasDiv', 'tablesDiv']);
-        };
-    }
-
-    if (scriptVariables.createJoins) {
-        let attributesMap = {
-            'id': 'joinsButton',
-            'name': 'joinsButton',
-            'class': 'joins-button',
-            'type': 'button'
-        };
-        joinsButton = createNewElement('button', attributesMap);
-        joinsButton.innerHTML = 'Joins';
-        joinsButton.onclick = function() {
-            hideAllDivsExcept(['joinsDiv']);
-        };
-    }
-
-    if (scriptVariables['availableColumns'] !== null) {
-        let attributesMap = {
-            'id': 'columnsButton',
-            'name': 'columnsButton',
-            'class': 'columns-button',
-            'type': 'button'
-        };
-        columnsButton = createNewElement('button', attributesMap);
-        columnsButton.innerHTML = 'Columns';
-        columnsButton.onclick = function() {
-            hideAllDivsExcept(['tableColumns']);
-        };
-    }
-
-    if (scriptVariables.createCriteria) {
-        let attributesMap = {
-            'id': 'criteriaButton',
-            'name': 'criteriaButton',
-            'class': 'criteria-button',
-            'type': 'button'
-        };
-        criteriaButton = createNewElement('button', attributesMap);
-        criteriaButton.innerHTML = 'Criteria';
-        criteriaButton.onclick = function() {
-            hideAllDivsExcept(['criteria']);
-        };
-    }
-
-    if (scriptVariables.createDistinct !== null || scriptVariables['orderByColumns'] !== null || scriptVariables['groupByColumns'] !== null
-        || scriptVariables['limitChoices'] !== null || scriptVariables['offsetChoices'] !== null || scriptVariables.createSuppressNulls !== null) {
-        let attributesMap = {
-            'id': 'criteriaButton',
-            'name': 'criteriaButton',
-            'class': 'criteria-button',
-            'type': 'button'
-        };
-        otherOptionsButton = createNewElement('button', attributesMap);
-        otherOptionsButton.innerHTML = 'Other Options';
-        otherOptionsButton.onclick = function() {
-            hideAllDivsExcept(['otherOptionsDiv']);
-        };
-    }
-
-    let attributesMap = {
-        'id': 'runQuery',
-        'name': 'runQuery',
-        'type': 'button',
-        'class': 'run-query-button'
-    };
-    let runQueryButton = createNewElement('button', attributesMap, null);
-    runQueryButton.innerHTML = 'Run Query';
-    runQueryButton.onclick = function () {
-        scriptVariables['formSubmissionFunction']();
-    };
-
-    if (scriptVariables.saveAsQueryTemplate) {
-        let attributesMap = {
-            'id': 'saveAsQueryTemplate',
-            'name': 'saveAsQueryTemplate',
-            'type': 'button',
-            'class': 'save-as-query-template-button'
-        };
-        saveAsQueryTemplateButton = createNewElement('button', attributesMap, null);
-        saveAsQueryTemplateButton.innerHTML = 'Save As Query Template';
-        saveAsQueryTemplateButton.onclick = function () {
-            let requestData;
-            try {
-                requestData = buildRequestData();
-            } catch (ex) {
-                alert(ex);
-                return;
-            }
-
-            sendAjaxRequest(scriptVariables.saveAsQueryTemplateEndpoint,
-                requestData,
-                "POST",
-                function() {
-                    alert('Query Saved Successfully!');
-                },
-                null,
-                'application/json');
-        };
-    }
-
-    let div = createNewElement('div', {
-        'id': 'statementButtonsDiv',
-        'class': 'statement-buttons-div'
-    });
-    if (queryTemplatesButton !== null) div.appendChild(queryTemplatesButton);
-    if (schemasAndTablesButton !== null) div.appendChild(schemasAndTablesButton);
-    if (joinsButton !== null) div.appendChild(joinsButton);
-    if (columnsButton !== null) div.appendChild(columnsButton);
-    if (criteriaButton !== null) div.appendChild(criteriaButton);
-    if (otherOptionsButton !== null) div.appendChild(otherOptionsButton);
-    if (saveAsQueryTemplateButton !== null) div.appendChild(saveAsQueryTemplateButton);
-    div.appendChild(runQueryButton);
-
-    return div;
-}
-
-async function renderQueryTemplatesHTML() {
-    let htmlTemplate = document.createElement('template');
-    let queryTemplatesHtml = await loadHtmlFragment(scriptVariables.htmlFragmentUrl + 'query-templates.html');
-    queryTemplatesHtml = eval(queryTemplatesHtml);
-    htmlTemplate.innerHTML = queryTemplatesHtml;
-
-    htmlTemplate.content.getElementById('queryTemplates').onchange = function () {
-        let queryTemplateId = document.getElementById('queryTemplates').value;
-
-        getQueryTemplateById(queryTemplateId, async function(queryTemplate) {
-            await renderHTML(scriptVariables.renderHtmlAnchorElement, queryTemplate);
-        });
-    };
-
-    return htmlTemplate;
-}
-
-async function renderSchemaHTML() {
-    let htmlTemplate = document.createElement('template');
-    let schemasHtml = await loadHtmlFragment(scriptVariables.htmlFragmentUrl + 'schemas.html');
-    schemasHtml = eval(schemasHtml);
-    htmlTemplate.innerHTML = schemasHtml;
-
-    htmlTemplate.content.getElementById('schemasDiv').onchange = function () {
-        let schema = document.getElementById('schemas').value;
-        if (schema !== "") {
-            getTables(schema);
-        } else {
-            alert('Please select a schema before retrieving tables');
+    // If there are no exceptions in building the JSON above, then send data to endpoint.
+    let config = {
+        method: 'POST',
+        body: requestData,
+        headers: {
+            'Content-Type': 'application/json'
         }
     };
 
-    return htmlTemplate;
-}
-
-async function renderTablesHTML() {
-    let htmlTemplate = document.createElement('template');
-    let tablesHtml = await loadHtmlFragment(scriptVariables.htmlFragmentUrl + 'tables.html');
-    let tablesSize = scriptVariables.tablesSize;
-    tablesHtml = eval(tablesHtml);
-    htmlTemplate.innerHTML = tablesHtml;
-
-    htmlTemplate.content.getElementById('table').onchange = function () {
-        let schema = document.getElementById('schemas').value;
-        let tables = getOptionsAsArray('table', 'text', true);
-        if (schema !== "" && tables.length !== 0) {
-            getAvailableColumns(schema, tables);
-        } else {
-            alert('Please select a schema before retrieving tables');
-        }
-    };
-
-    return htmlTemplate;
-}
-
-async function renderJoinsHTML() {
-    let htmlTemplate = document.createElement('template');
-    let joinsHtml = await loadHtmlFragment(scriptVariables.htmlFragmentUrl + 'joins-container.html');
-    joinsHtml = eval(joinsHtml);
-    htmlTemplate.innerHTML = joinsHtml;
-
-    htmlTemplate.content.getElementById('addJoin').onclick = function () {
-        addJoin();
-    };
-
-    return htmlTemplate;
+    fetch(scriptVariables.saveAsQueryTemplateEndpoint, config)
+        .then(response => response.ok)
+        .then(response => alert('Query Saved Successfully'))
+        .catch(error => alert(error));
 }
 
 function getJoinsDivMaxId() {
     let maxId = 0;
-    $('#joinsDiv div').each(function() {
-        let idLength = $(this)[0].id.length;
-        let id = parseInt($(this)[0].id[idLength - 1]);
+    let joinsDiv = document.getElementById('joinsDiv');
+    let childJoinDivs = joinsDiv.querySelectorAll('div');
+    childJoinDivs.forEach((childJoinDiv) => {
+        let idLength = childJoinDiv.id.length;
+        let id = parseInt(childJoinDiv.id[idLength - 1]);
         if (id >= maxId) {
             maxId = id + 1;
         }
@@ -1277,7 +1143,7 @@ function addParentAndColumnJoinColumns(maxId, parentJoinColumn=null, targetJoinC
 function getSelectedOption(node) {
     let options = node.children;
     let selectedOption = null;
-    for (var i=0; i<options.length; i++) {
+    for (let i=0; i<options.length; i++) {
         if (options[i].selected === true) {
             selectedOption = options[i];
         }
@@ -1384,7 +1250,7 @@ function clearOptions(HtmlId) {
         if (selectElement.options.length === 0)
             return;
 
-        for (var i=selectElement.options.length-1; i>=0; i--) {
+        for (let i=selectElement.options.length-1; i>=0; i--) {
             selectElement.remove(i);
         }
     }
@@ -1425,7 +1291,7 @@ function addOptionsToSelectElement(htmlId, data) {
 function getSelectedOptionsAsJSON(HtmlId, textOrIndeces='text') {
     let results = [];
     let select = document.getElementById(HtmlId);
-    for (var i=0; i<select.options.length; i++) {
+    for (let i=0; i<select.options.length; i++) {
         if (select.options[i].selected) {
             if (textOrIndeces === 'text') {
                 let obj = {};
@@ -1444,7 +1310,7 @@ function getSelectedOptionsAsJSON(HtmlId, textOrIndeces='text') {
 function getOptionsAsArray(HtmlId, textOrIndeces='text', selectedOptionsOnly=false) {
     let results = [];
     let select = document.getElementById(HtmlId);
-    for (var i=0; i<select.options.length; i++) {
+    for (let i=0; i<select.options.length; i++) {
         if (selectedOptionsOnly) {
             if (select.options[i].selected) {
                 (textOrIndeces === 'text') ? results.push(select.options[i].text) : results.push(i);
@@ -1457,17 +1323,14 @@ function getOptionsAsArray(HtmlId, textOrIndeces='text', selectedOptionsOnly=fal
 }
 
 function getParentTable() {
-    let parentTables = $('#table option:selected').map(function(){
-        return this.value;
-    }).get();
-
+    let parentTables = getOptionsAsArray('table', 'text', true);
     let targetJoinTables = [];
 
     let targetJoinTablesEls = document.getElementsByClassName('join-row');
-    for (var i=0; i<targetJoinTablesEls.length; i++) {
-        for (var j=0; j<targetJoinTablesEls[i].children.length; j++) {
+    for (let i=0; i<targetJoinTablesEls.length; i++) {
+        for (let j=0; j<targetJoinTablesEls[i].children.length; j++) {
             let element = targetJoinTablesEls[i].children[j];
-            var rex = /joins\d\.targetTable/;
+            let rex = /joins\d\.targetTable/;
             if (rex.test(element.id)) {
                 targetJoinTables.push(element.value);
             }
@@ -1483,7 +1346,7 @@ function getParentTable() {
         You should have one less target join tables than the number of tables you choose.`
     }
 
-    for (var i=0; i<parentTables.length; i++) {
+    for (let i=0; i<parentTables.length; i++) {
         if (! targetJoinTables.includes(parentTables[i])) {
             return parentTables[i];
         }
@@ -1492,83 +1355,67 @@ function getParentTable() {
 
 // returnJson:  true (the default) to return the form data as JSON.  False to return the form data as x-www-form-urlencoded.
 // Throws exception if getParentTable throws exception.
-function buildRequestData(returnJson=true) {
-    if (returnJson) {
-        let json = {};
-        json.table = getParentTable();
-        json.columns = getOptionsAsArray('columns', 'text', false);
+function buildRequestData() {
+    let json = {};
+    json.table = getParentTable();
+    json.columns = getOptionsAsArray('columns', 'text', false);
 
-        // Criteria
-        let criteriaDivs = document.getElementsByClassName('criteria-row');
-        let criteriaArray = [];
-        if (criteriaDivs !== undefined) {
-            for (let i=0; i<criteriaDivs.length; i++) {
-                let divId = criteriaDivs[i].id.slice(-1);
-                let criteriaJson = {};
-                criteriaJson.id = document.getElementById(`criteria${divId}.id`).value;
-                criteriaJson.parentId = document.getElementById(`criteria${divId}.parentId`).value;
-                criteriaJson.conjunction = document.getElementById(`criteria${divId}.conjunction`).value;
-                criteriaJson.column = document.getElementById(`criteria${divId}.column`).value;
-                criteriaJson.operator = document.getElementById(`criteria${divId}.operator`).value;
-                criteriaJson.filter = document.getElementById(`criteria${divId}.filter`).value;
-                criteriaArray.push(criteriaJson);
-            }
+    // Criteria
+    let criteriaDivs = document.getElementsByClassName('criteria-row');
+    let criteriaArray = [];
+    if (criteriaDivs !== undefined) {
+        for (let i=0; i<criteriaDivs.length; i++) {
+            let divId = criteriaDivs[i].id.slice(-1);
+            let criteriaJson = {};
+            criteriaJson.id = document.getElementById(`criteria${divId}.id`).value;
+            criteriaJson.parentId = document.getElementById(`criteria${divId}.parentId`).value;
+            criteriaJson.conjunction = document.getElementById(`criteria${divId}.conjunction`).value;
+            criteriaJson.column = document.getElementById(`criteria${divId}.column`).value;
+            criteriaJson.operator = document.getElementById(`criteria${divId}.operator`).value;
+            criteriaJson.filter = document.getElementById(`criteria${divId}.filter`).value;
+            criteriaArray.push(criteriaJson);
         }
-        json.criteria = criteriaArray;
-
-        // Joins
-        let joinsDivs = document.getElementsByClassName('join-row');
-        let joinsArray = [];
-        if (joinsDivs !== undefined) {
-            for (let i=0; i<joinsDivs.length; i++) {
-                let joinId = joinsDivs[i].id.slice(-1);
-                let joinJson = {};
-                joinJson.joinType = document.getElementById(`joins${joinId}.joinType`).value;
-                joinJson.parentTable = document.getElementById(`joins${joinId}.parentTable`).value;
-                joinJson.targetTable = document.getElementById(`joins${joinId}.targetTable`).value;
-
-                let parentJoinColumns = [];
-                let parentJoinColumnsEls = document.getElementsByName(`joins[${joinId}].parentJoinColumns`);
-                parentJoinColumnsEls.forEach((element) => {
-                    parentJoinColumns.push(element.value);
-                });
-                joinJson.parentJoinColumns = parentJoinColumns;
-
-                let targetJoinColumns = [];
-                let targetJoinColumnsEls = document.getElementsByName(`joins[${joinId}].targetJoinColumns`);
-                targetJoinColumnsEls.forEach((element) => {
-                    targetJoinColumns.push(element.value);
-                });
-                joinJson.targetJoinColumns = targetJoinColumns;
-
-                joinsArray.push(joinJson);
-            }
-
-            json.joins = joinsArray;
-        }
-
-        // Other Options
-        json.distinct = document.getElementById('distinct').checked;
-        json.suppressNulls = document.getElementById('suppressNulls').checked;
-        json.limit = document.getElementById('limit').value;
-        json.offset = document.getElementById('offset').value;
-
-        return JSON.stringify(json);
-    } else {
-        // Serialize form's select and input elements except for table select element, which is added manually below.
-        let requestData = $('#queryBuilder select, #queryBuilder input').not('#table').serialize();
-
-        // Add selected columns manually to request data.
-        let selectedColumns = document.getElementById('columns').options;
-        for (var i=0; i<selectedColumns.length; i++) {
-            requestData += '&columns=' + selectedColumns[i].value;
-        }
-
-        // Add parent table as 'table' request attribute.
-        let parentTable = getParentTable();
-        requestData += '&table=' + parentTable;
-        return requestData;
     }
+    json.criteria = criteriaArray;
+
+    // Joins
+    let joinsDivs = document.getElementsByClassName('join-row');
+    let joinsArray = [];
+    if (joinsDivs !== undefined) {
+        for (let i=0; i<joinsDivs.length; i++) {
+            let joinId = joinsDivs[i].id.slice(-1);
+            let joinJson = {};
+            joinJson.joinType = document.getElementById(`joins${joinId}.joinType`).value;
+            joinJson.parentTable = document.getElementById(`joins${joinId}.parentTable`).value;
+            joinJson.targetTable = document.getElementById(`joins${joinId}.targetTable`).value;
+
+            let parentJoinColumns = [];
+            let parentJoinColumnsEls = document.getElementsByName(`joins[${joinId}].parentJoinColumns`);
+            parentJoinColumnsEls.forEach((element) => {
+                parentJoinColumns.push(element.value);
+            });
+            joinJson.parentJoinColumns = parentJoinColumns;
+
+            let targetJoinColumns = [];
+            let targetJoinColumnsEls = document.getElementsByName(`joins[${joinId}].targetJoinColumns`);
+            targetJoinColumnsEls.forEach((element) => {
+                targetJoinColumns.push(element.value);
+            });
+            joinJson.targetJoinColumns = targetJoinColumns;
+
+            joinsArray.push(joinJson);
+        }
+
+        json.joins = joinsArray;
+    }
+
+    // Other Options
+    json.distinct = document.getElementById('distinct').checked;
+    json.suppressNulls = document.getElementById('suppressNulls').checked;
+    json.limit = document.getElementById('limit').value;
+    json.offset = document.getElementById('offset').value;
+
+    return JSON.stringify(json);
 }
 
 
@@ -1586,9 +1433,7 @@ function buildRequestData(returnJson=true) {
         modalEl.parentNode.removeChild(modalEl);
 
         let parentEl = document.getElementById(parentId);
-        parentEl.parentNode.removeChild(parentEl);
-        // $('#' + modalId).remove();
-        // $('#' + parentId).show();
+        parentEl.style.display = '';
     }
 
     // modalHtmlId:  the HTML id of the modal.
@@ -1682,7 +1527,7 @@ function buildRequestData(returnJson=true) {
     function adjustColumnMembersCurrentOffset(adjustment, modalHtmlId) {
         let currentOffsetElement = getModalCurrentOffset(modalHtmlId);
         let currentOffsetValue = parseInt(currentOffsetElement.value);
-        let newOffsetValue = currentOffsetValue += adjustment;
+        let newOffsetValue = currentOffsetValue + adjustment;
         if (newOffsetValue < 0) {
             newOffsetValue = 0;
         }
@@ -1725,16 +1570,16 @@ function buildRequestData(returnJson=true) {
 
 renderHTML(scriptVariables.renderHtmlAnchorElement);
 
-$(document).ready(function() {
-    setTimeout(function() {
-        if (scriptVariables['getQueryTemplateEndpoint'] !== null) {
-            getQueryTemplates();
-        }
-
-        if (scriptVariables['getSchemaEndpoint'] !== null) {
-            getSchemas();
-        } else if (scriptVariables['getTablesEndpoint'] !== null) {
-            getTables();
-        }
-    }, scriptVariables['phaseOutMilliseconds'] + 200);
-});
+// $(document).ready(function() {
+//     setTimeout(function() {
+//         if (scriptVariables['getQueryTemplateEndpoint'] !== null) {
+//             getQueryTemplates();
+//         }
+//
+//         if (scriptVariables['getSchemaEndpoint'] !== null) {
+//             getSchemas();
+//         } else if (scriptVariables['getTablesEndpoint'] !== null) {
+//             getTables();
+//         }
+//     }, scriptVariables['phaseOutMilliseconds'] + 200);
+// });

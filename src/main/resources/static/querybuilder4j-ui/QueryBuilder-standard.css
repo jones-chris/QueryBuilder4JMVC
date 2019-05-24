@@ -11,7 +11,7 @@
     text-align: center;
     padding-top: 20px;
     z-index: 3;
-    display: none;
+    /*display: none;*/
     padding-top: 100px;
     position: fixed;
     left: 0;
