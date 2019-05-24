@@ -106,22 +106,13 @@ const internalUseVariables = {
 // Main JavaScript Methods
 //===============================================================================================
 
+// async function fetchDataAsJson(url, config={}) {
+//     let response = await fetch(url, config);
+//     return response.json();
+// }
+
 // Acts as the main method and controller.
 async function renderHTML(beforeNode, queryTemplate=null) {
-    document.addEventListener('DOMContentLoaded', function() {
-        setTimeout(function() {
-            if (scriptVariables.getQueryTemplateEndpoint !== null) {
-                getQueryTemplates();
-            }
-
-            if (scriptVariables.getSchemaEndpoint !== null) {
-                getSchemas();
-            } else if (scriptVariables.getTablesEndpoint !== null) {
-                getTables();
-            }
-        }, scriptVariables.phaseOutMilliseconds + 200);
-    });
-
     // If queryTemplate is not null, then we are wiping the current queryBuilder form so that it can be rendered again
     // with the queryTemplate data.
     if (queryTemplate !== null) {
@@ -213,12 +204,12 @@ async function renderHTML(beforeNode, queryTemplate=null) {
             child.selected = true;
         });
 
-        function populateFormWithQueryTemplateData() {
+        // Now that we have the tables, get the available columns.
+        getAvailableColumns('null', tables, function() {
             getQueryTemplates();
             syncSelectOptionsWithDataModel('schemas', ['null']);
+
             // table columns should update automatically after tables array is updated.  Update selected columns.
-            // scriptVariables.selectedColumns = queryTemplate.columns;
-            // syncSelectOptionsWithDataModel('columns', scriptVariables.selectedColumns);
             syncSelectOptionsWithDataModel('columns', queryTemplate.columns);
 
             // update criteria...call reindent criteria method.
@@ -241,10 +232,17 @@ async function renderHTML(beforeNode, queryTemplate=null) {
             document.getElementById('suppressNulls').checked = queryTemplate.suppressNulls;
             document.getElementById('limit').value = queryTemplate.limit;
             document.getElementById('offset').value = queryTemplate.offset;
-        }
+        });
+    }
 
-        // Now that we have the tables, get the available columns.
-        getAvailableColumns('null', tables, populateFormWithQueryTemplateData);
+    if (scriptVariables.getQueryTemplateEndpoint !== null) {
+        await getQueryTemplates();
+    }
+
+    if (scriptVariables.getSchemaEndpoint !== null) {
+        await getSchemas();
+    } else if (scriptVariables.getTablesEndpoint !== null) {
+        await getTables();
     }
 }
 
@@ -415,7 +413,7 @@ function sendAjaxRequest(endpoint, data, method, successCallbackFunction, doneCa
     .finally(doneCallbackFunction());
 }
 
-function getQueryTemplates() {
+async function getQueryTemplates() {
     fetch(scriptVariables.getQueryTemplateEndpoint, {
         method: 'GET',
     }).then(response => response.json())
@@ -722,17 +720,16 @@ function getNextModalId() {
 }
 
 // parentId:  the HTML id of the parent of this column members' div that will be used in eval() for interpolation.
-async function addColumnMembersHTML(parentId=null) {
+function addColumnMembersHTML(parentId=null) {
     // Get id to use in eval() interpolation.
     let id = getNextModalId();
 
     let element = document.getElementById('modals');
 
-    let columnMembersHTML = await loadHtmlFragment(scriptVariables.htmlFragmentUrl + 'column-members.html');
-    columnMembersHTML = eval(columnMembersHTML);
-    element.insertAdjacentHTML('beforeend', columnMembersHTML);
-
-    document.getElementById(`#cm-modal-${id}`).style.display = '';
+    loadHtmlFragment(scriptVariables.htmlFragmentUrl + 'column-members.html')
+        .then(data => eval(data))
+        .then(data => element.insertAdjacentHTML('beforeend', data))
+        .then(() => document.getElementById(`cm-modal-${id}`).style.display = '');
 }
 
 // parentId:  The id of the parent HTML element to be used in eval() interpolation.
@@ -1468,35 +1465,31 @@ function buildRequestData() {
 
     // priorOrNext parameter should be either true (get prior page) or false (get next page).
     function getPageMembers(modalId, isPrior) {
-        // Create endpoint
-        let schema = null;
+        // Create URI
+        let schema = getSelectedOption(document.getElementById('schemas'));
         let parentElementId = document.getElementById(`${modalId}-parentId`).value;
         let parentElementColumn = document.getElementById(parentElementId.split('.')[0] + '.column').value;
         let table = parentElementColumn.split('.')[0];
         let column = parentElementColumn.split('.')[1];
-        let endpoint = scriptVariables.columnMembersEndpoint + `${schema}/${table}/${column}/`;
-
-        // Create query string
         let limit = parseInt(document.getElementById(`${modalId}-limit`).value);
         if (isPrior === true) {
-            adjustColumnMembersCurrentOffset(-limit);
+            adjustColumnMembersCurrentOffset(-limit, modalId);
         }
         let offset = getModalCurrentOffset(modalId).getAttribute('value');
         let ascending = getModalAscending(modalId);
+
+        // Leave this as a single line!  If it spans multiple lines, the endpoint will include white space and carriage returns.
+        let endpoint = scriptVariables.columnMembersEndpoint + `${schema}/${table}/${column}?limit=${limit}&offset=${offset}&ascending=${ascending}`;
+
+        // Add search parameter to URI's query string if the search criteria is not an empty string.
         let search = getModalSearch(modalId);
-        let queryString = `limit=${limit}&offset=${offset}&ascending=${ascending}`;
         if (search !== '') {
-            queryString += `&search=${search}`;
+            endpoint += `&search=${search}`;
         }
 
-        // Call endpoint
-        sendAjaxRequest(endpoint,
-            queryString,
-            'GET',
-            function (data) {
-                // If data's length less than the limit, we have reached the end of the column members.  We do NOT want to update the select options.
-                // Else if data's length is less than the limit, then we have reached the end of the column members.  We do want to update the select options.
-                // Else there is likely still more data to get.  We do want to update the select options and current offset if we retrieved the next page.
+        fetch(endpoint)
+            .then(response => response.json())
+            .then(data => {
                 if (data.length === 0) {
                     getModalNextPageButton(modalId).disabled = true;
                     getModalPriorPageButton(modalId).disabled = false;
@@ -1520,8 +1513,7 @@ function buildRequestData() {
                 } else {
                     document.getElementById(`${modalId}-priorPage`).disabled = false;
                 }
-            }
-        );
+            });
     }
 
     function adjustColumnMembersCurrentOffset(adjustment, modalHtmlId) {
@@ -1569,17 +1561,3 @@ function buildRequestData() {
 //===========================================================================
 
 renderHTML(scriptVariables.renderHtmlAnchorElement);
-
-// $(document).ready(function() {
-//     setTimeout(function() {
-//         if (scriptVariables['getQueryTemplateEndpoint'] !== null) {
-//             getQueryTemplates();
-//         }
-//
-//         if (scriptVariables['getSchemaEndpoint'] !== null) {
-//             getSchemas();
-//         } else if (scriptVariables['getTablesEndpoint'] !== null) {
-//             getTables();
-//         }
-//     }, scriptVariables['phaseOutMilliseconds'] + 200);
-// });
