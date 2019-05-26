@@ -317,7 +317,7 @@ async function renderStatementButtonsHTML() {
 
     if (scriptVariables.saveAsQueryTemplate) {
         htmlTemplate.content.getElementById('saveAsQueryTemplate').onclick = function () {
-            saveStatementAsQueryTemplate();
+            showQueryTemplateParameters();
         };
     } else {
         let saveAsQueryTemplateButton = htmlTemplate.content.getElementById('saveAsQueryTemplate');
@@ -929,12 +929,58 @@ function hideAllDivsExcept(divsToShow) {
     }
 }
 
-function saveStatementAsQueryTemplate() {
+async function showQueryTemplateParameters() {
+    // Insert container HTML before looping through each columnAndParameter.  Container should be added regardless of
+    // whether there are columnsAndParameters because the user must name the query template.
+    let modalDiv = document.getElementById('modals');
+    let containerHtml = await loadHtmlFragment(scriptVariables.htmlFragmentUrl + 'save-as-query-template-container.html');
+    let containerHtmlEvaled = eval(containerHtml);
+    modalDiv.insertAdjacentHTML('beforeend', containerHtmlEvaled);
+
+    let columnsAndParameters = getCriteriaParametersAndColumns();
+
+    if (columnsAndParameters.length > 0) {
+        let parameterHtml = await loadHtmlFragment(scriptVariables.htmlFragmentUrl + 'save-as-query-template-parameter.html');
+
+        // Loop through each columnAndParameter, eval() the parameterHtml, and insert before the end of the container HTML.
+        columnsAndParameters.forEach((columnAndParameter) => {
+            let parameterName = columnAndParameter.parameterName; // Used for eval
+            let parameterColumn = columnAndParameter.parameterColumn; // Used for eval
+            let parameterHtmlEvaled = eval(parameterHtml);
+
+            let paramTable = document.getElementById('qb-modal-query-template-parameters-param-table');
+            paramTable.insertAdjacentHTML('beforeend', parameterHtmlEvaled);
+        });
+
+        // Make sure the modal is displayed.
+        document.getElementById('qb-modal-query-template-parameters').style.display = '';
+    }
+}
+
+function getCriteriaParametersAndColumns() {
+    let columnsAndParameters = [];
+    let criteria = document.getElementsByClassName('criteria-row');
+    for (let i=0; i<criteria.length; i++) {
+        let criteriaId = criteria[0].id[criteria[0].id.length - 1];
+        let criteriaFilterValue = document.getElementById(`criteria${criteriaId}.filter`).value;
+
+        if (criteriaFilterValue[0] === '@') {
+            let newColumnAndParameter = {};
+            newColumnAndParameter.parameterName = criteriaFilterValue.slice(1, criteriaFilterValue.length);
+            newColumnAndParameter.parameterColumn = document.getElementById(`criteria${criteriaId}.column`).value;
+            columnsAndParameters.push(newColumnAndParameter);
+        }
+    }
+
+    return columnsAndParameters;
+}
+
+async function saveStatementAsQueryTemplate() {
     // Try building JSON to be added to request's body.
     // If there is an exception, display message and return.
     let requestData;
     try {
-        requestData = buildRequestData();
+        requestData = buildRequestData(true);
     } catch (ex) {
         alert(ex);
         return;
@@ -950,9 +996,25 @@ function saveStatementAsQueryTemplate() {
     };
 
     fetch(scriptVariables.saveAsQueryTemplateEndpoint, config)
-        .then(response => response.ok)
-        .then(response => alert('Query Saved Successfully'))
+        .then(response => {
+            if (response.ok) { alert('Query Saved Successfully') }
+        })
+        .then(() => {
+            let parameterModal = document.getElementById('qb-modal-query-template-parameters');
+            if (parameterModal !== null && parameterModal !== undefined) {
+                parameterModal.parentNode.removeChild(parameterModal);
+            }
+        })
         .catch(error => alert(error));
+
+    // Refresh list of query templates now that the query template has been saved.
+    await getQueryTemplates();
+
+    // If the Query Template Parameter modal exists, remove it.
+    // let parameterModal = document.getElementById('qb-modal-query-template-parameters');
+    // if (parameterModal !== null && parameterModal !== undefined) {
+    //     parameterModal.parentNode.removeChild(parameterModal);
+    // }
 }
 
 function getJoinsDivMaxId() {
@@ -1350,12 +1412,40 @@ function getParentTable() {
     }
 }
 
-// returnJson:  true (the default) to return the form data as JSON.  False to return the form data as x-www-form-urlencoded.
-// Throws exception if getParentTable throws exception.
-function buildRequestData() {
+// requireQueryName:  should be true if calling this method when saving a query template because the query name should
+//                    not be null or an empty string.  should be false if calling this method when running a query
+//                    because name is not needed then.
+// Throws exception if getParentTable throws exception or if requireQueryName is true and query template name or
+// parameter HTML elements do not exist in DOM.
+function buildRequestData(requireQueryName=false) {
     let json = {};
     json.table = getParentTable();
     json.columns = getOptionsAsArray('columns', 'text', false);
+
+    // Query Name
+    if (requireQueryName) {
+        try {
+            json.name = document.getElementById('qb-modal-query-template-name').value;
+        } catch {
+            throw 'You must give the query template a name before saving.';
+        }
+
+        // Criteria Parameters
+        let criteriaParameters = [];
+        let criteriaParameterNames = document.getElementsByName('qb-modal-query-template-parameter-name');
+        let criteriaParameterColumns = document.getElementsByName('qb-modal-query-template-parameter-column');
+        let criteriaParameterDescriptions = document.getElementsByName('qb-modal-query-template-parameter-description');
+
+        for (let i=0; i<criteriaParameterNames.length; i++) {
+            let criteriaParameter = {};
+            criteriaParameter.name = criteriaParameterNames[i].innerHTML;
+            criteriaParameter.column = criteriaParameterColumns[i].innerHTML;
+            criteriaParameter.description = criteriaParameterDescriptions[i].value;
+            criteriaParameters.push(criteriaParameter);
+        }
+
+        json.criteriaParameters = criteriaParameters;
+    }
 
     // Criteria
     let criteriaDivs = document.getElementsByClassName('criteria-row');
@@ -1429,8 +1519,10 @@ function buildRequestData() {
         let modalEl = document.getElementById(modalId);
         modalEl.parentNode.removeChild(modalEl);
 
-        let parentEl = document.getElementById(parentId);
-        parentEl.style.display = '';
+        if (parentId !== null) {
+            let parentEl = document.getElementById(parentId);
+            parentEl.style.display = '';
+        }
     }
 
     // modalHtmlId:  the HTML id of the modal.
