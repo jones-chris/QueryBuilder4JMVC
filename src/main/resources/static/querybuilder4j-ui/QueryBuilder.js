@@ -7,38 +7,28 @@ const scriptVariables = {
     // Set contents of array to any of the following: 'queryTemplatesDiv', 'schemasDiv', 'tablesDiv', 'joinsDiv', 'columnsDiv',
     // 'criteriaDiv', or 'otherOptionsDiv' in order to show these divs when the page is rendered.
     landingDivs : ['schemasDiv', 'tablesDiv'],
-    // set to the number of milliseconds that should elapse when hiding/showing the various divs.
-    phaseOutMilliseconds : 200,
     // set to your query template endpoint
     getQueryTemplateEndpoint : '/queryTemplates',
     // set to your schemas endpoint
-    getSchemaEndpoint : "/schemas",
+    getSchemaEndpoint : '/schemas',
     // set to your tables endpoint
-    getTablesEndpoint : "/tablesAndViews/",
+    getTablesEndpoint : '/tablesAndViews/',
     // set to your table columns endpoint
-    getColumnsEndpoint : "/columns",
+    getColumnsEndpoint : '/columns',
     // set to your column members endpoint
     columnMembersEndpoint : '/columns-members/',
     // set to your query endpoint
-    formSubmissionEndpoint : "/query",
+    formSubmissionEndpoint : '/query',
     // set to your save query template endpoint
-    saveAsQueryTemplateEndpoint : "/saveQueryTemplate",
+    saveAsQueryTemplateEndpoint : '/saveQueryTemplate',
     // set to the HTTP method that your query endpoint above accepts
-    formMethod : "POST",
-    createQueryTemplates : true,
-    createSchemas : true,
-    createTables : true,
+    formMethod : 'POST',
     createJoins : true,
-    createAvailableCollumns : true,
-    selectedColumns : [],
     createCriteria : true,
     createDistinct : true,
-    // orderByColumns : null,
-    // groupByColumns : null,
-    saveAsQueryTemplate : true,
     createSuppressNulls : true,
-    limitChoices : ['', 5, 10, 50, 500], // Set to non-empty [] to render.
-    offsetChoices : ['', 5, 10, 50, 500], // Set to non-empty [] to render.
+    limitChoices : ['', 5, 10, 50, 500],
+    offsetChoices : ['', 5, 10, 50, 500],
     queryTemplatesSize : 5,
     schemasSize : 5,
     tablesSize : 5,
@@ -106,13 +96,8 @@ const internalUseVariables = {
 // Main JavaScript Methods
 //===============================================================================================
 
-// async function fetchDataAsJson(url, config={}) {
-//     let response = await fetch(url, config);
-//     return response.json();
-// }
-
 // Acts as the main method and controller.
-async function renderHTML(beforeNode, queryTemplate=null) {
+async function renderHTML(queryTemplate=null) {
     // If queryTemplate is not null, then we are wiping the current queryBuilder form so that it can be rendered again
     // with the queryTemplate data.
     if (queryTemplate !== null) {
@@ -128,25 +113,25 @@ async function renderHTML(beforeNode, queryTemplate=null) {
     form.appendChild(buttonsHtml.content.firstElementChild);
 
     // Query Templates
-    if (scriptVariables.createQueryTemplates) {
+    if (scriptVariables.getQueryTemplateEndpoint) {
         let queryTemplatesHtml = await renderQueryTemplatesHTML();
         form.appendChild(queryTemplatesHtml.content.firstElementChild);
     }
 
     // Available Columns
-    if (scriptVariables.createAvailableCollumns) {
+    if (scriptVariables.getColumnsEndpoint) {
         let columnsHtml = await renderAvailableColumnsHTML();
         form.appendChild(columnsHtml.content.firstElementChild);
     }
 
     // Schemas
-    if (scriptVariables.createSchemas) {
+    if (scriptVariables.getSchemaEndpoint) {
         let schemaHtml = await renderSchemaHTML();
         form.appendChild(schemaHtml.content.firstElementChild);
     }
 
     // Tables
-    if (scriptVariables.createTables) {
+    if (scriptVariables.getTablesEndpoint) {
         let tablesHtml = await renderTablesHTML();
         form.appendChild(tablesHtml.content.firstElementChild);
     }
@@ -170,11 +155,12 @@ async function renderHTML(beforeNode, queryTemplate=null) {
         form.appendChild(otherOptionsHtml.content.firstElementChild);
     }
 
-    if (beforeNode === undefined || beforeNode === null) {
-        document.body.appendChild(form);
-    } else {
-        document.getElementById(beforeNode).appendChild(form);
-    }
+    // if (beforeNode === undefined || beforeNode === null) {
+    //     document.body.appendChild(form);
+    // } else {
+    //     document.getElementById(beforeNode).appendChild(form);
+    // }
+    document.getElementById(scriptVariables.renderHtmlAnchorElement).appendChild(form);
 
     // Now that the new form has been rendered, hide all divs except the landing divs listed in scriptVariables.
     if (scriptVariables.landingDivs.length > 0) {
@@ -256,7 +242,7 @@ async function renderStatementButtonsHTML() {
     buttonsHtml = eval(buttonsHtml);
     htmlTemplate.innerHTML = buttonsHtml;
 
-    if (scriptVariables.createQueryTemplates) {
+    if (scriptVariables.getQueryTemplateEndpoint) {
         htmlTemplate.content.getElementById('queryTemplatesButton').onclick = function() {
             hideAllDivsExcept(['queryTemplatesDiv']);
         }
@@ -265,7 +251,7 @@ async function renderStatementButtonsHTML() {
         queryTemplatesButton.parentNode.removeChild(queryTemplatesButton);
     }
 
-    if (scriptVariables.createSchemas || scriptVariables.createTables) {
+    if (scriptVariables.getSchemaEndpoint || scriptVariables.getTablesEndpoint) {
         htmlTemplate.content.getElementById('schemasButton').onclick = function() {
             hideAllDivsExcept(['schemasDiv', 'tablesDiv']);
         }
@@ -283,7 +269,7 @@ async function renderStatementButtonsHTML() {
         joinsButton.parentNode.removeChild(joinsButton);
     }
 
-    if (scriptVariables.createAvailableCollumns) {
+    if (scriptVariables.getColumnsEndpoint) {
         htmlTemplate.content.getElementById('columnsButton').onclick = function() {
             hideAllDivsExcept(['tableColumns']);
         }
@@ -315,7 +301,7 @@ async function renderStatementButtonsHTML() {
         scriptVariables.formSubmissionFunction();
     };
 
-    if (scriptVariables.saveAsQueryTemplate) {
+    if (scriptVariables.saveAsQueryTemplateEndpoint) {
         htmlTemplate.content.getElementById('saveAsQueryTemplate').onclick = function () {
             showQueryTemplateParameters();
         };
@@ -337,7 +323,8 @@ async function renderQueryTemplatesHTML() {
         let queryTemplateId = document.getElementById('queryTemplates').value;
 
         getQueryTemplateById(queryTemplateId, async function(queryTemplate) {
-            await renderHTML(scriptVariables.renderHtmlAnchorElement, queryTemplate);
+            // await renderHTML(scriptVariables.renderHtmlAnchorElement, queryTemplate);
+            await renderHTML(queryTemplate);
         });
     };
 
@@ -461,17 +448,18 @@ function getAvailableColumns(schema, tablesArray, doneCallbackFunction=function(
 // dataModel:  (string) Name of data model array to add members to.
 // HtmlId:  (boolean) Id of HTML select element to sync with dataModel.
 function addSelectedColumns(members, dataModel, HtmlId) {
-    fillArrayProperty(dataModel, members, false);
-    syncSelectOptionsWithDataModel(HtmlId, scriptVariables[dataModel]);
+    // fillArrayProperty(dataModel, members, false);
+    // syncSelectOptionsWithDataModel(HtmlId, scriptVariables[dataModel]);
+    syncSelectOptionsWithDataModel(HtmlId, dataModel);
 }
 
 // members:  Array of indeces to remove from dataModel.
 // dataModel:  Name of data model array to remove members from.
 // HtmlId:  Id of HTML select element to sync with dataModel.
-function removeSelectedColumn(memberIndeces, dataModel, HtmlId) {
-    deleteArrayPropertyMembers(dataModel, memberIndeces);
-    syncSelectOptionsWithDataModel(HtmlId, scriptVariables[dataModel]);
-}
+// function removeSelectedColumn(memberIndeces, dataModel, HtmlId) {
+//     deleteArrayPropertyMembers(dataModel, memberIndeces);
+//     syncSelectOptionsWithDataModel(HtmlId, scriptVariables[dataModel]);
+// }
 
 // htmlId:  The Id of the HTML select element that contains the option element to move up.
 // dataModel:  The name of the data model to update and sync with the htmlId element with.
@@ -828,17 +816,17 @@ function setTargetElementValueToSubQuery(subQueryHtmlId, targetHtmlId, targetHtm
 }
 
 // This method assumes you are feeding it a JSON object with key-value pairs.
-function fillArrayProperty(arrayPropertyName, data, clearPropertyArray=true) {
-    if (clearPropertyArray) {
-        scriptVariables[arrayPropertyName] = [];
-    }
-
-    for (let i=0; i<data.length; i++) {
-        for (let key in data[i]) {
-            scriptVariables[arrayPropertyName].push(data[i][key]);
-        }
-    }
-}
+// function fillArrayProperty(arrayPropertyName, data, clearPropertyArray=true) {
+//     if (clearPropertyArray) {
+//         scriptVariables[arrayPropertyName] = [];
+//     }
+//
+//     for (let i=0; i<data.length; i++) {
+//         for (let key in data[i]) {
+//             scriptVariables[arrayPropertyName].push(data[i][key]);
+//         }
+//     }
+// }
 
 function deleteArrayPropertyMembers(arrayPropertyName, indecesToDelete) {
     let newArray = scriptVariables[arrayPropertyName].slice();
@@ -920,12 +908,21 @@ function hideAllDivsExcept(divsToShow) {
     // Todo:  condense these two for loops into one for loop.
     // Hide all divs in array above.
     for (let i=0; i<divs.length; i++) {
-        document.getElementById(divs[i]).style.display = 'none';
+        // Check that the div exists.  If so, hide it.
+        let div = document.getElementById(divs[i]);
+        if (div !== null) {
+            div.style.display = 'none';
+        }
     }
 
     // Show all divs in divsToShow array.
     for (let i=0; i<divsToShow.length; i++) {
-        document.getElementById(divsToShow[i]).style.display = '';
+        // Check that the div exists.  If so, hide it.
+        let div = document.getElementById(divsToShow[i]);
+        if (div !== null) {
+            div.style.display = '';
+        }
+
     }
 }
 
@@ -1221,19 +1218,23 @@ function getTableColumns(table) {
 async function renderAvailableColumnsHTML() {
     let htmlTemplate = document.createElement('template');
     let queryTemplatesHtml = await loadHtmlFragment(scriptVariables.htmlFragmentUrl + 'columns.html');
-    let availableColumnSize = scriptVariables.availableColumnsSize;
-    let selectedColumnsSize = scriptVariables.selectedColumnsSize;
+    let availableColumnSize = scriptVariables.availableColumnsSize; // Used in eval()
+    let selectedColumnsSize = scriptVariables.selectedColumnsSize; // Used in eval()
     queryTemplatesHtml = eval(queryTemplatesHtml);
     htmlTemplate.innerHTML = queryTemplatesHtml;
 
     htmlTemplate.content.getElementById('addColumnsButton').onclick = function () {
-        let selectedColumns = getSelectedOptionsAsJSON('availableColumns');
-        addSelectedColumns(selectedColumns, 'selectedColumns', 'columns');
+        let newSelectedColumns = getOptionsAsArray('availableColumns', 'text', true);
+        let existingSelectedColumns = getOptionsAsArray('columns', 'text');
+        let allSelectedColumns = existingSelectedColumns.concat(newSelectedColumns);
+        syncSelectOptionsWithDataModel('columns', allSelectedColumns);
     };
 
     htmlTemplate.content.getElementById('removeColumnsButton').onclick = function() {
-        let selectedColumns = getSelectedOptionsAsJSON('columns', 'indeces');
-        removeSelectedColumn(selectedColumns, 'selectedColumns', 'columns');
+        let allSelectedColumns = getOptionsAsArray('columns', 'text', false);
+        let selectedColumnIndex = getOptionsAsArray('columns', 'indeces', true);
+        allSelectedColumns.splice(selectedColumnIndex, 1);
+        syncSelectOptionsWithDataModel('columns', allSelectedColumns);
     };
 
     return htmlTemplate;
@@ -1519,7 +1520,7 @@ function buildRequestData(requireQueryName=false) {
         let modalEl = document.getElementById(modalId);
         modalEl.parentNode.removeChild(modalEl);
 
-        if (parentId !== null) {
+        if (parentId !== null && parentId !== undefined) {
             let parentEl = document.getElementById(parentId);
             parentEl.style.display = '';
         }
@@ -1647,9 +1648,3 @@ function buildRequestData(requireQueryName=false) {
             select.add(option);
         }
     }
-
-//===========================================================================
-//                     START OF SCRIPT
-//===========================================================================
-
-renderHTML(scriptVariables.renderHtmlAnchorElement);
