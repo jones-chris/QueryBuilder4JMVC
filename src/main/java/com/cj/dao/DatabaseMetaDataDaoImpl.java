@@ -1,10 +1,10 @@
 package com.cj.dao;
 
 import com.cj.utils.Converter;
-import com.querybuilder4j.config.DatabaseType;
-import com.querybuilder4j.config.Operator;
-import com.querybuilder4j.sqlbuilders.statements.Criteria;
-import com.querybuilder4j.sqlbuilders.statements.SelectStatement;
+import com.querybuilder4j.statements.Criteria;
+import com.querybuilder4j.statements.DatabaseType;
+import com.querybuilder4j.statements.Operator;
+import com.querybuilder4j.statements.SelectStatement;
 import com.querybuilder4j.utils.ResultSetToHashMapConverter;
 import org.json.JSONArray;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -101,7 +101,7 @@ public class DatabaseMetaDataDaoImpl implements DatabaseMetaDataDao {
         selectStatement.setOffset(Integer.toUnsignedLong(offset));
         selectStatement.setOrderBy(true);
         selectStatement.setAscending(ascending);
-        selectStatement.setDatabaseType(DatabaseType.Sqlite);
+//        selectStatement.setDatabaseMetaData(dataSourceProperties); // todo:  don't need anymore because properties passed into toSql() method will set DatabaseMetaData field.
 
         String sql = selectStatement.toSql(dataSourceProperties);
 

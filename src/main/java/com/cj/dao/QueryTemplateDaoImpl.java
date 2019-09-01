@@ -1,8 +1,8 @@
 package com.cj.dao;
 
 import com.google.gson.Gson;
-import com.querybuilder4j.sqlbuilders.dao.QueryTemplateDao;
-import com.querybuilder4j.sqlbuilders.statements.SelectStatement;
+import com.querybuilder4j.databasemetadata.QueryTemplateDao;
+import com.querybuilder4j.statements.SelectStatement;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.jdbc.core.JdbcTemplate;

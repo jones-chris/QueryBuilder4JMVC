@@ -1,6 +1,6 @@
 package com.cj.service;
 
-import com.querybuilder4j.sqlbuilders.statements.SelectStatement;
+import com.querybuilder4j.statements.SelectStatement;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;

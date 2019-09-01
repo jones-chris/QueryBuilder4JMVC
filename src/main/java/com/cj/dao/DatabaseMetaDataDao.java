@@ -1,8 +1,6 @@
 package com.cj.dao;
 
-import org.springframework.jdbc.core.namedparam.SqlParameterSource;
 
-import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Map;
 

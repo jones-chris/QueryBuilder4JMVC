@@ -1,7 +1,7 @@
 package com.cj.service;
 
 import com.cj.dao.LoggingDao;
-import com.querybuilder4j.sqlbuilders.statements.SelectStatement;
+import com.querybuilder4j.statements.SelectStatement;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 

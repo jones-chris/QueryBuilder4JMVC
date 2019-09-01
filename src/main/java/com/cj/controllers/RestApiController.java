@@ -2,11 +2,15 @@ package com.cj.controllers;
 
 import com.amazonaws.services.sns.AmazonSNS;
 import com.amazonaws.services.sns.model.PublishRequest;
+import com.cj.config.Constants;
 import com.cj.service.*;
 import com.cj.utils.Converter;
+import com.cj.utils.TableauColumnSchema;
+import com.cj.utils.TableauColumns;
+import com.cj.utils.TableauTableSchema;
 import com.google.gson.Gson;
-import com.querybuilder4j.sqlbuilders.dao.QueryTemplateDao;
-import com.querybuilder4j.sqlbuilders.statements.SelectStatement;
+import com.querybuilder4j.databasemetadata.QueryTemplateDao;
+import com.querybuilder4j.statements.SelectStatement;
 import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -14,9 +18,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Properties;
+import java.util.*;
 
 @RestController
 public class RestApiController {
@@ -210,37 +212,67 @@ public class RestApiController {
             String queryResults = databaseMetaDataService.executeQuery(sql);
 
             // Log the SelectStatement and the database audit results to logging.db
-            Map<String, Boolean> databaseAuditResults = databaseAuditService.runAllChecks(3, 1, new String[1], 1);
+//            Map<String, Boolean> databaseAuditResults = databaseAuditService.runAllChecks(3, 1, new String[1], 1);
 
             // Set QueryTemplateDao to null before persisting SelectStatement.
-            selectStatement.setQueryTemplateDao(null);
-            loggingService.add(selectStatement, sql, databaseAuditResults);
+//            selectStatement.setQueryTemplateDao(null);
+//            loggingService.add(selectStatement, sql, databaseAuditResults);
 
-            Map<String, Runnable> healerFunctions;
-            if (databaseAuditResults.values().contains(false)) {
-                // Publish message to SNS topic to alert interested parties.
-                try {
-                    publishSnsMessage();
-                } catch (Exception ex) {
-                    // Todo:  Log the exception and SelectStatement.toString().
-                }
-
-                // Heal database so it's ready for next request.
-                healerFunctions = buildHealerFunctionsMap();
-                databaseAuditResults.forEach((key, passedCheck) -> {
-                    if (! passedCheck) {
-                        healerFunctions.get(key).run();
-                    }
-                });
-            }
+//            Map<String, Runnable> healerFunctions;
+//            if (databaseAuditResults.values().contains(false)) {
+//                // Publish message to SNS topic to alert interested parties.
+//                try {
+//                    publishSnsMessage();
+//                } catch (Exception ex) {
+//                    // Todo:  Log the exception and SelectStatement.toString().
+//                }
+//
+//                // Heal database so it's ready for next request.
+//                healerFunctions = buildHealerFunctionsMap();
+//                databaseAuditResults.forEach((key, passedCheck) -> {
+//                    if (! passedCheck) {
+//                        healerFunctions.get(key).run();
+//                    }
+//                });
+//            }
 
             // Create JSON string to be added to response body.  JSON string includes query results, selectStatement in SQL format,
             // and database audit results.
-            JSONObject jsonObject = new JSONObject(databaseAuditResults);
+//            JSONObject jsonObject = new JSONObject(databaseAuditResults);
+            JSONObject jsonObject = new JSONObject();
             jsonObject.append("queryResults", queryResults);
             jsonObject.append("sqlResult", sql);
 
             return new ResponseEntity<>(jsonObject.toString(4), HttpStatus.OK);
+        } catch (Exception ex) {
+            return new ResponseEntity<>(ex.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    @PostMapping("/tableau-wdc-types")
+    public ResponseEntity<String> getColumnDataTypes(@RequestBody TableauColumns columns) {
+        try {
+            List<String> tables = new ArrayList<>();
+            columns.getColumns().forEach((column) -> {
+                String table = column.split("\\.")[0];
+                if (! tables.contains(table)) { tables.add(table); }
+            });
+
+            Map<String, Integer> sqlTypes = new HashMap<>();
+            for (String table : tables) {
+                Map<String, Integer> tableMetaData = databaseMetaDataService.getColumns(null, table);
+                sqlTypes.putAll(tableMetaData);
+            }
+
+            List<TableauColumnSchema> columnSchemas = new ArrayList<>();
+            for (String column : columns.getColumns()) {
+                Integer sqlType = sqlTypes.get(column);
+                String tableType = Constants.tableauDataTypeMappings.get(sqlType);
+                columnSchemas.add(new TableauColumnSchema(column.split("\\.")[1], tableType));
+            }
+            TableauTableSchema tableauTableSchema = new TableauTableSchema("qb4j", "my alias", columnSchemas);
+
+            return ResponseEntity.ok(new Gson().toJson(tableauTableSchema));
         } catch (Exception ex) {
             return new ResponseEntity<>(ex.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
         }

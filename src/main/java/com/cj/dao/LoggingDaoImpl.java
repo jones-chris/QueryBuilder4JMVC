@@ -1,6 +1,6 @@
 package com.cj.dao;
 
-import com.querybuilder4j.sqlbuilders.statements.SelectStatement;
+import com.querybuilder4j.statements.SelectStatement;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Repository;

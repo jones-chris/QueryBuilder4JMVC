@@ -35,8 +35,6 @@ public class DatabaseMetaDataServiceImpl implements DatabaseMetaDataService {
      */
     @Override
     public Map<String, Integer> getColumns(String schema, String table) throws SQLException {
-
-
         Map<String, Integer> firstMap = databaseMetaDataDao.getColumns(schema, table);
 
         Map<String, Integer> finalMap = new HashMap<>();

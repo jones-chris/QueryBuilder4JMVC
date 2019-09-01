@@ -6,15 +6,20 @@ plugins {
 }
 
 group 'com.cj.QueryBuilderMVC'
-version '3.0'
+version '5.0'
 
 sourceCompatibility = 1.8
 
 
 repositories {
     mavenCentral()
-    flatDir {
-        dirs '/Users/chris.jones/Repos/QueryBuilder4J/build/libs/'
+    maven {
+//        url 's3://jones-chris-aleph-tav/QueryBuilder4J'
+        url 's3://qb4j/releases'
+        credentials(AwsCredentials) {
+            accessKey "AKIAXVH3WU3QUGICTCZL"
+            secretKey "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"
+        }
     }
 }
 
@@ -31,7 +36,8 @@ dependencies {
     extraLibs 'org.apache.tomcat:tomcat-dbcp:8.0.32'
     extraLibs 'org.springframework:spring-orm:4.2.5.RELEASE'
     extraLibs 'org.slf4j:slf4j-api:1.7.13'
-    extraLibs name: 'querybuilder4j'
+//    extraLibs name 'querybuilder4j'
+    extraLibs 'com.querybuilder4j:querybuilder4j:1'
 
     // https://mvnrepository.com/artifact/org.json/json
     extraLibs group: 'org.json', name: 'json', version: '20180130'
@@ -51,9 +57,6 @@ dependencies {
     // https://mvnrepository.com/artifact/javax.activation/activation
     extraLibs group: 'javax.activation', name: 'activation', version: '1.1.1'
 
-    // https://mvnrepository.com/artifact/javax.mail/javax.mail-api
-    //compile group: 'javax.mail', name: 'javax.mail-api', version: '1.6.1'
-
     // https://mvnrepository.com/artifact/com.sun.mail/javax.mail
     extraLibs group: 'com.sun.mail', name: 'javax.mail', version: '1.6.1'
 
@@ -61,13 +64,12 @@ dependencies {
     extraLibs group: 'com.amazonaws', name: 'aws-java-sdk-s3', version: '1.11.375'
 
     // https://mvnrepository.com/artifact/com.amazonaws/aws-java-sdk-sns
-    compile group: 'com.amazonaws', name: 'aws-java-sdk-sns', version: '1.11.513'
+    extraLibs group: 'com.amazonaws', name: 'aws-java-sdk-sns', version: '1.11.513'
 
     // https://mvnrepository.com/artifact/com.amazonaws/aws-java-sdk-dynamodb
     //extraLibs group: 'com.amazonaws', name: 'aws-java-sdk-dynamodb', version: '1.11.449'
 
     configurations.compile.extendsFrom(configurations.extraLibs)
-
 }
 
 jar {
