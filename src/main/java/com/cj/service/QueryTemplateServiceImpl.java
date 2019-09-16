@@ -12,9 +12,13 @@ import java.util.List;
 
 @Service
 public class QueryTemplateServiceImpl implements QueryTemplateService {
-    @Autowired
+
     private QueryTemplateDao queryTemplateDao;
 
+    @Autowired
+    public QueryTemplateServiceImpl(QueryTemplateDao queryTemplateDao) {
+        this.queryTemplateDao = queryTemplateDao;
+    }
 
     @Override
     public boolean save(String primaryKey, String json) {

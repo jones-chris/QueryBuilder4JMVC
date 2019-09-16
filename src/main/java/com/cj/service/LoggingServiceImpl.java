@@ -11,9 +11,13 @@ import java.util.Map;
 
 @Service
 public class LoggingServiceImpl implements LoggingService {
-    @Autowired
+
     private LoggingDao loggingDao;
 
+    @Autowired
+    public LoggingServiceImpl(LoggingDao loggingDao) {
+        this.loggingDao = loggingDao;
+    }
 
     @Override
     public boolean add(SelectStatement stmt, String sql, Map<String, Boolean> databaseAuditResults) {

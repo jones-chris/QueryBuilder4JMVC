@@ -12,9 +12,13 @@ import java.sql.Statement;
 
 @Repository
 public class DatabaseHealerDaoImpl implements DatabaseHealerDao {
-    @Qualifier("querybuilder4j.db")
-    @Autowired
+
     private DataSource dataSource;
+
+    @Autowired
+    public DatabaseHealerDaoImpl(@Qualifier("querybuilder4j.db") DataSource dataSource) {
+        this.dataSource = dataSource;
+    }
 
     /**
      * Deletes the database file.

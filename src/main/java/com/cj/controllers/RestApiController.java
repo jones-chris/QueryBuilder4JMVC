@@ -18,27 +18,38 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Properties;
 
 @RestController
 public class RestApiController {
-    @Autowired
     private LoggingService loggingService;
-    @Autowired
     private DatabaseAuditService databaseAuditService;
-    @Autowired
     private DatabaseHealerService databaseHealerService;
-    @Autowired
     private DatabaseMetaDataService databaseMetaDataService;
-    @Autowired
     private QueryTemplateService queryTemplateService;
-    @Autowired
     private QueryTemplateDao queryTemplateDao;
-    @Autowired
-    private AmazonSNS snsClient;
-    @Qualifier("querybuilder4jdb_properties")
-    @Autowired
     private Properties queryBuilder4JDatabaseProperties;
+
+    @Autowired
+    public RestApiController(LoggingService loggingService,
+                             DatabaseAuditService databaseAuditService,
+                             DatabaseHealerService databaseHealerService,
+                             DatabaseMetaDataService databaseMetaDataService,
+                             QueryTemplateService queryTemplateService,
+                             QueryTemplateDao queryTemplateDao,
+                             @Qualifier("querybuilder4jdb_properties") Properties properties) {
+        this.loggingService = loggingService;
+        this.databaseAuditService = databaseAuditService;
+        this.databaseHealerService = databaseHealerService;
+        this.databaseMetaDataService = databaseMetaDataService;
+        this.queryTemplateService = queryTemplateService;
+        this.queryTemplateDao = queryTemplateDao;
+        this.queryBuilder4JDatabaseProperties = properties;
+    }
 
     /**
      * Gets the query template names given a limit, offset, and and ordering (ascending vs descending).
@@ -48,8 +59,7 @@ public class RestApiController {
      * @param ascending
      * @return
      */
-    @RequestMapping(value = "/queryTemplates", method = RequestMethod.GET)
-    @ResponseBody
+    @GetMapping(value = "/queryTemplates")
     public ResponseEntity<String> getQueryTemplates(@RequestParam(required = false) Integer limit,
                                                     @RequestParam(required = false) Integer offset,
                                                     @RequestParam(required = false) boolean ascending) {
@@ -67,8 +77,7 @@ public class RestApiController {
      * @param name
      * @return
      */
-    @RequestMapping(value = "/queryTemplates/{name}", method = RequestMethod.GET)
-    @ResponseBody
+    @GetMapping(value = "/queryTemplates/{name}")
     public ResponseEntity<String> getQueryTemplateById(@PathVariable String name) {
         try {
             String queryTemplate = queryTemplateService.findByName(name);
@@ -84,8 +93,7 @@ public class RestApiController {
      * @param selectStatement
      * @return
      */
-    @RequestMapping(value = "/saveQueryTemplate", method = RequestMethod.POST)
-    @ResponseBody
+    @PostMapping(value = "/saveQueryTemplate")
     public ResponseEntity<String> saveQueryTemplate(@RequestBody SelectStatement selectStatement) {
         try {
             if (selectStatement.getName() == null) {
@@ -105,12 +113,11 @@ public class RestApiController {
     }
 
     /**
-     * Returns all database schemas.
+     * Returns all database schemas that a given user has access to.
      *
      * @return
      */
-    @RequestMapping(value = "/schemas", method = RequestMethod.GET)
-    @ResponseBody
+    @GetMapping(value = "/schemas")
     public ResponseEntity<String> getSchemas() {
         try {
             String schemasJson = databaseMetaDataService.getSchemas();
@@ -121,13 +128,12 @@ public class RestApiController {
     }
 
     /**
-     * Returns all database tables and views.
+     * Returns all database tables and views that a given user has access to.
      *
      * @param schema
      * @return
      */
-    @RequestMapping(value = "/tablesAndViews/{schema}", method = RequestMethod.GET)
-    @ResponseBody
+    @GetMapping(value = "/tablesAndViews/{schema}")
     public ResponseEntity<String> getTablesAndViews(@PathVariable(value = "schema", required = true) String schema) {
         try {
             schema = (schema.equals("null")) ? null : schema;
@@ -139,14 +145,13 @@ public class RestApiController {
     }
 
     /**
-     * Returns all columns for any number of tables or views given a schema name and table/view name.
+     * Returns all columns for any number of tables or views given a schema name and table/view name (user permissions apply).
      *
      * @param schema
      * @param tables
      * @return
      */
-    @RequestMapping(value = "/columns/{schema}/{tables}", method = RequestMethod.GET)
-    @ResponseBody
+    @GetMapping(value = "/columns/{schema}/{tables}")
     public ResponseEntity<String> getColumns(@PathVariable String schema,
                                              @PathVariable String tables)  {
         try {
@@ -179,8 +184,7 @@ public class RestApiController {
      * @param search
      * @return
      */
-    @RequestMapping(value = "/columns-members/{schema}/{table}/{column}", method = RequestMethod.GET)
-    @ResponseBody
+    @GetMapping(value = "/columns-members/{schema}/{table}/{column}")
     public ResponseEntity<String> getColumnMembers(@PathVariable String schema,
                                                    @PathVariable String table,
                                                    @PathVariable String column,
@@ -203,43 +207,14 @@ public class RestApiController {
      * @param selectStatement
      * @return
      */
-    @RequestMapping(value = "/query", method = RequestMethod.POST)
-    @ResponseBody
+    @PostMapping(value = "/query")
     public ResponseEntity<String> getQueryResults(@RequestBody SelectStatement selectStatement) {
         try {
             selectStatement.setQueryTemplateDao(queryTemplateDao);
             String sql = selectStatement.toSql(queryBuilder4JDatabaseProperties);
             String queryResults = databaseMetaDataService.executeQuery(sql);
 
-            // Log the SelectStatement and the database audit results to logging.db
-//            Map<String, Boolean> databaseAuditResults = databaseAuditService.runAllChecks(3, 1, new String[1], 1);
-
-            // Set QueryTemplateDao to null before persisting SelectStatement.
-//            selectStatement.setQueryTemplateDao(null);
-//            loggingService.add(selectStatement, sql, databaseAuditResults);
-
-//            Map<String, Runnable> healerFunctions;
-//            if (databaseAuditResults.values().contains(false)) {
-//                // Publish message to SNS topic to alert interested parties.
-//                try {
-//                    publishSnsMessage();
-//                } catch (Exception ex) {
-//                    // Todo:  Log the exception and SelectStatement.toString().
-//                }
-//
-//                // Heal database so it's ready for next request.
-//                healerFunctions = buildHealerFunctionsMap();
-//                databaseAuditResults.forEach((key, passedCheck) -> {
-//                    if (! passedCheck) {
-//                        healerFunctions.get(key).run();
-//                    }
-//                });
-//            }
-
-            // Create JSON string to be added to response body.  JSON string includes query results, selectStatement in SQL format,
-            // and database audit results.
-//            JSONObject jsonObject = new JSONObject(databaseAuditResults);
-            JSONObject jsonObject = new JSONObject();
+            JSONObject jsonObject = getDatabaseAuditResults(selectStatement, sql);
             jsonObject.append("queryResults", queryResults);
             jsonObject.append("sqlResult", sql);
 
@@ -276,6 +251,35 @@ public class RestApiController {
         } catch (Exception ex) {
             return new ResponseEntity<>(ex.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
         }
+    }
+
+    private JSONObject getDatabaseAuditResults(SelectStatement selectStatement, String sql) {
+//      Log the SelectStatement and the database audit results to logging.db
+        Map<String, Boolean> databaseAuditResults = databaseAuditService.runAllChecks();
+
+//      Set QueryTemplateDao to null before persisting SelectStatement.
+        selectStatement.setQueryTemplateDao(null);
+        loggingService.add(selectStatement, sql, databaseAuditResults);
+
+        Map<String, Runnable> healerFunctions;
+        if (databaseAuditResults.values().contains(false)) {
+            // Publish message to SNS topic to alert interested parties.
+//                try {
+//                    publishSnsMessage();
+//                } catch (Exception ex) {
+//                    // Todo:  Log the exception and SelectStatement.toString().
+//                }
+
+            // Heal database so it's ready for next request.
+            healerFunctions = buildHealerFunctionsMap();
+            databaseAuditResults.forEach((key, passedCheck) -> {
+                if (! passedCheck) {
+                    healerFunctions.get(key).run();
+                }
+            });
+        }
+
+        return new JSONObject(databaseAuditResults);
     }
 
     /**
@@ -323,11 +327,11 @@ public class RestApiController {
      *
      * @throws Exception
      */
-    private void publishSnsMessage() throws Exception {
-        String snsMessage = "A query was submitted that caused a database audit result to fail. Please " +
-                "check the S3 logs for more information.";
-        String arn = "arn:aws:sns:us-east-1:526661363425:qb4j-sql-injection-success";
-        PublishRequest publishRequest = new PublishRequest(arn, snsMessage);
-        snsClient.publish(publishRequest);
-    }
+//    private void publishSnsMessage() throws Exception {
+//        String snsMessage = "A query was submitted that caused a database audit result to fail. Please " +
+//                "check the S3 logs for more information.";
+//        String arn = "arn:aws:sns:us-east-1:526661363425:qb4j-sql-injection-success";
+//        PublishRequest publishRequest = new PublishRequest(arn, snsMessage);
+//        snsClient.publish(publishRequest);
+//    }
 }

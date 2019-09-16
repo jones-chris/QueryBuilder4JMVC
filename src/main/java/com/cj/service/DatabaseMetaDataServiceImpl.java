@@ -10,8 +10,13 @@ import java.util.Map;
 
 @Service
 public class DatabaseMetaDataServiceImpl implements DatabaseMetaDataService {
-    @Autowired
+
     private DatabaseMetaDataDao databaseMetaDataDao;
+
+    @Autowired
+    public DatabaseMetaDataServiceImpl(DatabaseMetaDataDao databaseMetaDataDao) {
+        this.databaseMetaDataDao = databaseMetaDataDao;
+    }
 
     @Override
     public String getSchemas() throws Exception {
@@ -52,7 +57,12 @@ public class DatabaseMetaDataServiceImpl implements DatabaseMetaDataService {
     }
 
     @Override
-    public String getColumnMembers(String schema, String table, String column, int limit, int offset, boolean ascending,
+    public String getColumnMembers(String schema,
+                                   String table,
+                                   String column,
+                                   int limit,
+                                   int offset,
+                                   boolean ascending,
                                    String search) throws Exception {
         return databaseMetaDataDao.getColumnMembers(schema, table, column, limit, offset, ascending, search);
     }

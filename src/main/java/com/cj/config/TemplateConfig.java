@@ -8,6 +8,7 @@ import org.thymeleaf.spring4.view.ThymeleafViewResolver;
 
 @Configuration
 public class TemplateConfig {
+
     @Bean
     public SpringResourceTemplateResolver templateResolver() {
         final SpringResourceTemplateResolver templateResolver = new SpringResourceTemplateResolver();
@@ -31,4 +32,5 @@ public class TemplateConfig {
         viewResolver.setOrder(1);
         return viewResolver;
     }
+
 }

@@ -6,8 +6,13 @@ import org.springframework.stereotype.Service;
 
 @Service
 public class DatabaseHealerServiceImpl implements DatabaseHealerService {
-    @Autowired
+
     private DatabaseHealerDao databaseHealerDao;
+
+    @Autowired
+    public DatabaseHealerServiceImpl(DatabaseHealerDao databaseHealerDao) {
+        this.databaseHealerDao = databaseHealerDao;
+    }
 
     @Override
     public boolean dropDatabase() {

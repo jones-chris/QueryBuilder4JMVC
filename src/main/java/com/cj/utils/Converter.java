@@ -10,6 +10,7 @@ import java.util.Map;
  * @author marlonlom
  */
 public class Converter {
+
     /**
      * Convert a result set into a JSONArray.
      * @param resultSet

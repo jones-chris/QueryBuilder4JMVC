@@ -15,12 +15,12 @@ import java.util.Map;
 @Repository
 public class DatabaseAuditDaoImpl implements DatabaseAuditDao {
 
-    @Qualifier("querybuilder4j.db")
-    @Autowired
     private DataSource dataSource;
 
-
-    public DatabaseAuditDaoImpl() {}
+    @Autowired
+    public DatabaseAuditDaoImpl(@Qualifier("querybuilder4j.db") DataSource dataSource) {
+        this.dataSource = dataSource;
+    }
 
     /**
      * Executes a simple SQL query against the sqlite_master table for the purpose of confirming that the database
@@ -193,14 +193,10 @@ public class DatabaseAuditDaoImpl implements DatabaseAuditDao {
     /**
      * This is a convenience method that runs all of the other public methods in the class and returns a single boolean.
      *
-     * @param expectedNumberOfTables
-     * @param expectedNumberOfTableColumns
-     * @param expectedData
-     * @param expectedNumberOfUsers
      * @return boolean
      */
     @Override
-    public Map<String, Boolean> runAllChecks(int expectedNumberOfTables, int expectedNumberOfTableColumns, String[] expectedData, int expectedNumberOfUsers) {
+    public Map<String, Boolean> runAllChecks() {
         boolean databaseExists = databaseStillExists();
         boolean tableExists = tableStillExists("county_spending_detail");
         boolean tablesAreSame = numberOfTablesIsTheSame(3);

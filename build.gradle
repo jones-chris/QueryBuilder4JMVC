@@ -1,3 +1,9 @@
+import com.amazonaws.auth.profile.*
+
+buildscript {
+    dependencies { classpath 'com.amazonaws:aws-java-sdk-core:1.11.513' }
+}
+
 plugins {
     id 'java'
     id 'idea'
@@ -5,8 +11,12 @@ plugins {
     id 'org.springframework.boot' version '1.4.3.RELEASE'
 }
 
+ext {
+    awsCredentials = new ProfileCredentialsProvider().credentials
+}
+
 group 'com.cj.QueryBuilderMVC'
-version '5.0'
+version '6.0'
 
 sourceCompatibility = 1.8
 
@@ -14,11 +24,11 @@ sourceCompatibility = 1.8
 repositories {
     mavenCentral()
     maven {
-//        url 's3://jones-chris-aleph-tav/QueryBuilder4J'
         url 's3://qb4j/releases'
         credentials(AwsCredentials) {
-            accessKey "AKIAXVH3WU3QUGICTCZL"
-            secretKey "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"
+            // Must run "aws configure" with "qb4j-releases" AWS user accessKey and secretKey.
+            accessKey awsCredentials.AWSAccessKeyId
+            secretKey awsCredentials.AWSSecretKey
         }
     }
 }
@@ -36,17 +46,13 @@ dependencies {
     extraLibs 'org.apache.tomcat:tomcat-dbcp:8.0.32'
     extraLibs 'org.springframework:spring-orm:4.2.5.RELEASE'
     extraLibs 'org.slf4j:slf4j-api:1.7.13'
-//    extraLibs name 'querybuilder4j'
-    extraLibs 'com.querybuilder4j:querybuilder4j:1'
+    extraLibs 'com.querybuilder4j:querybuilder4j:2'
 
     // https://mvnrepository.com/artifact/org.json/json
     extraLibs group: 'org.json', name: 'json', version: '20180130'
 
     // https://mvnrepository.com/artifact/org.xerial/sqlite-jdbc
     extraLibs group: 'org.xerial', name: 'sqlite-jdbc', version: '3.23.1'
-
-    // https://mvnrepository.com/artifact/org.postgresql/postgresql
-    //extraLibs group: 'org.postgresql', name: 'postgresql', version: '42.2.0'
 
     // https://mvnrepository.com/artifact/org.apache.tomcat/tomcat-dbcp
     extraLibs group: 'org.apache.tomcat', name: 'tomcat-dbcp', version: '9.0.2'

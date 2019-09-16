@@ -13,10 +13,15 @@ import java.util.List;
 
 @Repository
 public class QueryTemplateDaoImpl implements QueryTemplateDao {
-    @Qualifier("query_templates.db")
-    @Autowired
+
     private DataSource dataSource;
     private JdbcTemplate jdbcTemplate;
+
+    @Autowired
+    public QueryTemplateDaoImpl(@Qualifier("query_templates.db") DataSource dataSource, JdbcTemplate jdbcTemplate) {
+        this.dataSource = dataSource;
+        this.jdbcTemplate = jdbcTemplate;
+    }
 
 
     @Override
@@ -30,16 +35,6 @@ public class QueryTemplateDaoImpl implements QueryTemplateDao {
         return numRowsInserted > 0;
     }
 
-//    @Override
-//    public String findByName(String name) {
-//        String sql = "select query_json " +
-//                     "from query_templates " +
-//                     "where name = ? ";
-//
-//        jdbcTemplate = new JdbcTemplate(dataSource);
-//        return jdbcTemplate.queryForObject(sql, new Object[] {name}, String.class);
-//    }
-
     @Override
     public List<String> getNames(Integer limit, Integer offset, boolean ascending) throws Exception {
         // Throw exception if offset is not null and limit is null.  SQL does not allow this.
@@ -51,7 +46,7 @@ public class QueryTemplateDaoImpl implements QueryTemplateDao {
 
         String sql = "select distinct name " +
                      "from query_templates " +
-                     "order by name " + asc + " ";
+                     "order by name " + asc + " "; // todo:  change this to prevent sql injection?  Although it is a boolean?
 
         // Determine how many elements should be in the Object[] that will hold the query parameters.
         int numArrayElementsNeeded = 0;

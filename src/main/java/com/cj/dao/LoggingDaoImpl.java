@@ -11,10 +11,12 @@ import java.util.Map;
 
 @Repository
 public class LoggingDaoImpl implements LoggingDao {
-    @Qualifier("logging.db")
-    @Autowired
     private DataSource dataSource;
 
+    @Autowired
+    public LoggingDaoImpl(@Qualifier("logging.db") DataSource dataSource) {
+        this.dataSource = dataSource;
+    }
 
     @Override
     public boolean add(SelectStatement stmt, String sql, Map<String, Boolean> databaseAuditResults) {

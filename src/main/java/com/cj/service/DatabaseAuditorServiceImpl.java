@@ -9,8 +9,12 @@ import java.util.Map;
 @Service
 public class DatabaseAuditorServiceImpl implements DatabaseAuditService {
 
-    @Autowired
     private DatabaseAuditDao databaseAuditDao;
+
+    @Autowired
+    public DatabaseAuditorServiceImpl(DatabaseAuditDao databaseAuditDao) {
+        this.databaseAuditDao = databaseAuditDao;
+    }
 
 
     public boolean databaseStillExists() {
@@ -42,8 +46,8 @@ public class DatabaseAuditorServiceImpl implements DatabaseAuditService {
     }
 
     @Override
-    public Map<String, Boolean> runAllChecks(int expectedNumberOfTables, int expectedNumberOfTableColumns, String[] expectedData, int expectedNumberOfUsers) {
-        return databaseAuditDao.runAllChecks(expectedNumberOfTables, expectedNumberOfTableColumns, expectedData, expectedNumberOfUsers);
+    public Map<String, Boolean> runAllChecks() {
+        return databaseAuditDao.runAllChecks();
     }
 
 }

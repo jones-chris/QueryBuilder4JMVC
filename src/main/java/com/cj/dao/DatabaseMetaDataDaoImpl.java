@@ -1,10 +1,7 @@
 package com.cj.dao;
 
 import com.cj.utils.Converter;
-import com.querybuilder4j.statements.Criteria;
-import com.querybuilder4j.statements.DatabaseType;
-import com.querybuilder4j.statements.Operator;
-import com.querybuilder4j.statements.SelectStatement;
+import com.querybuilder4j.statements.*;
 import com.querybuilder4j.utils.ResultSetToHashMapConverter;
 import org.json.JSONArray;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -18,13 +15,16 @@ import java.util.Properties;
 
 @Repository
 public class DatabaseMetaDataDaoImpl implements DatabaseMetaDataDao {
-    @Qualifier("querybuilder4j.db")
-    @Autowired
+
     private DataSource dataSource;
-    @Qualifier("querybuilder4jdb_properties")
-    @Autowired
     private Properties dataSourceProperties;
 
+    @Autowired
+    public DatabaseMetaDataDaoImpl(@Qualifier("querybuilder4j.db") DataSource dataSource,
+                                   @Qualifier("querybuilder4jdb_properties") Properties dataSourceProperties) {
+        this.dataSource = dataSource;
+        this.dataSourceProperties = dataSourceProperties;
+    }
 
     @Override
     public String getSchemas() throws Exception {
@@ -61,7 +61,6 @@ public class DatabaseMetaDataDaoImpl implements DatabaseMetaDataDao {
             ResultSet rs = conn.getMetaData().getColumns(null, schema, table, "%");
             return ResultSetToHashMapConverter.toHashMap(rs);
         } catch (SQLException ex) {
-            // I must rethrow exception to calling code because I need to use the try-with-resources block to close the conn and stmt.
             throw ex;
         }
 
@@ -88,7 +87,7 @@ public class DatabaseMetaDataDaoImpl implements DatabaseMetaDataDao {
 
         SelectStatement selectStatement = new SelectStatement();
         selectStatement.setDistinct(true);
-        selectStatement.getColumns().add(tableAndColumn);
+        selectStatement.getColumns().add(new Column(tableAndColumn));
         selectStatement.setTable(table);
         if (search != null) {
             Criteria criterion = new Criteria(0);
@@ -101,7 +100,6 @@ public class DatabaseMetaDataDaoImpl implements DatabaseMetaDataDao {
         selectStatement.setOffset(Integer.toUnsignedLong(offset));
         selectStatement.setOrderBy(true);
         selectStatement.setAscending(ascending);
-//        selectStatement.setDatabaseMetaData(dataSourceProperties); // todo:  don't need anymore because properties passed into toSql() method will set DatabaseMetaData field.
 
         String sql = selectStatement.toSql(dataSourceProperties);
 

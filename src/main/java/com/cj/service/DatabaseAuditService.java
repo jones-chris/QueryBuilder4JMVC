@@ -11,6 +11,6 @@ public interface DatabaseAuditService {
     boolean numberOfRowsInTableIsTheSame(int expectedNumberOfTableRows);
     boolean tableDataIsTheSame(String[][] expectedData);
     boolean numberOfUsersWithTableAccessIsTheSame(int expectedNumberOfUsers);
-    Map<String, Boolean> runAllChecks(int expectedNumberOfTables, int expectedNumberOfTableColumns, String[] expectedData, int expectedNumberOfUsers);
+    Map<String, Boolean> runAllChecks();
 
 }

@@ -1,12 +1,8 @@
 package com.cj.config;
 
-import com.amazonaws.auth.AWSStaticCredentialsProvider;
-import com.amazonaws.auth.BasicAWSCredentials;
-import com.amazonaws.regions.Regions;
-import com.amazonaws.services.sns.AmazonSNS;
-import com.amazonaws.services.sns.AmazonSNSClient;
 import org.apache.tomcat.dbcp.dbcp2.BasicDataSource;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.*;
 import org.springframework.core.env.Environment;
 
@@ -15,24 +11,35 @@ import java.util.Properties;
 
 @Configuration // this annotation declares that the class contains one or more @Bean annotations
 @PropertySources({
-        @PropertySource("application.properties"),
-        @PropertySource("logging_db.properties"),
-        @PropertySource("querybuilder4j_db.properties"),
-        @PropertySource("query_templates_db.properties")
+        @PropertySource("application.properties")
 })
 public class DataConfig {
 
+    private Environment env;
+
+    @Value("${environment}")
+    private String environment;
+
     @Autowired
-    private Environment env; // Properties values are stores here
+    public DataConfig(Environment env) {
+        // Properties values are stores here
+        this.env = env;
+    }
 
     @Bean(name = "querybuilder4jdb_properties")
     public Properties queryBuilder4JDbProperties() {
+        String driverClassName = env.getProperty(environment + ".driver-class-name");
+        String url = env.getProperty(environment + ".url");
+        String username = env.getProperty(environment + ".username");
+        String password = env.getProperty(environment + ".password");
+        String databaseType = env.getProperty(environment + ".databaseType");
+
         Properties properties = new Properties();
-        properties.setProperty("driver-class-name", env.getProperty("driver-class-name"));
-        properties.setProperty("url", env.getProperty("url"));
-        properties.setProperty("username", env.getProperty("username"));
-        properties.setProperty("password", env.getProperty("password"));
-        properties.setProperty("databaseType", env.getProperty("databaseType"));
+        properties.setProperty("driver-class-name", driverClassName);
+        properties.setProperty("url", url);
+        properties.setProperty("username", username);
+        properties.setProperty("password", password);
+        properties.setProperty("databaseType", databaseType);
         return properties;
     }
 
@@ -41,15 +48,17 @@ public class DataConfig {
     public DataSource dataSource_querybuilder4j() {
         BasicDataSource ds = new BasicDataSource();
 
-        // Driver class name
-        ds.setDriverClassName(env.getProperty("driver-class-name"));
+        String driverClassName = env.getProperty(environment + ".driver-class-name");
+        ds.setDriverClassName(driverClassName);
 
-        // Set URL
-        ds.setUrl(env.getProperty("url"));
+        String url = env.getProperty(environment + ".url");
+        ds.setUrl(url);
 
-        // Set username & password
-        ds.setUsername(env.getProperty("username"));
-        ds.setPassword(env.getProperty("password"));
+        String username = env.getProperty(environment + ".username");
+        ds.setUsername(username);
+
+        String password = env.getProperty(environment + ".password");
+        ds.setPassword(password);
 
         return ds;
     }
@@ -58,15 +67,17 @@ public class DataConfig {
     public DataSource dataSource_logging() {
         BasicDataSource ds = new BasicDataSource();
 
-        // Driver class name
-        ds.setDriverClassName(env.getProperty("logging.datasource.driver-class-name"));
+        String driverClassName = env.getProperty(environment + ".logging.datasource.driver-class-name");
+        ds.setDriverClassName(driverClassName);
 
-        // Set URL
-        ds.setUrl(env.getProperty("logging.database.url"));
+        String url = env.getProperty(environment + ".logging.database.url");
+        ds.setUrl(url);
 
-        // Set username & password
-        ds.setUsername(env.getProperty("logging.database.username"));
-        ds.setPassword(env.getProperty("logging.database.password"));
+        String username = env.getProperty(environment + ".logging.database.username");
+        ds.setUsername(username);
+
+        String password = env.getProperty(environment + ".logging.database.password");
+        ds.setPassword(password);
 
         return ds;
     }
@@ -75,30 +86,32 @@ public class DataConfig {
     public DataSource dataSource_queryTemplates() {
         BasicDataSource ds = new BasicDataSource();
 
-        // Driver class name
-        ds.setDriverClassName(env.getProperty("query_templates.datasource.driver-class-name"));
+        String driverClassName = env.getProperty(environment + ".query_templates.datasource.driver-class-name");
+        ds.setDriverClassName(driverClassName);
 
-        // Set URL
-        ds.setUrl(env.getProperty("query_templates.database.url"));
+        String url = env.getProperty(environment + ".query_templates.database.url");
+        ds.setUrl(url);
 
-        // Set username & password
-        ds.setUsername(env.getProperty("query_templates.database.username"));
-        ds.setPassword(env.getProperty("query_templates.database.password"));
+        String username = env.getProperty(environment + ".query_templates.database.username");
+        ds.setUsername(username);
+
+        String password = env.getProperty(environment + ".query_templates.database.password");
+        ds.setPassword(password);
 
         return ds;
     }
 
-    @Bean
-    public AmazonSNS getSnsClient() {
-        String accessKey = env.getProperty("aws.accessKey");
-        String secretKey = env.getProperty("aws.secretKey");
-        BasicAWSCredentials awsCredentials = new BasicAWSCredentials(accessKey, secretKey);
-
-        return AmazonSNSClient
-                .builder()
-                .withRegion(Regions.US_EAST_1)
-                .withCredentials(new AWSStaticCredentialsProvider(awsCredentials))
-                .build();
-    }
+//    @Bean
+//    public AmazonSNS getSnsClient() {
+//        String accessKey = env.getProperty("aws.accessKey");
+//        String secretKey = env.getProperty("aws.secretKey");
+//        BasicAWSCredentials awsCredentials = new BasicAWSCredentials(accessKey, secretKey);
+//
+//        return AmazonSNSClient
+//                .builder()
+//                .withRegion(Regions.US_EAST_1)
+//                .withCredentials(new AWSStaticCredentialsProvider(awsCredentials))
+//                .build();
+//    }
 
 }
