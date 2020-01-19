@@ -24,6 +24,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 
+@CrossOrigin(origins = "http://localhost:4200")
 @RestController
 public class RestApiController {
     private LoggingService loggingService;
