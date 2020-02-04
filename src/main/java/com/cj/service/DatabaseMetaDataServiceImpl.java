@@ -20,8 +20,7 @@ public class DatabaseMetaDataServiceImpl implements DatabaseMetaDataService {
 
     @Override
     public String getSchemas() throws Exception {
-        String results = databaseMetaDataDao.getSchemas();
-        return (results.equals("[]")) ? "[{\"data\":\"null\"}]" : results;
+        return databaseMetaDataDao.getSchemas();
     }
 
     @Override

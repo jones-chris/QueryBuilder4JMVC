@@ -1,8 +1,7 @@
 package com.cj.config;
 
 import java.sql.Types;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 public class Constants {
 
@@ -62,5 +61,7 @@ public class Constants {
 //        put(Types.VARBINARY, true);
         put(Types.VARCHAR, "string");
     }};
+
+    public static final List<String> databaseNames = Arrays.asList("database1", "database2");
 
 }

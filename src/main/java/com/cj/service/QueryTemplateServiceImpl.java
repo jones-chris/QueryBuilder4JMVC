@@ -34,12 +34,10 @@ public class QueryTemplateServiceImpl implements QueryTemplateService {
     @Override
     public String getNames(Integer limit, Integer offset, boolean ascending) throws Exception {
         List<String> queryNames = queryTemplateDao.getNames(limit, offset, ascending);
-        JSONArray jsonArray = new JSONArray();
-        queryNames.forEach((queryName) -> {
-            JSONObject jsonObject = new JSONObject();
-            jsonObject.put("name", queryName);
-            jsonArray.put(jsonObject);
-        });
-        return jsonArray.toString();
+
+        JSONObject jsonObject = new JSONObject()
+                .put("queryTemplateNames", queryNames);
+
+        return jsonObject.toString();
     }
 }

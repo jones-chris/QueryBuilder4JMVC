@@ -17,12 +17,12 @@ public class S3TransferWrapperTest {
 
     }
 
-    @Test
-    public void sendFileToS3() {
-        S3TransferWrapper s3TransferWrapper = new S3TransferWrapper();
-        s3TransferWrapper.run();
-
-        //TODO:  add method to verify that file exists in S3.  If so, assertTrue(true).  If not, assertFalse(false).  Currently I manually open S3 to see if the file was transferred successfully.
-    }
+//    @Test
+//    public void sendFileToS3() {
+//        S3TransferWrapper s3TransferWrapper = new S3TransferWrapper();
+//        s3TransferWrapper.run();
+//
+//        //TODO:  add method to verify that file exists in S3.  If so, assertTrue(true).  If not, assertFalse(false).  Currently I manually open S3 to see if the file was transferred successfully.
+//    }
 
 }
