@@ -1,7 +1,5 @@
 package com.cj.controllers;
 
-import com.amazonaws.services.sns.AmazonSNS;
-import com.amazonaws.services.sns.model.PublishRequest;
 import com.cj.config.Constants;
 import com.cj.service.*;
 import com.cj.utils.Converter;
@@ -135,7 +133,7 @@ public class RestApiController {
      * @return
      */
     @GetMapping(value = "/tablesAndViews/{schema}")
-    public ResponseEntity<String> getTablesAndViews(@PathVariable(value = "schema", required = true) String schema) {
+    public ResponseEntity<String> getTablesAndViews(@PathVariable(value = "schema") String schema) {
         try {
             schema = (schema.equals("null")) ? null : schema;
             String tablesJson = databaseMetaDataService.getTablesAndViews(schema);
