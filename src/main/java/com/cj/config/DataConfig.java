@@ -22,7 +22,6 @@ public class DataConfig {
 
     @Autowired
     public DataConfig(Environment env) {
-        // Properties values are stores here
         this.env = env;
     }
 
@@ -77,6 +76,25 @@ public class DataConfig {
         ds.setUsername(username);
 
         String password = env.getProperty(environment + ".logging.database.password");
+        ds.setPassword(password);
+
+        return ds;
+    }
+
+    @Bean(name = "db_metadata_cache.db")
+    public DataSource dataSource_cache() {
+        BasicDataSource ds = new BasicDataSource();
+
+        String driverClassName = env.getProperty(environment + ".db_metadata_cache.datasource.driver-class-name");
+        ds.setDriverClassName(driverClassName);
+
+        String url = env.getProperty(environment + ".db_metadata_cache.database.url");
+        ds.setUrl(url);
+
+        String username = env.getProperty(environment + ".db_metadata_cache.database.username");
+        ds.setUsername(username);
+
+        String password = env.getProperty(environment + ".db_metadata_cache.database.password");
         ds.setPassword(password);
 
         return ds;

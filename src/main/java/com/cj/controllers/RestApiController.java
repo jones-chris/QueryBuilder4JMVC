@@ -1,7 +1,13 @@
 package com.cj.controllers;
 
 import com.cj.config.Constants;
-import com.cj.service.*;
+import com.cj.model.Table;
+import com.cj.service.database.audit.DatabaseAuditService;
+import com.cj.service.database.data.DatabaseDataService;
+import com.cj.service.database.healer.DatabaseHealerService;
+import com.cj.service.database.metadata.DatabaseMetaDataService;
+import com.cj.service.logging.LoggingService;
+import com.cj.service.querytemplate.QueryTemplateService;
 import com.cj.utils.Converter;
 import com.cj.utils.TableauColumnSchema;
 import com.cj.utils.TableauColumns;
@@ -16,6 +22,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -31,6 +38,7 @@ public class RestApiController {
     private DatabaseMetaDataService databaseMetaDataService;
     private QueryTemplateService queryTemplateService;
     private QueryTemplateDao queryTemplateDao;
+    private DatabaseDataService databaseDataService;
     private Properties queryBuilder4JDatabaseProperties;
 
     @Autowired
@@ -40,6 +48,7 @@ public class RestApiController {
                              DatabaseMetaDataService databaseMetaDataService,
                              QueryTemplateService queryTemplateService,
                              QueryTemplateDao queryTemplateDao,
+                             DatabaseDataService databaseDataService,
                              @Qualifier("querybuilder4jdb_properties") Properties properties) {
         this.loggingService = loggingService;
         this.databaseAuditService = databaseAuditService;
@@ -47,6 +56,7 @@ public class RestApiController {
         this.databaseMetaDataService = databaseMetaDataService;
         this.queryTemplateService = queryTemplateService;
         this.queryTemplateDao = queryTemplateDao;
+        this.databaseDataService = databaseDataService;
         this.queryBuilder4JDatabaseProperties = properties;
     }
 
@@ -61,13 +71,9 @@ public class RestApiController {
     @GetMapping(value = "/queryTemplates")
     public ResponseEntity<String> getQueryTemplates(@RequestParam(required = false) Integer limit,
                                                     @RequestParam(required = false) Integer offset,
-                                                    @RequestParam(required = false) boolean ascending) {
-        try {
-            String jsonResults = queryTemplateService.getNames(limit, offset, ascending);
-            return new ResponseEntity<>(jsonResults, HttpStatus.OK);
-        } catch (Exception ex) {
-            return new ResponseEntity<>(ex.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
-        }
+                                                    @RequestParam(required = false) boolean ascending) throws Exception {
+        String jsonResults = queryTemplateService.getNames(limit, offset, ascending);
+        return new ResponseEntity<>(jsonResults, HttpStatus.OK);
     }
 
     /**
@@ -78,12 +84,8 @@ public class RestApiController {
      */
     @GetMapping(value = "/queryTemplates/{name}")
     public ResponseEntity<String> getQueryTemplateById(@PathVariable String name) {
-        try {
-            String queryTemplate = queryTemplateService.findByName(name);
-            return new ResponseEntity<>(queryTemplate, HttpStatus.OK);
-        } catch (Exception ex) {
-            return new ResponseEntity<>(ex.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
-        }
+        String queryTemplate = queryTemplateService.findByName(name);
+        return new ResponseEntity<>(queryTemplate, HttpStatus.OK);
     }
 
     /**
@@ -94,21 +96,17 @@ public class RestApiController {
      */
     @PostMapping(value = "/saveQueryTemplate")
     public ResponseEntity<String> saveQueryTemplate(@RequestBody SelectStatement selectStatement) {
-        try {
-            if (selectStatement.getName() == null) {
-                throw new RuntimeException("The name of the select statement cannot be null when saving the statement " +
-                        "as a query template");
-            }
-
-            Gson gson = new Gson();
-            String json = gson.toJson(selectStatement);
-
-            queryTemplateService.save(selectStatement.getName(), json);
-
-            return new ResponseEntity<>(HttpStatus.OK);
-        } catch (Exception ex) {
-            return new ResponseEntity<>(ex.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
+        if (selectStatement.getName() == null) {
+            throw new RuntimeException("The name of the select statement cannot be null when saving the statement " +
+                    "as a query template");
         }
+
+        Gson gson = new Gson();
+        String json = gson.toJson(selectStatement);
+
+        queryTemplateService.save(selectStatement.getName(), json);
+
+        return new ResponseEntity<>(HttpStatus.OK);
     }
 
     /**
@@ -116,14 +114,10 @@ public class RestApiController {
      *
      * @return
      */
-    @GetMapping(value = "/schemas")
-    public ResponseEntity<String> getSchemas() {
-        try {
-            String schemasJson = databaseMetaDataService.getSchemas();
-            return new ResponseEntity<>(schemasJson, HttpStatus.OK);
-        } catch (Exception ex) {
-            return new ResponseEntity<>(ex.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
-        }
+    @GetMapping(value = "/metadata/schemas")
+    public ResponseEntity<String> getSchemas() throws Exception {
+        String schemasJson = databaseMetaDataService.getSchemas();
+        return ResponseEntity.ok(schemasJson);
     }
 
     /**
@@ -132,15 +126,11 @@ public class RestApiController {
      * @param schema
      * @return
      */
-    @GetMapping(value = "/tablesAndViews/{schema}")
-    public ResponseEntity<String> getTablesAndViews(@PathVariable(value = "schema") String schema) {
-        try {
-            schema = (schema.equals("null")) ? null : schema;
-            String tablesJson = databaseMetaDataService.getTablesAndViews(schema);
-            return new ResponseEntity<>(tablesJson, HttpStatus.OK);
-        } catch (Exception ex) {
-            return new ResponseEntity<>(ex.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
-        }
+    @GetMapping(value = "/metadata/{schema}/tables-and-views")
+    public ResponseEntity<List<Table>> getTablesAndViews(@PathVariable(value = "schema") String schema) throws Exception {
+        schema = (schema.equals("null")) ? null : schema;
+        List<Table> tables = databaseMetaDataService.getTablesAndViews(schema);
+        return ResponseEntity.ok(tables);
     }
 
     /**
@@ -152,23 +142,19 @@ public class RestApiController {
      */
     @GetMapping(value = "/columns/{schema}/{tables}")
     public ResponseEntity<String> getColumns(@PathVariable String schema,
-                                             @PathVariable String tables)  {
-        try {
-            schema = (schema.equals("null")) ? null : schema;
+                                             @PathVariable String tables) throws Exception {
+        schema = (schema.equals("null")) ? null : schema;
 
-            String[] splitTables = tables.split("&");
+        String[] splitTables = tables.split("&");
 
-            Map<String, Integer> columnsMap = new HashMap<>();
-            for (String table : splitTables) {
-                Map<String, Integer> columns = databaseMetaDataService.getColumns(schema, table);
-                columnsMap.putAll(columns);
-            }
-
-            String columnsJson = Converter.convertToJSON(columnsMap.keySet().toArray(), "column").toString();
-            return new ResponseEntity<>(columnsJson, HttpStatus.OK);
-        } catch (Exception ex) {
-            return new ResponseEntity<>(ex.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
+        Map<String, Integer> columnsMap = new HashMap<>();
+        for (String table : splitTables) {
+            Map<String, Integer> columns = databaseMetaDataService.getColumns(schema, table);
+            columnsMap.putAll(columns);
         }
+
+        String columnsJson = Converter.convertToJSON(columnsMap.keySet().toArray(), "column").toString();
+        return new ResponseEntity<>(columnsJson, HttpStatus.OK);
     }
 
     /**
@@ -190,13 +176,9 @@ public class RestApiController {
                                                    @RequestParam int limit,
                                                    @RequestParam int offset,
                                                    @RequestParam boolean ascending,
-                                                   @RequestParam(required = false) String search) {
-        try {
-            String jsonResults = databaseMetaDataService.getColumnMembers(schema, table, column, limit, offset, ascending, search);
-            return new ResponseEntity<>(jsonResults, HttpStatus.OK);
-        } catch (Exception ex) {
-            return new ResponseEntity<>(ex.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
-        }
+                                                   @RequestParam(required = false) String search) throws Exception {
+        String jsonResults = databaseDataService.getColumnMembers(schema, table, column, limit, offset, ascending, search);
+        return new ResponseEntity<>(jsonResults, HttpStatus.OK);
     }
 
     /**
@@ -207,49 +189,46 @@ public class RestApiController {
      * @return
      */
     @PostMapping(value = "/query")
-    public ResponseEntity<String> getQueryResults(@RequestBody SelectStatement selectStatement) {
-        try {
-            selectStatement.setQueryTemplateDao(queryTemplateDao);
-            String sql = selectStatement.toSql(queryBuilder4JDatabaseProperties);
-            String queryResults = databaseMetaDataService.executeQuery(sql);
+    public ResponseEntity<String> getQueryResults(@RequestBody SelectStatement selectStatement) throws Exception {
+        selectStatement.setQueryTemplateDao(queryTemplateDao);
+        String sql = selectStatement.toSql(queryBuilder4JDatabaseProperties);
+        String queryResults = databaseDataService.executeQuery(sql);
 
-            JSONObject jsonObject = getDatabaseAuditResults(selectStatement, sql);
-            jsonObject.append("queryResults", queryResults);
-            jsonObject.append("sqlResult", sql);
+        JSONObject jsonObject = getDatabaseAuditResults(selectStatement, sql);
+        jsonObject.append("queryResults", queryResults);
+        jsonObject.append("sqlResult", sql);
 
-            return new ResponseEntity<>(jsonObject.toString(4), HttpStatus.OK);
-        } catch (Exception ex) {
-            return new ResponseEntity<>(ex.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
-        }
+        return new ResponseEntity<>(jsonObject.toString(4), HttpStatus.OK);
     }
 
     @PostMapping("/tableau-wdc-types")
-    public ResponseEntity<String> getColumnDataTypes(@RequestBody TableauColumns columns) {
-        try {
-            List<String> tables = new ArrayList<>();
-            columns.getColumns().forEach((column) -> {
-                String table = column.split("\\.")[0];
-                if (! tables.contains(table)) { tables.add(table); }
-            });
+    public ResponseEntity<String> getColumnDataTypes(@RequestBody TableauColumns columns) throws SQLException {
+        List<String> tables = new ArrayList<>();
+        columns.getColumns().forEach((column) -> {
+            String table = column.split("\\.")[0];
+            if (! tables.contains(table)) { tables.add(table); }
+        });
 
-            Map<String, Integer> sqlTypes = new HashMap<>();
-            for (String table : tables) {
-                Map<String, Integer> tableMetaData = databaseMetaDataService.getColumns(null, table);
-                sqlTypes.putAll(tableMetaData);
-            }
-
-            List<TableauColumnSchema> columnSchemas = new ArrayList<>();
-            for (String column : columns.getColumns()) {
-                Integer sqlType = sqlTypes.get(column);
-                String tableType = Constants.tableauDataTypeMappings.get(sqlType);
-                columnSchemas.add(new TableauColumnSchema(column.split("\\.")[1], tableType));
-            }
-            TableauTableSchema tableauTableSchema = new TableauTableSchema("qb4j", "my alias", columnSchemas);
-
-            return ResponseEntity.ok(new Gson().toJson(tableauTableSchema));
-        } catch (Exception ex) {
-            return new ResponseEntity<>(ex.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
+        Map<String, Integer> sqlTypes = new HashMap<>();
+        for (String table : tables) {
+            Map<String, Integer> tableMetaData = databaseMetaDataService.getColumns(null, table);
+            sqlTypes.putAll(tableMetaData);
         }
+
+        List<TableauColumnSchema> columnSchemas = new ArrayList<>();
+        for (String column : columns.getColumns()) {
+            Integer sqlType = sqlTypes.get(column);
+            String tableType = Constants.tableauDataTypeMappings.get(sqlType);
+            columnSchemas.add(new TableauColumnSchema(column.split("\\.")[1], tableType));
+        }
+        TableauTableSchema tableauTableSchema = new TableauTableSchema("qb4j", "my alias", columnSchemas);
+
+        return ResponseEntity.ok(new Gson().toJson(tableauTableSchema));
+    }
+
+    @ExceptionHandler(value = Exception.class)
+    public ResponseEntity<String> handleException() {
+        return new ResponseEntity<>("", HttpStatus.INTERNAL_SERVER_ERROR);
     }
 
     private JSONObject getDatabaseAuditResults(SelectStatement selectStatement, String sql) {
