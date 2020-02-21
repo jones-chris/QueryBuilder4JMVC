@@ -19,6 +19,6 @@ public class TableMapper implements RowMapper<Table> {
 
         String tableName = resultSet.getString("table_name");
 
-        return new Table(schemaName, tableName);
+        return new Table(null, schemaName, tableName);
     }
 }

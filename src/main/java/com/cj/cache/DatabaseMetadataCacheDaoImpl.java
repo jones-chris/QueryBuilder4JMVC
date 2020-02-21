@@ -1,8 +1,11 @@
 package com.cj.cache;
 
+import com.cj.config.Qb4jConfig;
+import com.cj.config.Qb4jConfig.TargetDataSource;
 import com.cj.model.Column;
 import com.cj.model.Schema;
 import com.cj.model.Table;
+import org.apache.tomcat.dbcp.dbcp2.BasicDataSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
@@ -22,82 +25,88 @@ import java.util.List;
 @PropertySource("application.properties")
 public class DatabaseMetadataCacheDaoImpl {
 
-    private DataSource targetDataSource;
-
-    private DataSource cacheDataSource;
+    private Qb4jConfig qb4jConfig;
 
     @Value("${query.cache.insert}")
     private String cacheInsertSql;
 
     @Autowired
-    public DatabaseMetadataCacheDaoImpl(@Qualifier("querybuilder4j.db") DataSource targetDataSource,
-                                        @Qualifier("db_metadata_cache.db") DataSource cacheDataSource) {
-        this.targetDataSource = targetDataSource;
-        this.cacheDataSource = cacheDataSource;
+    public DatabaseMetadataCacheDaoImpl(Qb4jConfig qb4jConfig) {
+        this.qb4jConfig = qb4jConfig;
     }
 
-    public List<Schema> getSchemas() throws SQLException {
-        try (Connection conn = targetDataSource.getConnection()) {
-            ResultSet rs = conn.getMetaData().getSchemas();
+    public List<Schema> getSchemas() throws Exception {
+        List<Schema> schemas = new ArrayList<>();
+        for (TargetDataSource targetDataSource : qb4jConfig.getTargetDataSources()) {
+            try (Connection conn = targetDataSource.getDataSource().getConnection()) {
+                ResultSet rs = conn.getMetaData().getSchemas();
 
-            List<Schema> schemas = new ArrayList<>();
-            while (rs.next()) {
-                String schemaName = rs.getString("TABLE_SCHEM");
-                Schema schema = new Schema(schemaName);
-                schemas.add(schema);
+                String databaseName = targetDataSource.getName();
+                while (rs.next()) {
+                    String schemaName = rs.getString("TABLE_SCHEM");
+                    Schema schema = new Schema(databaseName, schemaName);
+                    schemas.add(schema);
+                }
+
+            } catch (Exception ex) {
+                throw ex;
             }
-
-            return schemas;
-
-        } catch (Exception ex) {
-            throw ex;
         }
+
+        return schemas;
     }
 
-    public List<Table> getTablesAndViews(String schema) throws SQLException {
-        try (Connection conn = targetDataSource.getConnection()) {
-            ResultSet rs = conn.getMetaData().getTables(null, schema, null, null);
+    public List<Table> getTablesAndViews(String schema) throws Exception {
+        List<Table> tables = new ArrayList<>();
+        for (TargetDataSource targetDataSource : qb4jConfig.getTargetDataSources()) {
+            try (Connection conn = targetDataSource.getDataSource().getConnection()) {
+                ResultSet rs = conn.getMetaData().getTables(null, schema, null, null);
 
-            List<Table> tables = new ArrayList<>();
-            while (rs.next()) {
-                String schemaName = rs.getString("TABLE_SCHEM");
-                String tableName = rs.getString("TABLE_NAME");
-                Table table = new Table(schemaName, tableName);
-                tables.add(table);
+                String databaseName = targetDataSource.getName();
+                while (rs.next()) {
+                    String schemaName = rs.getString("TABLE_SCHEM");
+                    String tableName = rs.getString("TABLE_NAME");
+                    Table table = new Table(databaseName, schemaName, tableName);
+                    tables.add(table);
+                }
+
+            } catch (Exception ex) {
+                throw ex;
             }
-
-            return tables;
-
-        } catch (Exception ex) {
-            throw ex;
         }
+
+        return tables;
     }
 
-    public List<Column> getColumns(String schema, String table) throws SQLException {
-        try (Connection conn = targetDataSource.getConnection()) {
-            ResultSet rs = conn.getMetaData().getColumns(null, schema, table, "%");
+    public List<Column> getColumns(String schema, String table) throws Exception {
+        List<Column> columns = new ArrayList<>();
+        for (TargetDataSource targetDataSource : qb4jConfig.getTargetDataSources()) {
+            try (Connection conn = targetDataSource.getDataSource().getConnection()) {
+                ResultSet rs = conn.getMetaData().getColumns(null, schema, table, "%");
 
-            List<Column> columns = new ArrayList<>();
-            while (rs.next()) {
-                String schemaName = rs.getString("TABLE_SCHEM");
-                String tableName = rs.getString("TABLE_NAME");
-                String columnName = rs.getString("COLUMN_NAME");
-                int dataType = rs.getInt("DATA_TYPE");
+                String databaseName = targetDataSource.getName();
+                while (rs.next()) {
+                    String schemaName = rs.getString("TABLE_SCHEM");
+                    String tableName = rs.getString("TABLE_NAME");
+                    String columnName = rs.getString("COLUMN_NAME");
+                    int dataType = rs.getInt("DATA_TYPE");
 
-                Column column = new Column(schemaName, tableName, columnName, dataType);
+                    Column column = new Column(databaseName, schemaName, tableName, columnName, dataType);
 
-                columns.add(column);
+                    columns.add(column);
+                }
+
+            } catch (Exception ex) {
+                throw ex;
             }
-
-            return columns;
-
-        } catch (Exception ex) {
-            throw ex;
         }
+
+        return columns;
     }
 
     public void saveColumns(List<Column> columns) {
-        NamedParameterJdbcTemplate namedParameterJdbcTemplate = new NamedParameterJdbcTemplate(cacheDataSource);
+        DataSource databaseMetadataCacheDataSource = this.qb4jConfig.getDatabaseMetaDataCache().getDataSource();
+        NamedParameterJdbcTemplate namedParameterJdbcTemplate = new NamedParameterJdbcTemplate(databaseMetadataCacheDataSource);
 
         int numOfColumns = columns.size();
         MapSqlParameterSource[] paramsArray = new MapSqlParameterSource[numOfColumns];
@@ -105,6 +114,7 @@ public class DatabaseMetadataCacheDaoImpl {
             Column column = columns.get(i);
 
             MapSqlParameterSource params = new MapSqlParameterSource();
+            params.addValue("databaseName", column.getDatabaseName());
             params.addValue("schemaName", column.getSchemaName());
             params.addValue("tableName", column.getTableName());
             params.addValue("columnName", column.getColumnName());

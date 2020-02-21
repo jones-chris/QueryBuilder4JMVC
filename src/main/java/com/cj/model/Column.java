@@ -4,18 +4,28 @@ import java.sql.Types;
 
 public class Column {
 
+    private String databaseName;
     private String schemaName;
     private String tableName;
     private String columnName;
     private int dataType;
 
-    public Column(String schemaName, String tableName, String columnName, int dataType) {
+    public Column(String databaseName, String schemaName, String tableName, String columnName, int dataType) {
         // Some databases, like SQLite, do not have schemas, so change the schema name to "null" instead of null because
         // SQLite primary keys (which is used for the cache) cannot have null values.
+        this.databaseName = databaseName;
         this.schemaName = (schemaName == null) ? "null" : schemaName;
         this.tableName = tableName;
         this.columnName = columnName;
         this.dataType = dataType;
+    }
+
+    public String getDatabaseName() {
+        return databaseName;
+    }
+
+    public void setDatabaseName(String databaseName) {
+        this.databaseName = databaseName;
     }
 
     public String getSchemaName() {

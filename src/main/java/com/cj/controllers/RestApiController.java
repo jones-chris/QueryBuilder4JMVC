@@ -6,7 +6,6 @@ import com.cj.service.database.audit.DatabaseAuditService;
 import com.cj.service.database.data.DatabaseDataService;
 import com.cj.service.database.healer.DatabaseHealerService;
 import com.cj.service.database.metadata.DatabaseMetaDataService;
-import com.cj.service.logging.LoggingService;
 import com.cj.service.querytemplate.QueryTemplateService;
 import com.cj.utils.Converter;
 import com.cj.utils.TableauColumnSchema;
@@ -32,7 +31,6 @@ import java.util.Properties;
 @CrossOrigin(origins = "http://localhost:4200")
 @RestController
 public class RestApiController {
-    private LoggingService loggingService;
     private DatabaseAuditService databaseAuditService;
     private DatabaseHealerService databaseHealerService;
     private DatabaseMetaDataService databaseMetaDataService;
@@ -42,15 +40,13 @@ public class RestApiController {
     private Properties queryBuilder4JDatabaseProperties;
 
     @Autowired
-    public RestApiController(LoggingService loggingService,
-                             DatabaseAuditService databaseAuditService,
+    public RestApiController(DatabaseAuditService databaseAuditService,
                              DatabaseHealerService databaseHealerService,
                              DatabaseMetaDataService databaseMetaDataService,
                              QueryTemplateService queryTemplateService,
                              QueryTemplateDao queryTemplateDao,
                              DatabaseDataService databaseDataService,
                              @Qualifier("querybuilder4jdb_properties") Properties properties) {
-        this.loggingService = loggingService;
         this.databaseAuditService = databaseAuditService;
         this.databaseHealerService = databaseHealerService;
         this.databaseMetaDataService = databaseMetaDataService;
@@ -237,7 +233,6 @@ public class RestApiController {
 
 //      Set QueryTemplateDao to null before persisting SelectStatement.
         selectStatement.setQueryTemplateDao(null);
-        loggingService.add(selectStatement, sql, databaseAuditResults);
 
         Map<String, Runnable> healerFunctions;
         if (databaseAuditResults.values().contains(false)) {

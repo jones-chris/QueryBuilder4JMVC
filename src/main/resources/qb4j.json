@@ -1,0 +1,37 @@
+{
+  "dev": {
+    "targetDataSources": [
+      {
+        "name": "querybuilder4j",
+        "url": "jdbc:sqlite:./data/querybuilder4j.db",
+        "driverClassName": "org.sqlite.JDBC",
+        "databaseType": "Sqlite"
+      }
+    ],
+    "databaseMetadataCache": {
+      "url": "jdbc:sqlite:./data/db_metadata_cache.db",
+      "driverClassName": "org.sqlite.JDBC"
+    },
+    "queryTemplateDataSource": {
+      "url": "jdbc:sqlite:./data/query_templates.db",
+      "driverClassName": "org.sqlite.JDBC"
+    }
+  },
+  "prod": {
+    "targetDataSources": [
+      {
+        "url": "jdbc:sqlite:./data/querybuilder4j.db",
+        "driver-class-name": "org.sqlite.JDBC",
+        "databaseType": "Sqlite"
+      }
+    ],
+    "databaseMetadataCache": {
+      "url": "jdbc:sqlite:./data/db_metadata_cache.db",
+      "driverClassName": "org.sqlite.JDBC"
+    },
+    "queryTemplateDataSource": {
+      "url": "jdbc:sqlite:./data/query_templates.db",
+      "driverClassName": "org.sqlite.JDBC"
+    }
+  }
+}
