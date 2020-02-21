@@ -24,7 +24,7 @@ public class DatabaseMetadataCacheRefresher {
         this.databaseMetadataCacheDao = databaseMetadataCacheDao;
     }
 
-    @Scheduled(fixedDelay = 1000)
+    @Scheduled(cron = "0 0 0 * * SUN-FRI") // Run at the 0th second, 0th minute, and 0th hour every day (aka:  midnight)
     public void refreshDatabaseMetadataCache() {
         try {
             System.out.println("Starting the refreshDatabaseMetadataCache method");
@@ -49,6 +49,7 @@ public class DatabaseMetadataCacheRefresher {
             }
 
             // Save columns to cache
+            databaseMetadataCacheDao.deleteColumns();
             databaseMetadataCacheDao.saveColumns(columns);
 
             System.out.println("Finished getting target database's schemas, tables, and columns");

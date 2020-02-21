@@ -19,6 +19,7 @@ import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 
 @Repository
@@ -29,6 +30,9 @@ public class DatabaseMetadataCacheDaoImpl {
 
     @Value("${query.cache.insert}")
     private String cacheInsertSql;
+
+    @Value("${query.cache.delete}")
+    private String cacheDeleteSql;
 
     @Autowired
     public DatabaseMetadataCacheDaoImpl(Qb4jConfig qb4jConfig) {
@@ -102,6 +106,13 @@ public class DatabaseMetadataCacheDaoImpl {
         }
 
         return columns;
+    }
+
+    public void deleteColumns() {
+        DataSource databaseMetadataCacheDataSource = this.qb4jConfig.getDatabaseMetaDataCache().getDataSource();
+        NamedParameterJdbcTemplate namedParameterJdbcTemplate = new NamedParameterJdbcTemplate(databaseMetadataCacheDataSource);
+
+        namedParameterJdbcTemplate.update(cacheDeleteSql, new HashMap<>());
     }
 
     public void saveColumns(List<Column> columns) {
