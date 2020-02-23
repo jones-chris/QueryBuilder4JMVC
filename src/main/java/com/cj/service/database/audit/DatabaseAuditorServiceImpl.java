@@ -17,37 +17,36 @@ public class DatabaseAuditorServiceImpl implements DatabaseAuditService {
     }
 
 
-    public boolean databaseStillExists() {
-        return databaseAuditDao.databaseStillExists();
+    public boolean databaseStillExists(String databaseName) {
+        return databaseAuditDao.databaseStillExists(databaseName);
     }
 
-    public boolean tableStillExists(String table) {
-        return databaseAuditDao.tableStillExists(table);
+    public boolean tableStillExists(String databaseName, String table) {
+        return databaseAuditDao.tableStillExists(databaseName, table);
     }
 
-    public boolean numberOfTablesIsTheSame(int expectedNumberOfTables) {
-        return databaseAuditDao.numberOfTablesIsTheSame(1);
+    public boolean numberOfTablesIsTheSame(String databaseName, int expectedNumberOfTables) {
+        return databaseAuditDao.numberOfTablesIsTheSame(databaseName, 1);
     }
 
-    public boolean numberOfTableColumnsIsTheSame(int expectedNumberOfTableColumns) {
-        return databaseAuditDao.numberOfTableColumnsIsTheSame(expectedNumberOfTableColumns);
+    public boolean numberOfTableColumnsIsTheSame(String databaseName, int expectedNumberOfTableColumns) {
+        return databaseAuditDao.numberOfTableColumnsIsTheSame(databaseName, expectedNumberOfTableColumns);
     }
 
-    public boolean numberOfRowsInTableIsTheSame(int expectedNumberOfTableRows) {
-        return databaseAuditDao.numberOfRowsInTableIsTheSame(expectedNumberOfTableRows);
+    public boolean numberOfRowsInTableIsTheSame(String databaseName, int expectedNumberOfTableRows) {
+        return databaseAuditDao.numberOfRowsInTableIsTheSame(databaseName, expectedNumberOfTableRows);
     }
 
-    public boolean tableDataIsTheSame(String[][] expectedData) {
-        return databaseAuditDao.tableDataIsTheSame(expectedData);
+    public boolean tableDataIsTheSame(String databaseName, String[][] expectedData) {
+        return databaseAuditDao.tableDataIsTheSame(databaseName, expectedData);
     }
 
-    public boolean numberOfUsersWithTableAccessIsTheSame(int expectedNumberOfUsers) {
-        return databaseAuditDao.numberOfUsersWithTableAccessIsTheSame(expectedNumberOfUsers);
+    public boolean numberOfUsersWithTableAccessIsTheSame(String databaseName, int expectedNumberOfUsers) {
+        return databaseAuditDao.numberOfUsersWithTableAccessIsTheSame(databaseName, expectedNumberOfUsers);
     }
 
-    @Override
-    public Map<String, Boolean> runAllChecks() {
-        return databaseAuditDao.runAllChecks();
+    public Map<String, Boolean> runAllChecks(String databaseName) {
+        return databaseAuditDao.runAllChecks(databaseName);
     }
 
 }

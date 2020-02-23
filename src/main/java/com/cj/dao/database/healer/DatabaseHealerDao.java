@@ -4,10 +4,10 @@ public interface DatabaseHealerDao {
 
     boolean dropDatabase();
     boolean createDatabase();
-    boolean dropTable();
-    boolean dropAllTablesExcept(String tableNotToDrop);
-    boolean createTable();
-    boolean insertTestData();
-    boolean healDatabaseEntirely();
+    boolean dropTable(String databaseName);
+    boolean dropAllTablesExcept(String databaseName, String tableNotToDrop);
+    boolean createTable(String databaseName);
+    boolean insertTestData(String databaseName);
+    boolean healDatabaseEntirely(String databaseName);
 
 }

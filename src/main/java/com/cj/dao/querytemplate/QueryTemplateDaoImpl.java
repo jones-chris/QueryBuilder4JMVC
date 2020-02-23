@@ -1,10 +1,10 @@
 package com.cj.dao.querytemplate;
 
+import com.cj.config.Qb4jConfig;
 import com.google.gson.Gson;
 import com.querybuilder4j.databasemetadata.QueryTemplateDao;
 import com.querybuilder4j.statements.SelectStatement;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
 
@@ -18,9 +18,9 @@ public class QueryTemplateDaoImpl implements QueryTemplateDao {
     private JdbcTemplate jdbcTemplate;
 
     @Autowired
-    public QueryTemplateDaoImpl(@Qualifier("query_templates.db") DataSource dataSource, JdbcTemplate jdbcTemplate) {
-        this.dataSource = dataSource;
-        this.jdbcTemplate = jdbcTemplate;
+    public QueryTemplateDaoImpl(Qb4jConfig qb4jConfig) {
+        this.dataSource = qb4jConfig.getQueryTemplateDataSource().getDataSource();
+        this.jdbcTemplate = new JdbcTemplate(dataSource);
     }
 
 

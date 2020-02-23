@@ -25,27 +25,27 @@ public class DatabaseHealerServiceImpl implements DatabaseHealerService {
     }
 
     @Override
-    public boolean dropTable() {
-        return databaseHealerDao.dropTable();
+    public boolean dropTable(String databaseName) {
+        return databaseHealerDao.dropTable(databaseName);
     }
 
     @Override
-    public boolean dropAllTablesExcept(String tableNotToDrop) {
-        return databaseHealerDao.dropAllTablesExcept(tableNotToDrop);
+    public boolean dropAllTablesExcept(String databaseName, String tableNotToDrop) {
+        return databaseHealerDao.dropAllTablesExcept(databaseName, tableNotToDrop);
     }
 
     @Override
-    public boolean createTable() {
-        return databaseHealerDao.createTable();
+    public boolean createTable(String databaseName) {
+        return databaseHealerDao.createTable(databaseName);
     }
 
     @Override
-    public boolean insertTestData() {
-        return databaseHealerDao.insertTestData();
+    public boolean insertTestData(String databaseName) {
+        return databaseHealerDao.insertTestData(databaseName);
     }
 
     @Override
-    public boolean healDatabaseEntirely() {
-        return databaseHealerDao.healDatabaseEntirely();
+    public boolean healDatabaseEntirely(String databaseName) {
+        return databaseHealerDao.healDatabaseEntirely(databaseName);
     }
 }

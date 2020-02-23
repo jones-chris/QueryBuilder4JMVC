@@ -1,13 +1,15 @@
 package com.cj.controllers;
 
 import com.cj.config.Constants;
+import com.cj.config.Qb4jConfig;
+import com.cj.model.Column;
+import com.cj.model.Schema;
 import com.cj.model.Table;
 import com.cj.service.database.audit.DatabaseAuditService;
 import com.cj.service.database.data.DatabaseDataService;
 import com.cj.service.database.healer.DatabaseHealerService;
 import com.cj.service.database.metadata.DatabaseMetaDataService;
 import com.cj.service.querytemplate.QueryTemplateService;
-import com.cj.utils.Converter;
 import com.cj.utils.TableauColumnSchema;
 import com.cj.utils.TableauColumns;
 import com.cj.utils.TableauTableSchema;
@@ -16,12 +18,11 @@ import com.querybuilder4j.databasemetadata.QueryTemplateDao;
 import com.querybuilder4j.statements.SelectStatement;
 import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.sql.SQLException;
+import javax.servlet.http.HttpServletRequest;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -37,7 +38,7 @@ public class RestApiController {
     private QueryTemplateService queryTemplateService;
     private QueryTemplateDao queryTemplateDao;
     private DatabaseDataService databaseDataService;
-    private Properties queryBuilder4JDatabaseProperties;
+    private Qb4jConfig qb4jConfig;
 
     @Autowired
     public RestApiController(DatabaseAuditService databaseAuditService,
@@ -46,14 +47,14 @@ public class RestApiController {
                              QueryTemplateService queryTemplateService,
                              QueryTemplateDao queryTemplateDao,
                              DatabaseDataService databaseDataService,
-                             @Qualifier("querybuilder4jdb_properties") Properties properties) {
+                             Qb4jConfig qb4jConfig) {
         this.databaseAuditService = databaseAuditService;
         this.databaseHealerService = databaseHealerService;
         this.databaseMetaDataService = databaseMetaDataService;
         this.queryTemplateService = queryTemplateService;
         this.queryTemplateDao = queryTemplateDao;
         this.databaseDataService = databaseDataService;
-        this.queryBuilder4JDatabaseProperties = properties;
+        this.qb4jConfig = qb4jConfig;
     }
 
     /**
@@ -110,10 +111,10 @@ public class RestApiController {
      *
      * @return
      */
-    @GetMapping(value = "/metadata/schemas")
-    public ResponseEntity<String> getSchemas() throws Exception {
-        String schemasJson = databaseMetaDataService.getSchemas();
-        return ResponseEntity.ok(schemasJson);
+    @GetMapping(value = "/metadata/{database}/schemas")
+    public ResponseEntity<List<Schema>> getSchemas(@PathVariable String database) throws Exception {
+        List<Schema> schemas = databaseMetaDataService.getSchemas(database);
+        return ResponseEntity.ok(schemas);
     }
 
     /**
@@ -122,10 +123,10 @@ public class RestApiController {
      * @param schema
      * @return
      */
-    @GetMapping(value = "/metadata/{schema}/tables-and-views")
-    public ResponseEntity<List<Table>> getTablesAndViews(@PathVariable(value = "schema") String schema) throws Exception {
-        schema = (schema.equals("null")) ? null : schema;
-        List<Table> tables = databaseMetaDataService.getTablesAndViews(schema);
+    @GetMapping(value = "/metadata/{database}/{schema}/tables-and-views")
+    public ResponseEntity<List<Table>> getTablesAndViews(@PathVariable String database,
+                                                         @PathVariable String schema) throws Exception {
+        List<Table> tables = databaseMetaDataService.getTablesAndViews(database, schema);
         return ResponseEntity.ok(tables);
     }
 
@@ -136,21 +137,20 @@ public class RestApiController {
      * @param tables
      * @return
      */
-    @GetMapping(value = "/columns/{schema}/{tables}")
-    public ResponseEntity<String> getColumns(@PathVariable String schema,
+    @GetMapping(value = "/metadata/{database}/{schema}/{tables}/columns")
+    public ResponseEntity<List<Column>> getColumns(@PathVariable String database,
+                                             @PathVariable String schema,
                                              @PathVariable String tables) throws Exception {
-        schema = (schema.equals("null")) ? null : schema;
-
         String[] splitTables = tables.split("&");
 
-        Map<String, Integer> columnsMap = new HashMap<>();
+        List<Column> allColumns = new ArrayList<>();
+        // todo:  instead  of making a cache trip for each table, make cache SQL include WHERE IN clause?
         for (String table : splitTables) {
-            Map<String, Integer> columns = databaseMetaDataService.getColumns(schema, table);
-            columnsMap.putAll(columns);
+            List<Column> columns = databaseMetaDataService.getColumns(database, schema, table);
+            allColumns.addAll(columns);
         }
 
-        String columnsJson = Converter.convertToJSON(columnsMap.keySet().toArray(), "column").toString();
-        return new ResponseEntity<>(columnsJson, HttpStatus.OK);
+        return ResponseEntity.ok(allColumns);
     }
 
     /**
@@ -165,15 +165,16 @@ public class RestApiController {
      * @param search
      * @return
      */
-    @GetMapping(value = "/columns-members/{schema}/{table}/{column}")
-    public ResponseEntity<String> getColumnMembers(@PathVariable String schema,
+    @GetMapping(value = "/data/{database}/{schema}/{table}/{column}/column-members")
+    public ResponseEntity<String> getColumnMembers(@PathVariable String database,
+                                                   @PathVariable String schema,
                                                    @PathVariable String table,
                                                    @PathVariable String column,
                                                    @RequestParam int limit,
                                                    @RequestParam int offset,
                                                    @RequestParam boolean ascending,
                                                    @RequestParam(required = false) String search) throws Exception {
-        String jsonResults = databaseDataService.getColumnMembers(schema, table, column, limit, offset, ascending, search);
+        String jsonResults = databaseDataService.getColumnMembers(database, schema, table, column, limit, offset, ascending, search);
         return new ResponseEntity<>(jsonResults, HttpStatus.OK);
     }
 
@@ -184,52 +185,56 @@ public class RestApiController {
      * @param selectStatement
      * @return
      */
-    @PostMapping(value = "/query")
-    public ResponseEntity<String> getQueryResults(@RequestBody SelectStatement selectStatement) throws Exception {
+    @PostMapping(value = "/data/{database}/query")
+    public ResponseEntity<String> getQueryResults(@PathVariable String database,
+                                                  @RequestBody SelectStatement selectStatement) throws Exception {
         selectStatement.setQueryTemplateDao(queryTemplateDao);
-        String sql = selectStatement.toSql(queryBuilder4JDatabaseProperties);
-        String queryResults = databaseDataService.executeQuery(sql);
+        Properties properties = this.qb4jConfig.getTargetDataSource(database).getProperties();
+        String sql = selectStatement.toSql(properties);
+        String queryResults = databaseDataService.executeQuery(database, sql);
 
-        JSONObject jsonObject = getDatabaseAuditResults(selectStatement, sql);
+//        JSONObject jsonObject = getDatabaseAuditResults(database, selectStatement, sql);
+        JSONObject jsonObject = new JSONObject();
         jsonObject.append("queryResults", queryResults);
         jsonObject.append("sqlResult", sql);
 
         return new ResponseEntity<>(jsonObject.toString(4), HttpStatus.OK);
     }
 
-    @PostMapping("/tableau-wdc-types")
-    public ResponseEntity<String> getColumnDataTypes(@RequestBody TableauColumns columns) throws SQLException {
-        List<String> tables = new ArrayList<>();
-        columns.getColumns().forEach((column) -> {
-            String table = column.split("\\.")[0];
-            if (! tables.contains(table)) { tables.add(table); }
-        });
-
-        Map<String, Integer> sqlTypes = new HashMap<>();
-        for (String table : tables) {
-            Map<String, Integer> tableMetaData = databaseMetaDataService.getColumns(null, table);
-            sqlTypes.putAll(tableMetaData);
-        }
-
-        List<TableauColumnSchema> columnSchemas = new ArrayList<>();
-        for (String column : columns.getColumns()) {
-            Integer sqlType = sqlTypes.get(column);
-            String tableType = Constants.tableauDataTypeMappings.get(sqlType);
-            columnSchemas.add(new TableauColumnSchema(column.split("\\.")[1], tableType));
-        }
-        TableauTableSchema tableauTableSchema = new TableauTableSchema("qb4j", "my alias", columnSchemas);
-
-        return ResponseEntity.ok(new Gson().toJson(tableauTableSchema));
-    }
+//    @PostMapping("/{database}/tableau-wdc-types")
+//    public ResponseEntity<String> getColumnDataTypes(@PathVariable String database,
+//                                                     @RequestBody TableauColumns columns) throws SQLException {
+//        List<String> tables = new ArrayList<>();
+//        columns.getColumns().forEach((column) -> {
+//            String table = column.split("\\.")[0];
+//            if (! tables.contains(table)) { tables.add(table); }
+//        });
+//
+//        List<Column> allColumns = new ArrayList<>();
+//        for (String table : tables) {
+//            List<Column> tableMetaData = databaseMetaDataService.getColumns(database,null, table);
+//            allColumns.addAll(tableMetaData);
+//        }
+//
+//        List<TableauColumnSchema> columnSchemas = new ArrayList<>();
+//        for (String column : columns.getColumns()) {
+//            Integer sqlType = sqlTypes.get(column);
+//            String tableType = Constants.tableauDataTypeMappings.get(sqlType);
+//            columnSchemas.add(new TableauColumnSchema(column.split("\\.")[1], tableType));
+//        }
+//        TableauTableSchema tableauTableSchema = new TableauTableSchema("qb4j", "my alias", columnSchemas);
+//
+//        return ResponseEntity.ok(new Gson().toJson(tableauTableSchema));
+//    }
 
     @ExceptionHandler(value = Exception.class)
-    public ResponseEntity<String> handleException() {
-        return new ResponseEntity<>("", HttpStatus.INTERNAL_SERVER_ERROR);
+    public ResponseEntity<String> handleException(HttpServletRequest request, Exception ex) {
+        return new ResponseEntity<>(ex.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
     }
 
-    private JSONObject getDatabaseAuditResults(SelectStatement selectStatement, String sql) {
+    private JSONObject getDatabaseAuditResults(String databaseName, SelectStatement selectStatement, String sql) {
 //      Log the SelectStatement and the database audit results to logging.db
-        Map<String, Boolean> databaseAuditResults = databaseAuditService.runAllChecks();
+        Map<String, Boolean> databaseAuditResults = databaseAuditService.runAllChecks(databaseName);
 
 //      Set QueryTemplateDao to null before persisting SelectStatement.
         selectStatement.setQueryTemplateDao(null);
@@ -244,7 +249,7 @@ public class RestApiController {
 //                }
 
             // Heal database so it's ready for next request.
-            healerFunctions = buildHealerFunctionsMap();
+            healerFunctions = buildHealerFunctionsMap(databaseName);
             databaseAuditResults.forEach((key, passedCheck) -> {
                 if (! passedCheck) {
                     healerFunctions.get(key).run();
@@ -260,35 +265,35 @@ public class RestApiController {
      *
      * @return
      */
-    private Map<String, Runnable> buildHealerFunctionsMap() {
+    private Map<String, Runnable> buildHealerFunctionsMap(String databaseName) {
         Map<String, Runnable> healerFunctions = new HashMap<>();
 
         healerFunctions.put("databaseExists", () -> {
             databaseHealerService.createDatabase();
-            databaseHealerService.createTable();
-            databaseHealerService.insertTestData();
+            databaseHealerService.createTable(databaseName);
+            databaseHealerService.insertTestData(databaseName);
         });
         healerFunctions.put("tableExists", () -> {
-            databaseHealerService.createTable();
-            databaseHealerService.insertTestData();
+            databaseHealerService.createTable(databaseName);
+            databaseHealerService.insertTestData(databaseName);
         });
         healerFunctions.put("tablesAreSame", () -> {
-            databaseHealerService.dropAllTablesExcept("county_spending_detail");
+            databaseHealerService.dropAllTablesExcept(databaseName, "county_spending_detail");
         });
         healerFunctions.put("numOfTableColumnsAreSame", () -> {
-            databaseHealerService.dropTable();
-            databaseHealerService.createTable();
-            databaseHealerService.insertTestData();
+            databaseHealerService.dropTable(databaseName);
+            databaseHealerService.createTable(databaseName);
+            databaseHealerService.insertTestData(databaseName);
         });
         healerFunctions.put("numOfTableRowsAreSame", () -> {
-            databaseHealerService.dropTable();
-            databaseHealerService.createTable();
-            databaseHealerService.insertTestData();
+            databaseHealerService.dropTable(databaseName);
+            databaseHealerService.createTable(databaseName);
+            databaseHealerService.insertTestData(databaseName);
         });
         healerFunctions.put("tableDataIsSame", () -> {
-            databaseHealerService.dropTable();
-            databaseHealerService.createTable();
-            databaseHealerService.insertTestData();
+            databaseHealerService.dropTable(databaseName);
+            databaseHealerService.createTable(databaseName);
+            databaseHealerService.insertTestData(databaseName);
         });
 
         return healerFunctions;

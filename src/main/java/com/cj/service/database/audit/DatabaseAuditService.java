@@ -4,13 +4,13 @@ import java.util.Map;
 
 public interface DatabaseAuditService {
 
-    boolean databaseStillExists();
-    boolean tableStillExists(String table);
-    boolean numberOfTablesIsTheSame(int expectedNumberOfTables);
-    boolean numberOfTableColumnsIsTheSame(int expectedNumberOfTableColumns);
-    boolean numberOfRowsInTableIsTheSame(int expectedNumberOfTableRows);
-    boolean tableDataIsTheSame(String[][] expectedData);
-    boolean numberOfUsersWithTableAccessIsTheSame(int expectedNumberOfUsers);
-    Map<String, Boolean> runAllChecks();
+    boolean databaseStillExists(String databaseName);
+    boolean tableStillExists(String databaseName, String table);
+    boolean numberOfTablesIsTheSame(String databaseName, int expectedNumberOfTables);
+    boolean numberOfTableColumnsIsTheSame(String databaseName, int expectedNumberOfTableColumns);
+    boolean numberOfRowsInTableIsTheSame(String databaseName, int expectedNumberOfTableRows);
+    boolean tableDataIsTheSame(String databaseName, String[][] expectedData);
+    boolean numberOfUsersWithTableAccessIsTheSame(String databaseName, int expectedNumberOfUsers);
+    Map<String, Boolean> runAllChecks(String databaseName);
 
 }

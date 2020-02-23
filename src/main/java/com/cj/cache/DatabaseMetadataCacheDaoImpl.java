@@ -28,10 +28,10 @@ public class DatabaseMetadataCacheDaoImpl {
 
     private Qb4jConfig qb4jConfig;
 
-    @Value("${query.cache.insert}")
+    @Value("${qb4j.cache.insert}")
     private String cacheInsertSql;
 
-    @Value("${query.cache.delete}")
+    @Value("${qb4j.cache.delete}")
     private String cacheDeleteSql;
 
     @Autowired

@@ -1,5 +1,6 @@
 package com.cj.dao.database.healer;
 
+import com.cj.config.Qb4jConfig;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Repository;
@@ -13,11 +14,11 @@ import java.sql.Statement;
 @Repository
 public class DatabaseHealerDaoImpl implements DatabaseHealerDao {
 
-    private DataSource dataSource;
+    private Qb4jConfig qb4jConfig;
 
     @Autowired
-    public DatabaseHealerDaoImpl(@Qualifier("querybuilder4j.db") DataSource dataSource) {
-        this.dataSource = dataSource;
+    public DatabaseHealerDaoImpl(Qb4jConfig qb4jConfig) {
+        this.qb4jConfig = qb4jConfig;
     }
 
     /**
@@ -27,8 +28,9 @@ public class DatabaseHealerDaoImpl implements DatabaseHealerDao {
      */
     @Override
     public boolean dropDatabase() {
-        String projectRootDirectory = System.getProperty("user.dir");
-        return new File(projectRootDirectory + "\\data\\querybuilder4j.db").delete();
+//        String projectRootDirectory = System.getProperty("user.dir");
+//        return new File(projectRootDirectory + "\\data\\querybuilder4j.db").delete();
+        return true;
     }
 
     /**
@@ -53,7 +55,9 @@ public class DatabaseHealerDaoImpl implements DatabaseHealerDao {
      * @return boolean
      */
     @Override
-    public boolean dropTable() {
+    public boolean dropTable(String databaseName) {
+        DataSource dataSource = qb4jConfig.getTargetDataSourceAsDataSource(databaseName);
+
         String sql = "DROP TABLE county_spending_detail;";
 
         try (Connection conn = dataSource.getConnection();
@@ -71,7 +75,9 @@ public class DatabaseHealerDaoImpl implements DatabaseHealerDao {
      * @return boolean
      */
     @Override
-    public boolean dropAllTablesExcept(String tableNotToDrop) {
+    public boolean dropAllTablesExcept(String databaseName, String tableNotToDrop) {
+        DataSource dataSource = qb4jConfig.getTargetDataSourceAsDataSource(databaseName);
+
         String selectSql = "select tbl_name from sqlite_master;";
         String dropSql = "DROP TABLE %s;";
 
@@ -101,7 +107,9 @@ public class DatabaseHealerDaoImpl implements DatabaseHealerDao {
      * @return boolean
      */
     @Override
-    public boolean createTable() {
+    public boolean createTable(String databaseName) {
+        DataSource dataSource = qb4jConfig.getTargetDataSourceAsDataSource(databaseName);
+
         String sql = "CREATE TABLE county_spending_detail " +
                 "(" +
                 "   fiscal_year_period  INTEGER, " +
@@ -126,7 +134,9 @@ public class DatabaseHealerDaoImpl implements DatabaseHealerDao {
      * @return boolean
      */
     @Override
-    public boolean insertTestData() {
+    public boolean insertTestData(String databaseName) {
+        DataSource dataSource = qb4jConfig.getTargetDataSourceAsDataSource(databaseName);
+
         String sql1 = "INSERT INTO county_spending_detail\n" +
                 "(\n" +
                 "  fiscal_year_period,\n" +
@@ -263,11 +273,11 @@ public class DatabaseHealerDaoImpl implements DatabaseHealerDao {
      * @return
      */
     @Override
-    public boolean healDatabaseEntirely() {
+    public boolean healDatabaseEntirely(String databaseName) {
         //boolean isDatabaseDropped = dropDatabase();
         //boolean isDatabaseCreated = createDatabase();
-        boolean isTableCreated = createTable();
-        boolean isDataInserted = insertTestData();
+        boolean isTableCreated = createTable(databaseName);
+        boolean isDataInserted = insertTestData(databaseName);
 
         return isTableCreated && isDataInserted;
     }

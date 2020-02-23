@@ -1,11 +1,12 @@
 package com.cj.dao.database.data;
 
+import com.cj.config.Qb4jConfig;
 import com.cj.utils.Converter;
 import com.querybuilder4j.statements.Column;
 import com.querybuilder4j.statements.Criteria;
 import com.querybuilder4j.statements.Operator;
 import com.querybuilder4j.statements.SelectStatement;
-import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
 
 import javax.sql.DataSource;
@@ -17,17 +18,16 @@ import java.util.Properties;
 @Repository
 public class DatabaseDataDaoImpl implements DatabaseDataDao {
 
-    private DataSource dataSource;
-    private Properties dataSourceProperties;
+    private Qb4jConfig qb4jConfig;
 
-    public DatabaseDataDaoImpl(@Qualifier("querybuilder4j.db") DataSource dataSource,
-                                      @Qualifier("querybuilder4jdb_properties") Properties dataSourceProperties) {
-        this.dataSource = dataSource;
-        this.dataSourceProperties = dataSourceProperties;
+    @Autowired
+    public DatabaseDataDaoImpl(Qb4jConfig qb4jConfig) {
+        this.qb4jConfig = qb4jConfig;
     }
 
     @Override
-    public String executeQuery(String sql) throws Exception {
+    public String executeQuery(String databaseName, String sql) throws Exception {
+        DataSource dataSource = qb4jConfig.getTargetDataSourceAsDataSource(databaseName);
 
         try (Connection conn = dataSource.getConnection();
              Statement stmt = conn.createStatement()) {
@@ -40,8 +40,8 @@ public class DatabaseDataDaoImpl implements DatabaseDataDao {
     }
 
     @Override
-    public String getColumnMembers(String schema, String table, String column, int limit, int offset, boolean ascending,
-                                   String search) throws Exception {
+    public String getColumnMembers(String databaseName, String schema, String table, String column, int limit, int offset,
+                                   boolean ascending, String search) throws Exception {
         schema = (schema.equals("null")) ? null : schema;
         String tableAndColumn = table + "." + column;
 
@@ -61,8 +61,14 @@ public class DatabaseDataDaoImpl implements DatabaseDataDao {
         selectStatement.setOrderBy(true);
         selectStatement.setAscending(ascending);
 
+        Properties dataSourceProperties = qb4jConfig.getTargetDataSources().stream()
+                .filter(source -> source.getName().equals(databaseName))
+                .findFirst()
+                .get()
+                .getProperties();
         String sql = selectStatement.toSql(dataSourceProperties);
 
+        DataSource dataSource = qb4jConfig.getTargetDataSourceAsDataSource(databaseName);
         try (Connection conn = dataSource.getConnection();
              Statement stmt = conn.createStatement()) {
             ResultSet rs = stmt.executeQuery(sql);

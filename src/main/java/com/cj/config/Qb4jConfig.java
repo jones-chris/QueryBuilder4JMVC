@@ -4,9 +4,9 @@ import com.querybuilder4j.statements.DatabaseType;
 import org.apache.tomcat.dbcp.dbcp2.BasicDataSource;
 
 import javax.sql.DataSource;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.Properties;
 import java.util.stream.Collectors;
 
 public class Qb4jConfig {
@@ -50,6 +50,13 @@ public class Qb4jConfig {
 
     public List<DataSource> getTargetDataSourcesAsDataSource() {
         return this.targetDataSources.stream().map(TargetDataSource::getDataSource).collect(Collectors.toList());
+    }
+
+    public TargetDataSource getTargetDataSource(String name) {
+        return this.targetDataSources.stream()
+                .filter(source -> source.getName().equals(name))
+                .findFirst()
+                .get();
     }
 
     public DataSource getTargetDataSourceAsDataSource(String targetDatabaseName) {
@@ -136,6 +143,21 @@ public class Qb4jConfig {
                 this.dataSource = ds;
             }
             return this.dataSource;
+        }
+
+        public Properties getProperties() {
+            Properties properties = new Properties();
+            properties.setProperty("driver-class-name", driverClassName);
+            properties.setProperty("url", url);
+            if (username != null) {
+                properties.setProperty("username", username);
+            }
+            if (password != null) {
+                properties.setProperty("password", password);
+            }
+            properties.setProperty("databaseType", databaseType.toString());
+
+            return properties;
         }
     }
 

@@ -1,8 +1,9 @@
 package com.cj.dao.database.audit;
 
 import com.cj.config.Constants;
+import com.cj.config.Qb4jConfig;
+import com.cj.config.Qb4jConfig.TargetDataSource;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.PropertySource;
 import org.springframework.stereotype.Repository;
 
@@ -11,17 +12,18 @@ import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.Statement;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 @Repository
 @PropertySource(value = "application.properties")
 public class DatabaseAuditDaoImpl implements DatabaseAuditDao {
 
-    private DataSource dataSource;
+    private Qb4jConfig qb4jConfig;
 
     @Autowired
-    public DatabaseAuditDaoImpl(@Qualifier("querybuilder4j.db") DataSource dataSource) {
-        this.dataSource = dataSource;
+    public DatabaseAuditDaoImpl(Qb4jConfig qb4jConfig) {
+        this.qb4jConfig = qb4jConfig;
     }
 
     /**
@@ -31,7 +33,8 @@ public class DatabaseAuditDaoImpl implements DatabaseAuditDao {
      * @return boolean
      */
     @Override
-    public boolean databaseStillExists() {
+    public boolean databaseStillExists(String databaseName) {
+        DataSource dataSource = qb4jConfig.getTargetDataSourceAsDataSource(databaseName);
 
         try (Connection conn = dataSource.getConnection();
              Statement stmt = conn.createStatement()) {
@@ -50,7 +53,9 @@ public class DatabaseAuditDaoImpl implements DatabaseAuditDao {
      * @return boolean
      */
     @Override
-    public boolean tableStillExists(String table) {
+    public boolean tableStillExists(String databaseName, String table) {
+        DataSource dataSource = qb4jConfig.getTargetDataSourceAsDataSource(databaseName);
+
         try (Connection conn = dataSource.getConnection();
              Statement stmt = conn.createStatement()) {
             ResultSet rs = stmt.executeQuery(String.format("select tbl_name from sqlite_master where tbl_name = '%s' limit 1;", table));
@@ -72,7 +77,9 @@ public class DatabaseAuditDaoImpl implements DatabaseAuditDao {
      * @return boolean
      */
     @Override
-    public boolean numberOfTablesIsTheSame(int expectedNumberOfTables) {
+    public boolean numberOfTablesIsTheSame(String databaseName, int expectedNumberOfTables) {
+        DataSource dataSource = qb4jConfig.getTargetDataSourceAsDataSource(databaseName);
+
         try (Connection conn = dataSource.getConnection();
              Statement stmt = conn.createStatement()) {
             ResultSet rs = stmt.executeQuery("select count(*) cnt from sqlite_master;");
@@ -90,7 +97,9 @@ public class DatabaseAuditDaoImpl implements DatabaseAuditDao {
      * @return boolean
      */
     @Override
-    public boolean numberOfTableColumnsIsTheSame(int expectedNumberOfTableColumns) {
+    public boolean numberOfTableColumnsIsTheSame(String databaseName, int expectedNumberOfTableColumns) {
+        DataSource dataSource = qb4jConfig.getTargetDataSourceAsDataSource(databaseName);
+
         String sql = "SELECT count(*) cnt " +
                 "FROM sqlite_master m " +
                 "left outer join pragma_table_info((m.name)) p " +
@@ -113,7 +122,9 @@ public class DatabaseAuditDaoImpl implements DatabaseAuditDao {
      * @return boolean
      */
     @Override
-    public boolean numberOfRowsInTableIsTheSame(int expectedNumberOfTableRows) {
+    public boolean numberOfRowsInTableIsTheSame(String databaseName, int expectedNumberOfTableRows) {
+        DataSource dataSource = qb4jConfig.getTargetDataSourceAsDataSource(databaseName);
+
         try (Connection conn = dataSource.getConnection();
              Statement stmt = conn.createStatement()) {
             ResultSet rs = stmt.executeQuery("select (select count(*) from county_spending_detail) " +
@@ -135,7 +146,8 @@ public class DatabaseAuditDaoImpl implements DatabaseAuditDao {
      * @return boolean
      */
     @Override
-    public boolean tableDataIsTheSame(String[][] expectedData) {
+    public boolean tableDataIsTheSame(String databaseName, String[][] expectedData) {
+        DataSource dataSource = qb4jConfig.getTargetDataSourceAsDataSource(databaseName);
 
         try (Connection conn = dataSource.getConnection();
              Statement stmt = conn.createStatement()) {
@@ -186,7 +198,7 @@ public class DatabaseAuditDaoImpl implements DatabaseAuditDao {
      * @return boolean
      */
     @Override
-    public boolean numberOfUsersWithTableAccessIsTheSame(int expectedNumberOfUsers) {
+    public boolean numberOfUsersWithTableAccessIsTheSame(String databaseName, int expectedNumberOfUsers) {
         // There are no users in the SQLite database I've included, so always have this check pass.
         // Implement this method different for other databases or if users are enabled in SQLite.
         return true;
@@ -198,17 +210,17 @@ public class DatabaseAuditDaoImpl implements DatabaseAuditDao {
      * @return boolean
      */
     @Override
-    public Map<String, Boolean> runAllChecks() {
-        boolean databaseExists = databaseStillExists();
-        boolean tableExists = tableStillExists("county_spending_detail");
-        boolean tablesAreSame = numberOfTablesIsTheSame(3);
-        boolean numOfTableColumnsAreSame = numberOfTableColumnsIsTheSame(11);
-        boolean numOfTableRowsAreSame = numberOfRowsInTableIsTheSame(23);
+    public Map<String, Boolean> runAllChecks(String databaseName) {
+        boolean databaseExists = databaseStillExists(databaseName);
+        boolean tableExists = tableStillExists(databaseName, "county_spending_detail");
+        boolean tablesAreSame = numberOfTablesIsTheSame(databaseName, 3);
+        boolean numOfTableColumnsAreSame = numberOfTableColumnsIsTheSame(databaseName, 11);
+        boolean numOfTableRowsAreSame = numberOfRowsInTableIsTheSame(databaseName, 23);
         boolean tableDataIsSame = false;
         if (numOfTableRowsAreSame) {
-             tableDataIsSame = tableDataIsTheSame(new String[1][1]);
+             tableDataIsSame = tableDataIsTheSame(databaseName, new String[1][1]);
         }
-        boolean numOfUsersIsSame = numberOfUsersWithTableAccessIsTheSame(1);
+        boolean numOfUsersIsSame = numberOfUsersWithTableAccessIsTheSame(databaseName, 1);
 
         Map<String, Boolean> results = new HashMap<>();
         results.put("databaseExists", databaseExists);
