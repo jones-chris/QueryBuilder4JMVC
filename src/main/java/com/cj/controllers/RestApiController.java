@@ -36,7 +36,7 @@ public class RestApiController {
     private DatabaseHealerService databaseHealerService;
     private DatabaseMetaDataService databaseMetaDataService;
     private QueryTemplateService queryTemplateService;
-    private QueryTemplateDao queryTemplateDao;
+    private QueryTemplateDao queryTemplateDao;  // todo:  can this be a prebuilt class from qb4j and connection properties are just passed or injected into it?
     private DatabaseDataService databaseDataService;
     private Qb4jConfig qb4jConfig;
 
