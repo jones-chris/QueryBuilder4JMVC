@@ -25,7 +25,9 @@ class Qb4jStack(core.Stack):
                                                       name=f'querybuilder4jmvc-{env}.jar',
                                                       include_build_id=True,
                                                       path='build/'),
-                                                  environment=aws_codebuild.BuildEnvironment(privileged=True)  # This allows codebuild to build docker images.
+                                                  environment=aws_codebuild.BuildEnvironment(
+                                                      privileged=True  # This allows codebuild to build docker images.
+                                                  )
                                                   # allow_all_outbound=True  # True so docker image can be sent to docker hub.
                                                   )
 
