@@ -12,6 +12,30 @@
         "id": "QB4J",
         "path": "QB4J",
         "children": {
+          "CodeBuildDependencyCacheBucket": {
+            "id": "CodeBuildDependencyCacheBucket",
+            "path": "QB4J/CodeBuildDependencyCacheBucket",
+            "children": {
+              "Resource": {
+                "id": "Resource",
+                "path": "QB4J/CodeBuildDependencyCacheBucket/Resource",
+                "attributes": {
+                  "aws:cdk:cloudformation:type": "AWS::S3::Bucket",
+                  "aws:cdk:cloudformation:props": {
+                    "bucketName": "m2-dependencies",
+                    "publicAccessBlockConfiguration": {
+                      "blockPublicPolicy": true,
+                      "restrictPublicBuckets": true
+                    }
+                  }
+                }
+              },
+              "Notifications": {
+                "id": "Notifications",
+                "path": "QB4J/CodeBuildDependencyCacheBucket/Notifications"
+              }
+            }
+          },
           "CodeBuildArtifactBucket": {
             "id": "CodeBuildArtifactBucket",
             "path": "QB4J/CodeBuildArtifactBucket",
@@ -101,6 +125,39 @@
                                           {
                                             "Fn::GetAtt": [
                                               "CodeBuildArtifactBucket2C7834D4",
+                                              "Arn"
+                                            ]
+                                          },
+                                          "/*"
+                                        ]
+                                      ]
+                                    }
+                                  ]
+                                },
+                                {
+                                  "Action": [
+                                    "s3:GetObject*",
+                                    "s3:GetBucket*",
+                                    "s3:List*",
+                                    "s3:DeleteObject*",
+                                    "s3:PutObject*",
+                                    "s3:Abort*"
+                                  ],
+                                  "Effect": "Allow",
+                                  "Resource": [
+                                    {
+                                      "Fn::GetAtt": [
+                                        "CodeBuildDependencyCacheBucket1F3EBCDD",
+                                        "Arn"
+                                      ]
+                                    },
+                                    {
+                                      "Fn::Join": [
+                                        "",
+                                        [
+                                          {
+                                            "Fn::GetAtt": [
+                                              "CodeBuildDependencyCacheBucket1F3EBCDD",
                                               "Arn"
                                             ]
                                           },
@@ -235,6 +292,22 @@
                       "location": "https://github.com/jones-chris/QueryBuilder4JMVC.git"
                     },
                     "badgeEnabled": true,
+                    "cache": {
+                      "type": "S3",
+                      "location": {
+                        "Fn::Join": [
+                          "/",
+                          [
+                            {
+                              "Ref": "CodeBuildDependencyCacheBucket1F3EBCDD"
+                            },
+                            {
+                              "Ref": "AWS::NoValue"
+                            }
+                          ]
+                        ]
+                      }
+                    },
                     "name": "QueryBuilder4JMVC",
                     "sourceVersion": "master"
                   }

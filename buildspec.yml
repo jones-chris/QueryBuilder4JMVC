@@ -48,7 +48,6 @@ artifacts:
 #      files:
 #        - target/site/jacoco/**/*  # All files recursively in jacoco directory.
 #      name: code_coverage.zip
-
-# cache:
-#   paths:
-#     - '/query'
+cache:
+  paths:
+    - '/root/.m2/**/*'

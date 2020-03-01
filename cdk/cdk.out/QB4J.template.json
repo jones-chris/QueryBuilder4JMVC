@@ -1,5 +1,17 @@
 {
   "Resources": {
+    "CodeBuildDependencyCacheBucket1F3EBCDD": {
+      "Type": "AWS::S3::Bucket",
+      "Properties": {
+        "BucketName": "m2-dependencies",
+        "PublicAccessBlockConfiguration": {
+          "BlockPublicPolicy": true,
+          "RestrictPublicBuckets": true
+        }
+      },
+      "UpdateReplacePolicy": "Retain",
+      "DeletionPolicy": "Retain"
+    },
     "CodeBuildArtifactBucket2C7834D4": {
       "Type": "AWS::S3::Bucket",
       "Properties": {
@@ -58,6 +70,39 @@
                       {
                         "Fn::GetAtt": [
                           "CodeBuildArtifactBucket2C7834D4",
+                          "Arn"
+                        ]
+                      },
+                      "/*"
+                    ]
+                  ]
+                }
+              ]
+            },
+            {
+              "Action": [
+                "s3:GetObject*",
+                "s3:GetBucket*",
+                "s3:List*",
+                "s3:DeleteObject*",
+                "s3:PutObject*",
+                "s3:Abort*"
+              ],
+              "Effect": "Allow",
+              "Resource": [
+                {
+                  "Fn::GetAtt": [
+                    "CodeBuildDependencyCacheBucket1F3EBCDD",
+                    "Arn"
+                  ]
+                },
+                {
+                  "Fn::Join": [
+                    "",
+                    [
+                      {
+                        "Fn::GetAtt": [
+                          "CodeBuildDependencyCacheBucket1F3EBCDD",
                           "Arn"
                         ]
                       },
@@ -184,6 +229,22 @@
           "Type": "GITHUB"
         },
         "BadgeEnabled": true,
+        "Cache": {
+          "Location": {
+            "Fn::Join": [
+              "/",
+              [
+                {
+                  "Ref": "CodeBuildDependencyCacheBucket1F3EBCDD"
+                },
+                {
+                  "Ref": "AWS::NoValue"
+                }
+              ]
+            ]
+          },
+          "Type": "S3"
+        },
         "Name": "QueryBuilder4JMVC",
         "SourceVersion": "master"
       }

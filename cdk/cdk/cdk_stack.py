@@ -6,11 +6,25 @@ class Qb4jStack(core.Stack):
     def __init__(self, scope: core.Construct, id: str, env: str, **kwargs) -> None:
         super().__init__(scope, id, **kwargs)
 
+        # Create cache bucket
+        cache_bucket = aws_s3.Bucket(
+            self, 'CodeBuildDependencyCacheBucket',
+            bucket_name='m2-dependencies',
+            block_public_access=aws_s3.BlockPublicAccess(
+                restrict_public_buckets=True,
+                block_public_policy=True
+            )
+        )
+
         # Codebuild project.
         codebuild_project = aws_codebuild.Project(
             self, 'CodeBuildProject',
             project_name='QueryBuilder4JMVC',
             badge=True,
+            cache=aws_codebuild.Cache.bucket(
+                bucket=cache_bucket
+                # prefix='m2/'
+            ),
             source=aws_codebuild.Source.git_hub(
                 owner='jones-chris',
                 repo='QueryBuilder4JMVC',
@@ -59,6 +73,6 @@ class Qb4jStack(core.Stack):
         ))
 
         # ECS
-        
+
 
         # Define CW alarm with SNS topic?
