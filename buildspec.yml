@@ -1,8 +1,8 @@
 version: 0.2
 
-env:
-  parameter-store:
-    CODECOV_TOKEN: CODECOV_TOKEN  # CodeBuild will retrieve this from Systems Manager Parameter Store.
+#env:
+#  parameter-store:
+#    CODECOV_TOKEN: CODECOV_TOKEN  # CodeBuild will retrieve this from Systems Manager Parameter Store.
 
 
 phases:
@@ -19,7 +19,7 @@ phases:
       - docker info
       - apt-get update
 
-      - echo $CODECOV_TOKEN
+#      - echo $CODECOV_TOKEN
 
   pre_build:
     commands:
