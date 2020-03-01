@@ -165,6 +165,18 @@
                                       ]
                                     }
                                   ]
+                                },
+                                {
+                                  "Action": [
+                                    "s3:GetObject",
+                                    "s3:GetBucket",
+                                    "s3:List*"
+                                  ],
+                                  "Effect": "Allow",
+                                  "Resource": [
+                                    "arn:aws:s3:::maven-build-settings",
+                                    "arn:aws:s3:::maven-build-settings/*"
+                                  ]
                                 }
                               ],
                               "Version": "2012-10-17"
