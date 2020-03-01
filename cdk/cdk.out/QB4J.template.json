@@ -9,10 +9,7 @@
         }
       },
       "UpdateReplacePolicy": "Retain",
-      "DeletionPolicy": "Retain",
-      "Metadata": {
-        "aws:cdk:path": "QB4J/CodeBuildArtifactBucket/Resource"
-      }
+      "DeletionPolicy": "Retain"
     },
     "CodeBuildProjectRole2B162745": {
       "Type": "AWS::IAM::Role",
@@ -29,9 +26,6 @@
           ],
           "Version": "2012-10-17"
         }
-      },
-      "Metadata": {
-        "aws:cdk:path": "QB4J/CodeBuildProject/Role/Resource"
       }
     },
     "CodeBuildProjectRoleDefaultPolicy66975658": {
@@ -138,9 +132,6 @@
             "Ref": "CodeBuildProjectRole2B162745"
           }
         ]
-      },
-      "Metadata": {
-        "aws:cdk:path": "QB4J/CodeBuildProject/Role/DefaultPolicy/Resource"
       }
     },
     "CodeBuildProject4B91CF3F": {
@@ -159,7 +150,7 @@
         "Environment": {
           "ComputeType": "BUILD_GENERAL1_SMALL",
           "Image": "aws/codebuild/standard:1.0",
-          "PrivilegedMode": false,
+          "PrivilegedMode": true,
           "Type": "LINUX_CONTAINER"
         },
         "ServiceRole": {
@@ -177,9 +168,6 @@
         "BadgeEnabled": true,
         "Name": "QueryBuilder4JMVC",
         "SourceVersion": "master"
-      },
-      "Metadata": {
-        "aws:cdk:path": "QB4J/CodeBuildProject/Resource"
       }
     }
   }

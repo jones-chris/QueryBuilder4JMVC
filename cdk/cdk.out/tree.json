@@ -201,7 +201,7 @@
                     "environment": {
                       "type": "LINUX_CONTAINER",
                       "image": "aws/codebuild/standard:1.0",
-                      "privilegedMode": false,
+                      "privilegedMode": true,
                       "computeType": "BUILD_GENERAL1_SMALL"
                     },
                     "serviceRole": {

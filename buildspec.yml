@@ -23,20 +23,15 @@ phases:
 
   pre_build:
     commands:
-      # Start database containers
-#      - docker-compose -f src/test/resources/docker/docker-compose.yml up -d
-
-      # Pause script while containers initialize
-#      - sleep 20s
+      aws s3 cp s3://maven-build-settings/qb4j_settings.xml /root/.m2/settings.xml
 
   build:
     commands:
-      - mvn clean install  # Includes running unit tests.
+      - mvn clean install  # Builds uber jar.  Includes running unit tests.
       - docker image build -t qb4j-mvc:1 --build-arg environment=prod .
 
   post_build:
     commands:
-#      - docker-compose -f src/test/resources/docker/docker-compose.yml down
 #      - curl -s https://codecov.io/bash > codecov.sh
 #      - bash codecov.sh -t $CODECOV_TOKEN
 
