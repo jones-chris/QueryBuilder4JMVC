@@ -1,0 +1,56 @@
+version: 0.2
+
+env:
+  parameter-store:
+    CODECOV_TOKEN: CODECOV_TOKEN  # CodeBuild will retrieve this from Systems Manager Parameter Store.
+
+
+phases:
+  install:
+    runtime-versions:
+      docker: 18
+      java: openjdk8
+    commands:
+      # Get information about this image, the current directory, maven version, docker version, then update apt-get.
+      - lsb_release -a
+      - pwd
+      - mvn --version
+      - docker --version
+      - docker info
+      - apt-get update
+
+      - echo $CODECOV_TOKEN
+
+  pre_build:
+    commands:
+      # Start database containers
+#      - docker-compose -f src/test/resources/docker/docker-compose.yml up -d
+
+      # Pause script while containers initialize
+#      - sleep 20s
+
+  build:
+    commands:
+      - mvn clean install  # Includes running unit tests.
+      - docker image build -t qb4j-mvc:1 --build-arg environment=prod .
+
+  post_build:
+    commands:
+#      - docker-compose -f src/test/resources/docker/docker-compose.yml down
+#      - curl -s https://codecov.io/bash > codecov.sh
+#      - bash codecov.sh -t $CODECOV_TOKEN
+
+artifacts:
+  files:
+    - target/querybuilder4jmvc-1.jar
+  name: querybuilder4jmvc
+  discard-paths: yes
+#  secondary-artifacts:
+#    code_coverage:
+#      files:
+#        - target/site/jacoco/**/*  # All files recursively in jacoco directory.
+#      name: code_coverage.zip
+
+# cache:
+#   paths:
+#     - '/query'
