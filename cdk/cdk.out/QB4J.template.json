@@ -135,6 +135,11 @@
                 "arn:aws:s3:::maven-build-settings",
                 "arn:aws:s3:::maven-build-settings/*"
               ]
+            },
+            {
+              "Action": "ssm:GetParameters",
+              "Effect": "Allow",
+              "Resource": "*"
             }
           ],
           "Version": "2012-10-17"

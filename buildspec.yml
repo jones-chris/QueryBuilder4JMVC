@@ -20,7 +20,7 @@ phases:
       - docker info
       - apt-get update
 
-#      - echo $CODECOV_TOKEN
+  #      - echo $CODECOV_TOKEN
 
   pre_build:
     commands:
@@ -29,12 +29,12 @@ phases:
   build:
     commands:
       - mvn clean install  # Builds uber jar.  Includes running unit tests.
-      - docker image build -t qb4j-mvc:1 --build-arg environment=prod .
+      - docker image build -t joneschris/qb4j-mvc:1 --build-arg environment=prod .
 
   post_build:
     commands:
-      echo $DOCKERHUB_TOKEN | docker login --username joneschris --password-stdin  # Use password-stdin so that password does not go to shell's logs.
-      docker push joneschris/qb4j-mvc:1
+      - echo $DOCKERHUB_TOKEN | docker login --username joneschris --password-stdin  # Use password-stdin so that password does not go to shell's logs.
+      - docker push joneschris/qb4j-mvc:1
 #      - curl -s https://codecov.io/bash > codecov.sh
 #      - bash codecov.sh -t $CODECOV_TOKEN
 
