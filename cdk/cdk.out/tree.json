@@ -24,6 +24,7 @@
                   "aws:cdk:cloudformation:props": {
                     "bucketName": "qb4j-mvc",
                     "publicAccessBlockConfiguration": {
+                      "blockPublicPolicy": true,
                       "restrictPublicBuckets": true
                     }
                   }
@@ -207,7 +208,7 @@
                       },
                       "path": "build/",
                       "namespaceType": "BUILD_ID",
-                      "name": "querybuilder4jmvc-dev",
+                      "name": "querybuilder4jmvc-prod.jar",
                       "packaging": "ZIP"
                     },
                     "environment": {

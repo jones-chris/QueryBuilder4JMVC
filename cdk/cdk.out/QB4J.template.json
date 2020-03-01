@@ -5,6 +5,7 @@
       "Properties": {
         "BucketName": "qb4j-mvc",
         "PublicAccessBlockConfiguration": {
+          "BlockPublicPolicy": true,
           "RestrictPublicBuckets": true
         }
       },
@@ -153,7 +154,7 @@
           "Location": {
             "Ref": "CodeBuildArtifactBucket2C7834D4"
           },
-          "Name": "querybuilder4jmvc-dev",
+          "Name": "querybuilder4jmvc-prod.jar",
           "NamespaceType": "BUILD_ID",
           "Packaging": "ZIP",
           "Path": "build/",
