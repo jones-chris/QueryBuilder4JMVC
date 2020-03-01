@@ -20,17 +20,18 @@
   "prod": {
     "targetDataSources": [
       {
-        "url": "jdbc:sqlite:./data/querybuilder4j.db",
-        "driver-class-name": "org.sqlite.JDBC",
+        "name": "querybuilder4j",
+        "url": "jdbc:sqlite:/qb4j/data/querybuilder4j.db",
+        "driverClassName": "org.sqlite.JDBC",
         "databaseType": "Sqlite"
       }
     ],
     "databaseMetadataCache": {
-      "url": "jdbc:sqlite:./data/db_metadata_cache.db",
+      "url": "jdbc:sqlite:/qb4j/data/db_metadata_cache.db",
       "driverClassName": "org.sqlite.JDBC"
     },
     "queryTemplateDataSource": {
-      "url": "jdbc:sqlite:./data/query_templates.db",
+      "url": "jdbc:sqlite:/qb4j/data/query_templates.db",
       "driverClassName": "org.sqlite.JDBC"
     }
   }

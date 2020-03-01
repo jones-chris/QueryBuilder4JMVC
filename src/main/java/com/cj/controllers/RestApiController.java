@@ -13,6 +13,8 @@ import com.cj.service.querytemplate.QueryTemplateService;
 import com.cj.utils.TableauColumnSchema;
 import com.cj.utils.TableauColumns;
 import com.cj.utils.TableauTableSchema;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.gson.Gson;
 import com.querybuilder4j.databasemetadata.QueryTemplateDao;
 import com.querybuilder4j.statements.SelectStatement;
@@ -28,6 +30,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
+import java.util.stream.Collectors;
 
 @CrossOrigin(origins = "http://localhost:4200")
 @RestController
@@ -55,6 +58,18 @@ public class RestApiController {
         this.queryTemplateDao = queryTemplateDao;
         this.databaseDataService = databaseDataService;
         this.qb4jConfig = qb4jConfig;
+    }
+
+    /**
+     *
+     */
+    @GetMapping(value = "/metadata/databases")
+    public ResponseEntity<String> getDatabases() throws JsonProcessingException {
+        List<String> databases = qb4jConfig.getTargetDataSources().stream()
+                .map(Qb4jConfig.TargetDataSource::getName)
+                .collect(Collectors.toList());
+
+        return new ResponseEntity<>(new ObjectMapper().writeValueAsString(databases),  HttpStatus.OK);
     }
 
     /**
