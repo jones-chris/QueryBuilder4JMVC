@@ -14,12 +14,12 @@
         "templateFile": "QB4J.template.json"
       },
       "metadata": {
-        "/QB4J/CodeBuildDependencyCacheBucket/Resource": [
+        "/QB4J/TaskDefinitionExecutionRole/Resource": [
           {
             "type": "aws:cdk:logicalId",
-            "data": "CodeBuildDependencyCacheBucket1F3EBCDD",
+            "data": "TaskDefinitionExecutionRole3138A4FF",
             "trace": [
-              "new Bucket (/private/var/folders/16/_3_cngb5685764_0qj0csbp00000gn/T/jsii-kernel-iueecV/node_modules/@aws-cdk/aws-s3/lib/bucket.js:366:26)",
+              "new Role (/private/var/folders/16/_3_cngb5685764_0qj0csbp00000gn/T/jsii-kernel-p28STz/node_modules/@aws-cdk/aws-iam/lib/role.js:41:22)",
               "/Users/chris.jones/repos/qb4j-mvc/QueryBuilder4JMVC/cdk/.env/lib/python3.7/site-packages/jsii/_embedded/jsii/jsii-runtime.js:7838:49",
               "Kernel._wrapSandboxCode (/Users/chris.jones/repos/qb4j-mvc/QueryBuilder4JMVC/cdk/.env/lib/python3.7/site-packages/jsii/_embedded/jsii/jsii-runtime.js:8298:20)",
               "Kernel._create (/Users/chris.jones/repos/qb4j-mvc/QueryBuilder4JMVC/cdk/.env/lib/python3.7/site-packages/jsii/_embedded/jsii/jsii-runtime.js:7838:26)",
@@ -31,12 +31,12 @@
             ]
           }
         ],
-        "/QB4J/CodeBuildArtifactBucket/Resource": [
+        "/QB4J/TaskDefinition/Resource": [
           {
             "type": "aws:cdk:logicalId",
-            "data": "CodeBuildArtifactBucket2C7834D4",
+            "data": "TaskDefinitionB36D86D9",
             "trace": [
-              "new Bucket (/private/var/folders/16/_3_cngb5685764_0qj0csbp00000gn/T/jsii-kernel-iueecV/node_modules/@aws-cdk/aws-s3/lib/bucket.js:366:26)",
+              "new TaskDefinition (/private/var/folders/16/_3_cngb5685764_0qj0csbp00000gn/T/jsii-kernel-p28STz/node_modules/@aws-cdk/aws-ecs/lib/base/task-definition.js:68:25)",
               "/Users/chris.jones/repos/qb4j-mvc/QueryBuilder4JMVC/cdk/.env/lib/python3.7/site-packages/jsii/_embedded/jsii/jsii-runtime.js:7838:49",
               "Kernel._wrapSandboxCode (/Users/chris.jones/repos/qb4j-mvc/QueryBuilder4JMVC/cdk/.env/lib/python3.7/site-packages/jsii/_embedded/jsii/jsii-runtime.js:8298:20)",
               "Kernel._create (/Users/chris.jones/repos/qb4j-mvc/QueryBuilder4JMVC/cdk/.env/lib/python3.7/site-packages/jsii/_embedded/jsii/jsii-runtime.js:7838:26)",
@@ -48,13 +48,12 @@
             ]
           }
         ],
-        "/QB4J/CodeBuildProject/Role/Resource": [
+        "/QB4J/Vpc/Resource": [
           {
             "type": "aws:cdk:logicalId",
-            "data": "CodeBuildProjectRole2B162745",
+            "data": "Vpc8378EB38",
             "trace": [
-              "new Role (/private/var/folders/16/_3_cngb5685764_0qj0csbp00000gn/T/jsii-kernel-iueecV/node_modules/@aws-cdk/aws-iam/lib/role.js:41:22)",
-              "new Project (/private/var/folders/16/_3_cngb5685764_0qj0csbp00000gn/T/jsii-kernel-iueecV/node_modules/@aws-cdk/aws-codebuild/lib/project.js:238:35)",
+              "new Vpc (/private/var/folders/16/_3_cngb5685764_0qj0csbp00000gn/T/jsii-kernel-p28STz/node_modules/@aws-cdk/aws-ec2/lib/vpc.js:286:25)",
               "/Users/chris.jones/repos/qb4j-mvc/QueryBuilder4JMVC/cdk/.env/lib/python3.7/site-packages/jsii/_embedded/jsii/jsii-runtime.js:7838:49",
               "Kernel._wrapSandboxCode (/Users/chris.jones/repos/qb4j-mvc/QueryBuilder4JMVC/cdk/.env/lib/python3.7/site-packages/jsii/_embedded/jsii/jsii-runtime.js:8298:20)",
               "Kernel._create (/Users/chris.jones/repos/qb4j-mvc/QueryBuilder4JMVC/cdk/.env/lib/python3.7/site-packages/jsii/_embedded/jsii/jsii-runtime.js:7838:26)",
@@ -66,19 +65,18 @@
             ]
           }
         ],
-        "/QB4J/CodeBuildProject/Role/DefaultPolicy/Resource": [
+        "/QB4J/Vpc/PublicSubnet1/Subnet": [
           {
             "type": "aws:cdk:logicalId",
-            "data": "CodeBuildProjectRoleDefaultPolicy66975658",
+            "data": "VpcPublicSubnet1Subnet5C2D37C4",
             "trace": [
-              "new Policy (/private/var/folders/16/_3_cngb5685764_0qj0csbp00000gn/T/jsii-kernel-iueecV/node_modules/@aws-cdk/aws-iam/lib/policy.js:30:26)",
-              "Role.addToPolicy (/private/var/folders/16/_3_cngb5685764_0qj0csbp00000gn/T/jsii-kernel-iueecV/node_modules/@aws-cdk/aws-iam/lib/role.js:160:34)",
-              "Function.addToPrincipal (/private/var/folders/16/_3_cngb5685764_0qj0csbp00000gn/T/jsii-kernel-iueecV/node_modules/@aws-cdk/aws-iam/lib/grant.js:57:65)",
-              "Function.addToPrincipalOrResource (/private/var/folders/16/_3_cngb5685764_0qj0csbp00000gn/T/jsii-kernel-iueecV/node_modules/@aws-cdk/aws-iam/lib/grant.js:31:30)",
-              "Bucket.grant (/private/var/folders/16/_3_cngb5685764_0qj0csbp00000gn/T/jsii-kernel-iueecV/node_modules/@aws-cdk/aws-s3/lib/bucket.js:275:29)",
-              "Bucket.grantReadWrite (/private/var/folders/16/_3_cngb5685764_0qj0csbp00000gn/T/jsii-kernel-iueecV/node_modules/@aws-cdk/aws-s3/lib/bucket.js:224:21)",
-              "S3Artifacts.bind (/private/var/folders/16/_3_cngb5685764_0qj0csbp00000gn/T/jsii-kernel-iueecV/node_modules/@aws-cdk/aws-codebuild/lib/artifacts.js:33:27)",
-              "new Project (/private/var/folders/16/_3_cngb5685764_0qj0csbp00000gn/T/jsii-kernel-iueecV/node_modules/@aws-cdk/aws-codebuild/lib/project.js:256:43)",
+              "new Subnet (/private/var/folders/16/_3_cngb5685764_0qj0csbp00000gn/T/jsii-kernel-p28STz/node_modules/@aws-cdk/aws-ec2/lib/vpc.js:576:24)",
+              "new PublicSubnet (/private/var/folders/16/_3_cngb5685764_0qj0csbp00000gn/T/jsii-kernel-p28STz/node_modules/@aws-cdk/aws-ec2/lib/vpc.js:726:9)",
+              "/private/var/folders/16/_3_cngb5685764_0qj0csbp00000gn/T/jsii-kernel-p28STz/node_modules/@aws-cdk/aws-ec2/lib/vpc.js:505:42",
+              "Array.forEach (<anonymous>)",
+              "Vpc.createSubnetResources (/private/var/folders/16/_3_cngb5685764_0qj0csbp00000gn/T/jsii-kernel-p28STz/node_modules/@aws-cdk/aws-ec2/lib/vpc.js:489:32)",
+              "Vpc.createSubnets (/private/var/folders/16/_3_cngb5685764_0qj0csbp00000gn/T/jsii-kernel-p28STz/node_modules/@aws-cdk/aws-ec2/lib/vpc.js:485:18)",
+              "new Vpc (/private/var/folders/16/_3_cngb5685764_0qj0csbp00000gn/T/jsii-kernel-p28STz/node_modules/@aws-cdk/aws-ec2/lib/vpc.js:306:14)",
               "/Users/chris.jones/repos/qb4j-mvc/QueryBuilder4JMVC/cdk/.env/lib/python3.7/site-packages/jsii/_embedded/jsii/jsii-runtime.js:7838:49",
               "Kernel._wrapSandboxCode (/Users/chris.jones/repos/qb4j-mvc/QueryBuilder4JMVC/cdk/.env/lib/python3.7/site-packages/jsii/_embedded/jsii/jsii-runtime.js:8298:20)",
               "Kernel._create (/Users/chris.jones/repos/qb4j-mvc/QueryBuilder4JMVC/cdk/.env/lib/python3.7/site-packages/jsii/_embedded/jsii/jsii-runtime.js:7838:26)",
@@ -90,16 +88,540 @@
             ]
           }
         ],
-        "/QB4J/CodeBuildProject/Resource": [
+        "/QB4J/Vpc/PublicSubnet1/RouteTable": [
           {
             "type": "aws:cdk:logicalId",
-            "data": "CodeBuildProject4B91CF3F",
+            "data": "VpcPublicSubnet1RouteTable6C95E38E",
             "trace": [
-              "new Project (/private/var/folders/16/_3_cngb5685764_0qj0csbp00000gn/T/jsii-kernel-iueecV/node_modules/@aws-cdk/aws-codebuild/lib/project.js:276:26)",
+              "new Subnet (/private/var/folders/16/_3_cngb5685764_0qj0csbp00000gn/T/jsii-kernel-p28STz/node_modules/@aws-cdk/aws-ec2/lib/vpc.js:591:23)",
+              "new PublicSubnet (/private/var/folders/16/_3_cngb5685764_0qj0csbp00000gn/T/jsii-kernel-p28STz/node_modules/@aws-cdk/aws-ec2/lib/vpc.js:726:9)",
+              "/private/var/folders/16/_3_cngb5685764_0qj0csbp00000gn/T/jsii-kernel-p28STz/node_modules/@aws-cdk/aws-ec2/lib/vpc.js:505:42",
+              "Array.forEach (<anonymous>)",
+              "Vpc.createSubnetResources (/private/var/folders/16/_3_cngb5685764_0qj0csbp00000gn/T/jsii-kernel-p28STz/node_modules/@aws-cdk/aws-ec2/lib/vpc.js:489:32)",
+              "Vpc.createSubnets (/private/var/folders/16/_3_cngb5685764_0qj0csbp00000gn/T/jsii-kernel-p28STz/node_modules/@aws-cdk/aws-ec2/lib/vpc.js:485:18)",
+              "new Vpc (/private/var/folders/16/_3_cngb5685764_0qj0csbp00000gn/T/jsii-kernel-p28STz/node_modules/@aws-cdk/aws-ec2/lib/vpc.js:306:14)",
               "/Users/chris.jones/repos/qb4j-mvc/QueryBuilder4JMVC/cdk/.env/lib/python3.7/site-packages/jsii/_embedded/jsii/jsii-runtime.js:7838:49",
               "Kernel._wrapSandboxCode (/Users/chris.jones/repos/qb4j-mvc/QueryBuilder4JMVC/cdk/.env/lib/python3.7/site-packages/jsii/_embedded/jsii/jsii-runtime.js:8298:20)",
               "Kernel._create (/Users/chris.jones/repos/qb4j-mvc/QueryBuilder4JMVC/cdk/.env/lib/python3.7/site-packages/jsii/_embedded/jsii/jsii-runtime.js:7838:26)",
               "Kernel.create (/Users/chris.jones/repos/qb4j-mvc/QueryBuilder4JMVC/cdk/.env/lib/python3.7/site-packages/jsii/_embedded/jsii/jsii-runtime.js:7585:21)",
+              "KernelHost.processRequest (/Users/chris.jones/repos/qb4j-mvc/QueryBuilder4JMVC/cdk/.env/lib/python3.7/site-packages/jsii/_embedded/jsii/jsii-runtime.js:7372:28)",
+              "KernelHost.run (/Users/chris.jones/repos/qb4j-mvc/QueryBuilder4JMVC/cdk/.env/lib/python3.7/site-packages/jsii/_embedded/jsii/jsii-runtime.js:7312:14)",
+              "Immediate._onImmediate (/Users/chris.jones/repos/qb4j-mvc/QueryBuilder4JMVC/cdk/.env/lib/python3.7/site-packages/jsii/_embedded/jsii/jsii-runtime.js:7315:37)",
+              "processImmediate (internal/timers.js:456:21)"
+            ]
+          }
+        ],
+        "/QB4J/Vpc/PublicSubnet1/RouteTableAssociation": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "VpcPublicSubnet1RouteTableAssociation97140677",
+            "trace": [
+              "new Subnet (/private/var/folders/16/_3_cngb5685764_0qj0csbp00000gn/T/jsii-kernel-p28STz/node_modules/@aws-cdk/aws-ec2/lib/vpc.js:596:9)",
+              "new PublicSubnet (/private/var/folders/16/_3_cngb5685764_0qj0csbp00000gn/T/jsii-kernel-p28STz/node_modules/@aws-cdk/aws-ec2/lib/vpc.js:726:9)",
+              "/private/var/folders/16/_3_cngb5685764_0qj0csbp00000gn/T/jsii-kernel-p28STz/node_modules/@aws-cdk/aws-ec2/lib/vpc.js:505:42",
+              "Array.forEach (<anonymous>)",
+              "Vpc.createSubnetResources (/private/var/folders/16/_3_cngb5685764_0qj0csbp00000gn/T/jsii-kernel-p28STz/node_modules/@aws-cdk/aws-ec2/lib/vpc.js:489:32)",
+              "Vpc.createSubnets (/private/var/folders/16/_3_cngb5685764_0qj0csbp00000gn/T/jsii-kernel-p28STz/node_modules/@aws-cdk/aws-ec2/lib/vpc.js:485:18)",
+              "new Vpc (/private/var/folders/16/_3_cngb5685764_0qj0csbp00000gn/T/jsii-kernel-p28STz/node_modules/@aws-cdk/aws-ec2/lib/vpc.js:306:14)",
+              "/Users/chris.jones/repos/qb4j-mvc/QueryBuilder4JMVC/cdk/.env/lib/python3.7/site-packages/jsii/_embedded/jsii/jsii-runtime.js:7838:49",
+              "Kernel._wrapSandboxCode (/Users/chris.jones/repos/qb4j-mvc/QueryBuilder4JMVC/cdk/.env/lib/python3.7/site-packages/jsii/_embedded/jsii/jsii-runtime.js:8298:20)",
+              "Kernel._create (/Users/chris.jones/repos/qb4j-mvc/QueryBuilder4JMVC/cdk/.env/lib/python3.7/site-packages/jsii/_embedded/jsii/jsii-runtime.js:7838:26)",
+              "Kernel.create (/Users/chris.jones/repos/qb4j-mvc/QueryBuilder4JMVC/cdk/.env/lib/python3.7/site-packages/jsii/_embedded/jsii/jsii-runtime.js:7585:21)",
+              "KernelHost.processRequest (/Users/chris.jones/repos/qb4j-mvc/QueryBuilder4JMVC/cdk/.env/lib/python3.7/site-packages/jsii/_embedded/jsii/jsii-runtime.js:7372:28)",
+              "KernelHost.run (/Users/chris.jones/repos/qb4j-mvc/QueryBuilder4JMVC/cdk/.env/lib/python3.7/site-packages/jsii/_embedded/jsii/jsii-runtime.js:7312:14)",
+              "Immediate._onImmediate (/Users/chris.jones/repos/qb4j-mvc/QueryBuilder4JMVC/cdk/.env/lib/python3.7/site-packages/jsii/_embedded/jsii/jsii-runtime.js:7315:37)",
+              "processImmediate (internal/timers.js:456:21)"
+            ]
+          }
+        ],
+        "/QB4J/Vpc/PublicSubnet1/DefaultRoute": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "VpcPublicSubnet1DefaultRoute3DA9E72A",
+            "trace": [
+              "PublicSubnet.addDefaultInternetRoute (/private/var/folders/16/_3_cngb5685764_0qj0csbp00000gn/T/jsii-kernel-p28STz/node_modules/@aws-cdk/aws-ec2/lib/vpc.js:616:23)",
+              "/private/var/folders/16/_3_cngb5685764_0qj0csbp00000gn/T/jsii-kernel-p28STz/node_modules/@aws-cdk/aws-ec2/lib/vpc.js:317:30",
+              "Array.forEach (<anonymous>)",
+              "new Vpc (/private/var/folders/16/_3_cngb5685764_0qj0csbp00000gn/T/jsii-kernel-p28STz/node_modules/@aws-cdk/aws-ec2/lib/vpc.js:316:32)",
+              "/Users/chris.jones/repos/qb4j-mvc/QueryBuilder4JMVC/cdk/.env/lib/python3.7/site-packages/jsii/_embedded/jsii/jsii-runtime.js:7838:49",
+              "Kernel._wrapSandboxCode (/Users/chris.jones/repos/qb4j-mvc/QueryBuilder4JMVC/cdk/.env/lib/python3.7/site-packages/jsii/_embedded/jsii/jsii-runtime.js:8298:20)",
+              "Kernel._create (/Users/chris.jones/repos/qb4j-mvc/QueryBuilder4JMVC/cdk/.env/lib/python3.7/site-packages/jsii/_embedded/jsii/jsii-runtime.js:7838:26)",
+              "Kernel.create (/Users/chris.jones/repos/qb4j-mvc/QueryBuilder4JMVC/cdk/.env/lib/python3.7/site-packages/jsii/_embedded/jsii/jsii-runtime.js:7585:21)",
+              "KernelHost.processRequest (/Users/chris.jones/repos/qb4j-mvc/QueryBuilder4JMVC/cdk/.env/lib/python3.7/site-packages/jsii/_embedded/jsii/jsii-runtime.js:7372:28)",
+              "KernelHost.run (/Users/chris.jones/repos/qb4j-mvc/QueryBuilder4JMVC/cdk/.env/lib/python3.7/site-packages/jsii/_embedded/jsii/jsii-runtime.js:7312:14)",
+              "Immediate._onImmediate (/Users/chris.jones/repos/qb4j-mvc/QueryBuilder4JMVC/cdk/.env/lib/python3.7/site-packages/jsii/_embedded/jsii/jsii-runtime.js:7315:37)",
+              "processImmediate (internal/timers.js:456:21)"
+            ]
+          }
+        ],
+        "/QB4J/Vpc/PublicSubnet1/EIP": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "VpcPublicSubnet1EIPD7E02669",
+            "trace": [
+              "PublicSubnet.addNatGateway (/private/var/folders/16/_3_cngb5685764_0qj0csbp00000gn/T/jsii-kernel-p28STz/node_modules/@aws-cdk/aws-ec2/lib/vpc.js:737:27)",
+              "NatGateway.configureNat (/private/var/folders/16/_3_cngb5685764_0qj0csbp00000gn/T/jsii-kernel-p28STz/node_modules/@aws-cdk/aws-ec2/lib/nat.js:52:33)",
+              "Vpc.createNatGateways (/private/var/folders/16/_3_cngb5685764_0qj0csbp00000gn/T/jsii-kernel-p28STz/node_modules/@aws-cdk/aws-ec2/lib/vpc.js:463:18)",
+              "new Vpc (/private/var/folders/16/_3_cngb5685764_0qj0csbp00000gn/T/jsii-kernel-p28STz/node_modules/@aws-cdk/aws-ec2/lib/vpc.js:322:22)",
+              "/Users/chris.jones/repos/qb4j-mvc/QueryBuilder4JMVC/cdk/.env/lib/python3.7/site-packages/jsii/_embedded/jsii/jsii-runtime.js:7838:49",
+              "Kernel._wrapSandboxCode (/Users/chris.jones/repos/qb4j-mvc/QueryBuilder4JMVC/cdk/.env/lib/python3.7/site-packages/jsii/_embedded/jsii/jsii-runtime.js:8298:20)",
+              "Kernel._create (/Users/chris.jones/repos/qb4j-mvc/QueryBuilder4JMVC/cdk/.env/lib/python3.7/site-packages/jsii/_embedded/jsii/jsii-runtime.js:7838:26)",
+              "Kernel.create (/Users/chris.jones/repos/qb4j-mvc/QueryBuilder4JMVC/cdk/.env/lib/python3.7/site-packages/jsii/_embedded/jsii/jsii-runtime.js:7585:21)",
+              "KernelHost.processRequest (/Users/chris.jones/repos/qb4j-mvc/QueryBuilder4JMVC/cdk/.env/lib/python3.7/site-packages/jsii/_embedded/jsii/jsii-runtime.js:7372:28)",
+              "KernelHost.run (/Users/chris.jones/repos/qb4j-mvc/QueryBuilder4JMVC/cdk/.env/lib/python3.7/site-packages/jsii/_embedded/jsii/jsii-runtime.js:7312:14)",
+              "Immediate._onImmediate (/Users/chris.jones/repos/qb4j-mvc/QueryBuilder4JMVC/cdk/.env/lib/python3.7/site-packages/jsii/_embedded/jsii/jsii-runtime.js:7315:37)",
+              "processImmediate (internal/timers.js:456:21)"
+            ]
+          }
+        ],
+        "/QB4J/Vpc/PublicSubnet1/NATGateway": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "VpcPublicSubnet1NATGateway4D7517AA",
+            "trace": [
+              "PublicSubnet.addNatGateway (/private/var/folders/16/_3_cngb5685764_0qj0csbp00000gn/T/jsii-kernel-p28STz/node_modules/@aws-cdk/aws-ec2/lib/vpc.js:735:21)",
+              "NatGateway.configureNat (/private/var/folders/16/_3_cngb5685764_0qj0csbp00000gn/T/jsii-kernel-p28STz/node_modules/@aws-cdk/aws-ec2/lib/nat.js:52:33)",
+              "Vpc.createNatGateways (/private/var/folders/16/_3_cngb5685764_0qj0csbp00000gn/T/jsii-kernel-p28STz/node_modules/@aws-cdk/aws-ec2/lib/vpc.js:463:18)",
+              "new Vpc (/private/var/folders/16/_3_cngb5685764_0qj0csbp00000gn/T/jsii-kernel-p28STz/node_modules/@aws-cdk/aws-ec2/lib/vpc.js:322:22)",
+              "/Users/chris.jones/repos/qb4j-mvc/QueryBuilder4JMVC/cdk/.env/lib/python3.7/site-packages/jsii/_embedded/jsii/jsii-runtime.js:7838:49",
+              "Kernel._wrapSandboxCode (/Users/chris.jones/repos/qb4j-mvc/QueryBuilder4JMVC/cdk/.env/lib/python3.7/site-packages/jsii/_embedded/jsii/jsii-runtime.js:8298:20)",
+              "Kernel._create (/Users/chris.jones/repos/qb4j-mvc/QueryBuilder4JMVC/cdk/.env/lib/python3.7/site-packages/jsii/_embedded/jsii/jsii-runtime.js:7838:26)",
+              "Kernel.create (/Users/chris.jones/repos/qb4j-mvc/QueryBuilder4JMVC/cdk/.env/lib/python3.7/site-packages/jsii/_embedded/jsii/jsii-runtime.js:7585:21)",
+              "KernelHost.processRequest (/Users/chris.jones/repos/qb4j-mvc/QueryBuilder4JMVC/cdk/.env/lib/python3.7/site-packages/jsii/_embedded/jsii/jsii-runtime.js:7372:28)",
+              "KernelHost.run (/Users/chris.jones/repos/qb4j-mvc/QueryBuilder4JMVC/cdk/.env/lib/python3.7/site-packages/jsii/_embedded/jsii/jsii-runtime.js:7312:14)",
+              "Immediate._onImmediate (/Users/chris.jones/repos/qb4j-mvc/QueryBuilder4JMVC/cdk/.env/lib/python3.7/site-packages/jsii/_embedded/jsii/jsii-runtime.js:7315:37)",
+              "processImmediate (internal/timers.js:456:21)"
+            ]
+          }
+        ],
+        "/QB4J/Vpc/PublicSubnet2/Subnet": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "VpcPublicSubnet2Subnet691E08A3",
+            "trace": [
+              "new Subnet (/private/var/folders/16/_3_cngb5685764_0qj0csbp00000gn/T/jsii-kernel-p28STz/node_modules/@aws-cdk/aws-ec2/lib/vpc.js:576:24)",
+              "new PublicSubnet (/private/var/folders/16/_3_cngb5685764_0qj0csbp00000gn/T/jsii-kernel-p28STz/node_modules/@aws-cdk/aws-ec2/lib/vpc.js:726:9)",
+              "/private/var/folders/16/_3_cngb5685764_0qj0csbp00000gn/T/jsii-kernel-p28STz/node_modules/@aws-cdk/aws-ec2/lib/vpc.js:505:42",
+              "Array.forEach (<anonymous>)",
+              "Vpc.createSubnetResources (/private/var/folders/16/_3_cngb5685764_0qj0csbp00000gn/T/jsii-kernel-p28STz/node_modules/@aws-cdk/aws-ec2/lib/vpc.js:489:32)",
+              "Vpc.createSubnets (/private/var/folders/16/_3_cngb5685764_0qj0csbp00000gn/T/jsii-kernel-p28STz/node_modules/@aws-cdk/aws-ec2/lib/vpc.js:485:18)",
+              "new Vpc (/private/var/folders/16/_3_cngb5685764_0qj0csbp00000gn/T/jsii-kernel-p28STz/node_modules/@aws-cdk/aws-ec2/lib/vpc.js:306:14)",
+              "/Users/chris.jones/repos/qb4j-mvc/QueryBuilder4JMVC/cdk/.env/lib/python3.7/site-packages/jsii/_embedded/jsii/jsii-runtime.js:7838:49",
+              "Kernel._wrapSandboxCode (/Users/chris.jones/repos/qb4j-mvc/QueryBuilder4JMVC/cdk/.env/lib/python3.7/site-packages/jsii/_embedded/jsii/jsii-runtime.js:8298:20)",
+              "Kernel._create (/Users/chris.jones/repos/qb4j-mvc/QueryBuilder4JMVC/cdk/.env/lib/python3.7/site-packages/jsii/_embedded/jsii/jsii-runtime.js:7838:26)",
+              "Kernel.create (/Users/chris.jones/repos/qb4j-mvc/QueryBuilder4JMVC/cdk/.env/lib/python3.7/site-packages/jsii/_embedded/jsii/jsii-runtime.js:7585:21)",
+              "KernelHost.processRequest (/Users/chris.jones/repos/qb4j-mvc/QueryBuilder4JMVC/cdk/.env/lib/python3.7/site-packages/jsii/_embedded/jsii/jsii-runtime.js:7372:28)",
+              "KernelHost.run (/Users/chris.jones/repos/qb4j-mvc/QueryBuilder4JMVC/cdk/.env/lib/python3.7/site-packages/jsii/_embedded/jsii/jsii-runtime.js:7312:14)",
+              "Immediate._onImmediate (/Users/chris.jones/repos/qb4j-mvc/QueryBuilder4JMVC/cdk/.env/lib/python3.7/site-packages/jsii/_embedded/jsii/jsii-runtime.js:7315:37)",
+              "processImmediate (internal/timers.js:456:21)"
+            ]
+          }
+        ],
+        "/QB4J/Vpc/PublicSubnet2/RouteTable": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "VpcPublicSubnet2RouteTable94F7E489",
+            "trace": [
+              "new Subnet (/private/var/folders/16/_3_cngb5685764_0qj0csbp00000gn/T/jsii-kernel-p28STz/node_modules/@aws-cdk/aws-ec2/lib/vpc.js:591:23)",
+              "new PublicSubnet (/private/var/folders/16/_3_cngb5685764_0qj0csbp00000gn/T/jsii-kernel-p28STz/node_modules/@aws-cdk/aws-ec2/lib/vpc.js:726:9)",
+              "/private/var/folders/16/_3_cngb5685764_0qj0csbp00000gn/T/jsii-kernel-p28STz/node_modules/@aws-cdk/aws-ec2/lib/vpc.js:505:42",
+              "Array.forEach (<anonymous>)",
+              "Vpc.createSubnetResources (/private/var/folders/16/_3_cngb5685764_0qj0csbp00000gn/T/jsii-kernel-p28STz/node_modules/@aws-cdk/aws-ec2/lib/vpc.js:489:32)",
+              "Vpc.createSubnets (/private/var/folders/16/_3_cngb5685764_0qj0csbp00000gn/T/jsii-kernel-p28STz/node_modules/@aws-cdk/aws-ec2/lib/vpc.js:485:18)",
+              "new Vpc (/private/var/folders/16/_3_cngb5685764_0qj0csbp00000gn/T/jsii-kernel-p28STz/node_modules/@aws-cdk/aws-ec2/lib/vpc.js:306:14)",
+              "/Users/chris.jones/repos/qb4j-mvc/QueryBuilder4JMVC/cdk/.env/lib/python3.7/site-packages/jsii/_embedded/jsii/jsii-runtime.js:7838:49",
+              "Kernel._wrapSandboxCode (/Users/chris.jones/repos/qb4j-mvc/QueryBuilder4JMVC/cdk/.env/lib/python3.7/site-packages/jsii/_embedded/jsii/jsii-runtime.js:8298:20)",
+              "Kernel._create (/Users/chris.jones/repos/qb4j-mvc/QueryBuilder4JMVC/cdk/.env/lib/python3.7/site-packages/jsii/_embedded/jsii/jsii-runtime.js:7838:26)",
+              "Kernel.create (/Users/chris.jones/repos/qb4j-mvc/QueryBuilder4JMVC/cdk/.env/lib/python3.7/site-packages/jsii/_embedded/jsii/jsii-runtime.js:7585:21)",
+              "KernelHost.processRequest (/Users/chris.jones/repos/qb4j-mvc/QueryBuilder4JMVC/cdk/.env/lib/python3.7/site-packages/jsii/_embedded/jsii/jsii-runtime.js:7372:28)",
+              "KernelHost.run (/Users/chris.jones/repos/qb4j-mvc/QueryBuilder4JMVC/cdk/.env/lib/python3.7/site-packages/jsii/_embedded/jsii/jsii-runtime.js:7312:14)",
+              "Immediate._onImmediate (/Users/chris.jones/repos/qb4j-mvc/QueryBuilder4JMVC/cdk/.env/lib/python3.7/site-packages/jsii/_embedded/jsii/jsii-runtime.js:7315:37)",
+              "processImmediate (internal/timers.js:456:21)"
+            ]
+          }
+        ],
+        "/QB4J/Vpc/PublicSubnet2/RouteTableAssociation": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "VpcPublicSubnet2RouteTableAssociationDD5762D8",
+            "trace": [
+              "new Subnet (/private/var/folders/16/_3_cngb5685764_0qj0csbp00000gn/T/jsii-kernel-p28STz/node_modules/@aws-cdk/aws-ec2/lib/vpc.js:596:9)",
+              "new PublicSubnet (/private/var/folders/16/_3_cngb5685764_0qj0csbp00000gn/T/jsii-kernel-p28STz/node_modules/@aws-cdk/aws-ec2/lib/vpc.js:726:9)",
+              "/private/var/folders/16/_3_cngb5685764_0qj0csbp00000gn/T/jsii-kernel-p28STz/node_modules/@aws-cdk/aws-ec2/lib/vpc.js:505:42",
+              "Array.forEach (<anonymous>)",
+              "Vpc.createSubnetResources (/private/var/folders/16/_3_cngb5685764_0qj0csbp00000gn/T/jsii-kernel-p28STz/node_modules/@aws-cdk/aws-ec2/lib/vpc.js:489:32)",
+              "Vpc.createSubnets (/private/var/folders/16/_3_cngb5685764_0qj0csbp00000gn/T/jsii-kernel-p28STz/node_modules/@aws-cdk/aws-ec2/lib/vpc.js:485:18)",
+              "new Vpc (/private/var/folders/16/_3_cngb5685764_0qj0csbp00000gn/T/jsii-kernel-p28STz/node_modules/@aws-cdk/aws-ec2/lib/vpc.js:306:14)",
+              "/Users/chris.jones/repos/qb4j-mvc/QueryBuilder4JMVC/cdk/.env/lib/python3.7/site-packages/jsii/_embedded/jsii/jsii-runtime.js:7838:49",
+              "Kernel._wrapSandboxCode (/Users/chris.jones/repos/qb4j-mvc/QueryBuilder4JMVC/cdk/.env/lib/python3.7/site-packages/jsii/_embedded/jsii/jsii-runtime.js:8298:20)",
+              "Kernel._create (/Users/chris.jones/repos/qb4j-mvc/QueryBuilder4JMVC/cdk/.env/lib/python3.7/site-packages/jsii/_embedded/jsii/jsii-runtime.js:7838:26)",
+              "Kernel.create (/Users/chris.jones/repos/qb4j-mvc/QueryBuilder4JMVC/cdk/.env/lib/python3.7/site-packages/jsii/_embedded/jsii/jsii-runtime.js:7585:21)",
+              "KernelHost.processRequest (/Users/chris.jones/repos/qb4j-mvc/QueryBuilder4JMVC/cdk/.env/lib/python3.7/site-packages/jsii/_embedded/jsii/jsii-runtime.js:7372:28)",
+              "KernelHost.run (/Users/chris.jones/repos/qb4j-mvc/QueryBuilder4JMVC/cdk/.env/lib/python3.7/site-packages/jsii/_embedded/jsii/jsii-runtime.js:7312:14)",
+              "Immediate._onImmediate (/Users/chris.jones/repos/qb4j-mvc/QueryBuilder4JMVC/cdk/.env/lib/python3.7/site-packages/jsii/_embedded/jsii/jsii-runtime.js:7315:37)",
+              "processImmediate (internal/timers.js:456:21)"
+            ]
+          }
+        ],
+        "/QB4J/Vpc/PublicSubnet2/DefaultRoute": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "VpcPublicSubnet2DefaultRoute97F91067",
+            "trace": [
+              "PublicSubnet.addDefaultInternetRoute (/private/var/folders/16/_3_cngb5685764_0qj0csbp00000gn/T/jsii-kernel-p28STz/node_modules/@aws-cdk/aws-ec2/lib/vpc.js:616:23)",
+              "/private/var/folders/16/_3_cngb5685764_0qj0csbp00000gn/T/jsii-kernel-p28STz/node_modules/@aws-cdk/aws-ec2/lib/vpc.js:317:30",
+              "Array.forEach (<anonymous>)",
+              "new Vpc (/private/var/folders/16/_3_cngb5685764_0qj0csbp00000gn/T/jsii-kernel-p28STz/node_modules/@aws-cdk/aws-ec2/lib/vpc.js:316:32)",
+              "/Users/chris.jones/repos/qb4j-mvc/QueryBuilder4JMVC/cdk/.env/lib/python3.7/site-packages/jsii/_embedded/jsii/jsii-runtime.js:7838:49",
+              "Kernel._wrapSandboxCode (/Users/chris.jones/repos/qb4j-mvc/QueryBuilder4JMVC/cdk/.env/lib/python3.7/site-packages/jsii/_embedded/jsii/jsii-runtime.js:8298:20)",
+              "Kernel._create (/Users/chris.jones/repos/qb4j-mvc/QueryBuilder4JMVC/cdk/.env/lib/python3.7/site-packages/jsii/_embedded/jsii/jsii-runtime.js:7838:26)",
+              "Kernel.create (/Users/chris.jones/repos/qb4j-mvc/QueryBuilder4JMVC/cdk/.env/lib/python3.7/site-packages/jsii/_embedded/jsii/jsii-runtime.js:7585:21)",
+              "KernelHost.processRequest (/Users/chris.jones/repos/qb4j-mvc/QueryBuilder4JMVC/cdk/.env/lib/python3.7/site-packages/jsii/_embedded/jsii/jsii-runtime.js:7372:28)",
+              "KernelHost.run (/Users/chris.jones/repos/qb4j-mvc/QueryBuilder4JMVC/cdk/.env/lib/python3.7/site-packages/jsii/_embedded/jsii/jsii-runtime.js:7312:14)",
+              "Immediate._onImmediate (/Users/chris.jones/repos/qb4j-mvc/QueryBuilder4JMVC/cdk/.env/lib/python3.7/site-packages/jsii/_embedded/jsii/jsii-runtime.js:7315:37)",
+              "processImmediate (internal/timers.js:456:21)"
+            ]
+          }
+        ],
+        "/QB4J/Vpc/PublicSubnet2/EIP": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "VpcPublicSubnet2EIP3C605A87",
+            "trace": [
+              "PublicSubnet.addNatGateway (/private/var/folders/16/_3_cngb5685764_0qj0csbp00000gn/T/jsii-kernel-p28STz/node_modules/@aws-cdk/aws-ec2/lib/vpc.js:737:27)",
+              "NatGateway.configureNat (/private/var/folders/16/_3_cngb5685764_0qj0csbp00000gn/T/jsii-kernel-p28STz/node_modules/@aws-cdk/aws-ec2/lib/nat.js:52:33)",
+              "Vpc.createNatGateways (/private/var/folders/16/_3_cngb5685764_0qj0csbp00000gn/T/jsii-kernel-p28STz/node_modules/@aws-cdk/aws-ec2/lib/vpc.js:463:18)",
+              "new Vpc (/private/var/folders/16/_3_cngb5685764_0qj0csbp00000gn/T/jsii-kernel-p28STz/node_modules/@aws-cdk/aws-ec2/lib/vpc.js:322:22)",
+              "/Users/chris.jones/repos/qb4j-mvc/QueryBuilder4JMVC/cdk/.env/lib/python3.7/site-packages/jsii/_embedded/jsii/jsii-runtime.js:7838:49",
+              "Kernel._wrapSandboxCode (/Users/chris.jones/repos/qb4j-mvc/QueryBuilder4JMVC/cdk/.env/lib/python3.7/site-packages/jsii/_embedded/jsii/jsii-runtime.js:8298:20)",
+              "Kernel._create (/Users/chris.jones/repos/qb4j-mvc/QueryBuilder4JMVC/cdk/.env/lib/python3.7/site-packages/jsii/_embedded/jsii/jsii-runtime.js:7838:26)",
+              "Kernel.create (/Users/chris.jones/repos/qb4j-mvc/QueryBuilder4JMVC/cdk/.env/lib/python3.7/site-packages/jsii/_embedded/jsii/jsii-runtime.js:7585:21)",
+              "KernelHost.processRequest (/Users/chris.jones/repos/qb4j-mvc/QueryBuilder4JMVC/cdk/.env/lib/python3.7/site-packages/jsii/_embedded/jsii/jsii-runtime.js:7372:28)",
+              "KernelHost.run (/Users/chris.jones/repos/qb4j-mvc/QueryBuilder4JMVC/cdk/.env/lib/python3.7/site-packages/jsii/_embedded/jsii/jsii-runtime.js:7312:14)",
+              "Immediate._onImmediate (/Users/chris.jones/repos/qb4j-mvc/QueryBuilder4JMVC/cdk/.env/lib/python3.7/site-packages/jsii/_embedded/jsii/jsii-runtime.js:7315:37)",
+              "processImmediate (internal/timers.js:456:21)"
+            ]
+          }
+        ],
+        "/QB4J/Vpc/PublicSubnet2/NATGateway": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "VpcPublicSubnet2NATGateway9182C01D",
+            "trace": [
+              "PublicSubnet.addNatGateway (/private/var/folders/16/_3_cngb5685764_0qj0csbp00000gn/T/jsii-kernel-p28STz/node_modules/@aws-cdk/aws-ec2/lib/vpc.js:735:21)",
+              "NatGateway.configureNat (/private/var/folders/16/_3_cngb5685764_0qj0csbp00000gn/T/jsii-kernel-p28STz/node_modules/@aws-cdk/aws-ec2/lib/nat.js:52:33)",
+              "Vpc.createNatGateways (/private/var/folders/16/_3_cngb5685764_0qj0csbp00000gn/T/jsii-kernel-p28STz/node_modules/@aws-cdk/aws-ec2/lib/vpc.js:463:18)",
+              "new Vpc (/private/var/folders/16/_3_cngb5685764_0qj0csbp00000gn/T/jsii-kernel-p28STz/node_modules/@aws-cdk/aws-ec2/lib/vpc.js:322:22)",
+              "/Users/chris.jones/repos/qb4j-mvc/QueryBuilder4JMVC/cdk/.env/lib/python3.7/site-packages/jsii/_embedded/jsii/jsii-runtime.js:7838:49",
+              "Kernel._wrapSandboxCode (/Users/chris.jones/repos/qb4j-mvc/QueryBuilder4JMVC/cdk/.env/lib/python3.7/site-packages/jsii/_embedded/jsii/jsii-runtime.js:8298:20)",
+              "Kernel._create (/Users/chris.jones/repos/qb4j-mvc/QueryBuilder4JMVC/cdk/.env/lib/python3.7/site-packages/jsii/_embedded/jsii/jsii-runtime.js:7838:26)",
+              "Kernel.create (/Users/chris.jones/repos/qb4j-mvc/QueryBuilder4JMVC/cdk/.env/lib/python3.7/site-packages/jsii/_embedded/jsii/jsii-runtime.js:7585:21)",
+              "KernelHost.processRequest (/Users/chris.jones/repos/qb4j-mvc/QueryBuilder4JMVC/cdk/.env/lib/python3.7/site-packages/jsii/_embedded/jsii/jsii-runtime.js:7372:28)",
+              "KernelHost.run (/Users/chris.jones/repos/qb4j-mvc/QueryBuilder4JMVC/cdk/.env/lib/python3.7/site-packages/jsii/_embedded/jsii/jsii-runtime.js:7312:14)",
+              "Immediate._onImmediate (/Users/chris.jones/repos/qb4j-mvc/QueryBuilder4JMVC/cdk/.env/lib/python3.7/site-packages/jsii/_embedded/jsii/jsii-runtime.js:7315:37)",
+              "processImmediate (internal/timers.js:456:21)"
+            ]
+          }
+        ],
+        "/QB4J/Vpc/PrivateSubnet1/Subnet": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "VpcPrivateSubnet1Subnet536B997A",
+            "trace": [
+              "new Subnet (/private/var/folders/16/_3_cngb5685764_0qj0csbp00000gn/T/jsii-kernel-p28STz/node_modules/@aws-cdk/aws-ec2/lib/vpc.js:576:24)",
+              "new PrivateSubnet (/private/var/folders/16/_3_cngb5685764_0qj0csbp00000gn/T/jsii-kernel-p28STz/node_modules/@aws-cdk/aws-ec2/lib/vpc.js:753:9)",
+              "/private/var/folders/16/_3_cngb5685764_0qj0csbp00000gn/T/jsii-kernel-p28STz/node_modules/@aws-cdk/aws-ec2/lib/vpc.js:510:43",
+              "Array.forEach (<anonymous>)",
+              "Vpc.createSubnetResources (/private/var/folders/16/_3_cngb5685764_0qj0csbp00000gn/T/jsii-kernel-p28STz/node_modules/@aws-cdk/aws-ec2/lib/vpc.js:489:32)",
+              "Vpc.createSubnets (/private/var/folders/16/_3_cngb5685764_0qj0csbp00000gn/T/jsii-kernel-p28STz/node_modules/@aws-cdk/aws-ec2/lib/vpc.js:485:18)",
+              "new Vpc (/private/var/folders/16/_3_cngb5685764_0qj0csbp00000gn/T/jsii-kernel-p28STz/node_modules/@aws-cdk/aws-ec2/lib/vpc.js:306:14)",
+              "/Users/chris.jones/repos/qb4j-mvc/QueryBuilder4JMVC/cdk/.env/lib/python3.7/site-packages/jsii/_embedded/jsii/jsii-runtime.js:7838:49",
+              "Kernel._wrapSandboxCode (/Users/chris.jones/repos/qb4j-mvc/QueryBuilder4JMVC/cdk/.env/lib/python3.7/site-packages/jsii/_embedded/jsii/jsii-runtime.js:8298:20)",
+              "Kernel._create (/Users/chris.jones/repos/qb4j-mvc/QueryBuilder4JMVC/cdk/.env/lib/python3.7/site-packages/jsii/_embedded/jsii/jsii-runtime.js:7838:26)",
+              "Kernel.create (/Users/chris.jones/repos/qb4j-mvc/QueryBuilder4JMVC/cdk/.env/lib/python3.7/site-packages/jsii/_embedded/jsii/jsii-runtime.js:7585:21)",
+              "KernelHost.processRequest (/Users/chris.jones/repos/qb4j-mvc/QueryBuilder4JMVC/cdk/.env/lib/python3.7/site-packages/jsii/_embedded/jsii/jsii-runtime.js:7372:28)",
+              "KernelHost.run (/Users/chris.jones/repos/qb4j-mvc/QueryBuilder4JMVC/cdk/.env/lib/python3.7/site-packages/jsii/_embedded/jsii/jsii-runtime.js:7312:14)",
+              "Immediate._onImmediate (/Users/chris.jones/repos/qb4j-mvc/QueryBuilder4JMVC/cdk/.env/lib/python3.7/site-packages/jsii/_embedded/jsii/jsii-runtime.js:7315:37)",
+              "processImmediate (internal/timers.js:456:21)"
+            ]
+          }
+        ],
+        "/QB4J/Vpc/PrivateSubnet1/RouteTable": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "VpcPrivateSubnet1RouteTableB2C5B500",
+            "trace": [
+              "new Subnet (/private/var/folders/16/_3_cngb5685764_0qj0csbp00000gn/T/jsii-kernel-p28STz/node_modules/@aws-cdk/aws-ec2/lib/vpc.js:591:23)",
+              "new PrivateSubnet (/private/var/folders/16/_3_cngb5685764_0qj0csbp00000gn/T/jsii-kernel-p28STz/node_modules/@aws-cdk/aws-ec2/lib/vpc.js:753:9)",
+              "/private/var/folders/16/_3_cngb5685764_0qj0csbp00000gn/T/jsii-kernel-p28STz/node_modules/@aws-cdk/aws-ec2/lib/vpc.js:510:43",
+              "Array.forEach (<anonymous>)",
+              "Vpc.createSubnetResources (/private/var/folders/16/_3_cngb5685764_0qj0csbp00000gn/T/jsii-kernel-p28STz/node_modules/@aws-cdk/aws-ec2/lib/vpc.js:489:32)",
+              "Vpc.createSubnets (/private/var/folders/16/_3_cngb5685764_0qj0csbp00000gn/T/jsii-kernel-p28STz/node_modules/@aws-cdk/aws-ec2/lib/vpc.js:485:18)",
+              "new Vpc (/private/var/folders/16/_3_cngb5685764_0qj0csbp00000gn/T/jsii-kernel-p28STz/node_modules/@aws-cdk/aws-ec2/lib/vpc.js:306:14)",
+              "/Users/chris.jones/repos/qb4j-mvc/QueryBuilder4JMVC/cdk/.env/lib/python3.7/site-packages/jsii/_embedded/jsii/jsii-runtime.js:7838:49",
+              "Kernel._wrapSandboxCode (/Users/chris.jones/repos/qb4j-mvc/QueryBuilder4JMVC/cdk/.env/lib/python3.7/site-packages/jsii/_embedded/jsii/jsii-runtime.js:8298:20)",
+              "Kernel._create (/Users/chris.jones/repos/qb4j-mvc/QueryBuilder4JMVC/cdk/.env/lib/python3.7/site-packages/jsii/_embedded/jsii/jsii-runtime.js:7838:26)",
+              "Kernel.create (/Users/chris.jones/repos/qb4j-mvc/QueryBuilder4JMVC/cdk/.env/lib/python3.7/site-packages/jsii/_embedded/jsii/jsii-runtime.js:7585:21)",
+              "KernelHost.processRequest (/Users/chris.jones/repos/qb4j-mvc/QueryBuilder4JMVC/cdk/.env/lib/python3.7/site-packages/jsii/_embedded/jsii/jsii-runtime.js:7372:28)",
+              "KernelHost.run (/Users/chris.jones/repos/qb4j-mvc/QueryBuilder4JMVC/cdk/.env/lib/python3.7/site-packages/jsii/_embedded/jsii/jsii-runtime.js:7312:14)",
+              "Immediate._onImmediate (/Users/chris.jones/repos/qb4j-mvc/QueryBuilder4JMVC/cdk/.env/lib/python3.7/site-packages/jsii/_embedded/jsii/jsii-runtime.js:7315:37)",
+              "processImmediate (internal/timers.js:456:21)"
+            ]
+          }
+        ],
+        "/QB4J/Vpc/PrivateSubnet1/RouteTableAssociation": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "VpcPrivateSubnet1RouteTableAssociation70C59FA6",
+            "trace": [
+              "new Subnet (/private/var/folders/16/_3_cngb5685764_0qj0csbp00000gn/T/jsii-kernel-p28STz/node_modules/@aws-cdk/aws-ec2/lib/vpc.js:596:9)",
+              "new PrivateSubnet (/private/var/folders/16/_3_cngb5685764_0qj0csbp00000gn/T/jsii-kernel-p28STz/node_modules/@aws-cdk/aws-ec2/lib/vpc.js:753:9)",
+              "/private/var/folders/16/_3_cngb5685764_0qj0csbp00000gn/T/jsii-kernel-p28STz/node_modules/@aws-cdk/aws-ec2/lib/vpc.js:510:43",
+              "Array.forEach (<anonymous>)",
+              "Vpc.createSubnetResources (/private/var/folders/16/_3_cngb5685764_0qj0csbp00000gn/T/jsii-kernel-p28STz/node_modules/@aws-cdk/aws-ec2/lib/vpc.js:489:32)",
+              "Vpc.createSubnets (/private/var/folders/16/_3_cngb5685764_0qj0csbp00000gn/T/jsii-kernel-p28STz/node_modules/@aws-cdk/aws-ec2/lib/vpc.js:485:18)",
+              "new Vpc (/private/var/folders/16/_3_cngb5685764_0qj0csbp00000gn/T/jsii-kernel-p28STz/node_modules/@aws-cdk/aws-ec2/lib/vpc.js:306:14)",
+              "/Users/chris.jones/repos/qb4j-mvc/QueryBuilder4JMVC/cdk/.env/lib/python3.7/site-packages/jsii/_embedded/jsii/jsii-runtime.js:7838:49",
+              "Kernel._wrapSandboxCode (/Users/chris.jones/repos/qb4j-mvc/QueryBuilder4JMVC/cdk/.env/lib/python3.7/site-packages/jsii/_embedded/jsii/jsii-runtime.js:8298:20)",
+              "Kernel._create (/Users/chris.jones/repos/qb4j-mvc/QueryBuilder4JMVC/cdk/.env/lib/python3.7/site-packages/jsii/_embedded/jsii/jsii-runtime.js:7838:26)",
+              "Kernel.create (/Users/chris.jones/repos/qb4j-mvc/QueryBuilder4JMVC/cdk/.env/lib/python3.7/site-packages/jsii/_embedded/jsii/jsii-runtime.js:7585:21)",
+              "KernelHost.processRequest (/Users/chris.jones/repos/qb4j-mvc/QueryBuilder4JMVC/cdk/.env/lib/python3.7/site-packages/jsii/_embedded/jsii/jsii-runtime.js:7372:28)",
+              "KernelHost.run (/Users/chris.jones/repos/qb4j-mvc/QueryBuilder4JMVC/cdk/.env/lib/python3.7/site-packages/jsii/_embedded/jsii/jsii-runtime.js:7312:14)",
+              "Immediate._onImmediate (/Users/chris.jones/repos/qb4j-mvc/QueryBuilder4JMVC/cdk/.env/lib/python3.7/site-packages/jsii/_embedded/jsii/jsii-runtime.js:7315:37)",
+              "processImmediate (internal/timers.js:456:21)"
+            ]
+          }
+        ],
+        "/QB4J/Vpc/PrivateSubnet1/DefaultRoute": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "VpcPrivateSubnet1DefaultRouteBE02A9ED",
+            "trace": [
+              "PrivateSubnet.addRoute (/private/var/folders/16/_3_cngb5685764_0qj0csbp00000gn/T/jsii-kernel-p28STz/node_modules/@aws-cdk/aws-ec2/lib/vpc.js:657:23)",
+              "NatGateway.configureSubnet (/private/var/folders/16/_3_cngb5685764_0qj0csbp00000gn/T/jsii-kernel-p28STz/node_modules/@aws-cdk/aws-ec2/lib/nat.js:63:16)",
+              "NatGateway.configureNat (/private/var/folders/16/_3_cngb5685764_0qj0csbp00000gn/T/jsii-kernel-p28STz/node_modules/@aws-cdk/aws-ec2/lib/nat.js:57:18)",
+              "Vpc.createNatGateways (/private/var/folders/16/_3_cngb5685764_0qj0csbp00000gn/T/jsii-kernel-p28STz/node_modules/@aws-cdk/aws-ec2/lib/vpc.js:463:18)",
+              "new Vpc (/private/var/folders/16/_3_cngb5685764_0qj0csbp00000gn/T/jsii-kernel-p28STz/node_modules/@aws-cdk/aws-ec2/lib/vpc.js:322:22)",
+              "/Users/chris.jones/repos/qb4j-mvc/QueryBuilder4JMVC/cdk/.env/lib/python3.7/site-packages/jsii/_embedded/jsii/jsii-runtime.js:7838:49",
+              "Kernel._wrapSandboxCode (/Users/chris.jones/repos/qb4j-mvc/QueryBuilder4JMVC/cdk/.env/lib/python3.7/site-packages/jsii/_embedded/jsii/jsii-runtime.js:8298:20)",
+              "Kernel._create (/Users/chris.jones/repos/qb4j-mvc/QueryBuilder4JMVC/cdk/.env/lib/python3.7/site-packages/jsii/_embedded/jsii/jsii-runtime.js:7838:26)",
+              "Kernel.create (/Users/chris.jones/repos/qb4j-mvc/QueryBuilder4JMVC/cdk/.env/lib/python3.7/site-packages/jsii/_embedded/jsii/jsii-runtime.js:7585:21)",
+              "KernelHost.processRequest (/Users/chris.jones/repos/qb4j-mvc/QueryBuilder4JMVC/cdk/.env/lib/python3.7/site-packages/jsii/_embedded/jsii/jsii-runtime.js:7372:28)",
+              "KernelHost.run (/Users/chris.jones/repos/qb4j-mvc/QueryBuilder4JMVC/cdk/.env/lib/python3.7/site-packages/jsii/_embedded/jsii/jsii-runtime.js:7312:14)",
+              "Immediate._onImmediate (/Users/chris.jones/repos/qb4j-mvc/QueryBuilder4JMVC/cdk/.env/lib/python3.7/site-packages/jsii/_embedded/jsii/jsii-runtime.js:7315:37)",
+              "processImmediate (internal/timers.js:456:21)"
+            ]
+          }
+        ],
+        "/QB4J/Vpc/PrivateSubnet2/Subnet": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "VpcPrivateSubnet2Subnet3788AAA1",
+            "trace": [
+              "new Subnet (/private/var/folders/16/_3_cngb5685764_0qj0csbp00000gn/T/jsii-kernel-p28STz/node_modules/@aws-cdk/aws-ec2/lib/vpc.js:576:24)",
+              "new PrivateSubnet (/private/var/folders/16/_3_cngb5685764_0qj0csbp00000gn/T/jsii-kernel-p28STz/node_modules/@aws-cdk/aws-ec2/lib/vpc.js:753:9)",
+              "/private/var/folders/16/_3_cngb5685764_0qj0csbp00000gn/T/jsii-kernel-p28STz/node_modules/@aws-cdk/aws-ec2/lib/vpc.js:510:43",
+              "Array.forEach (<anonymous>)",
+              "Vpc.createSubnetResources (/private/var/folders/16/_3_cngb5685764_0qj0csbp00000gn/T/jsii-kernel-p28STz/node_modules/@aws-cdk/aws-ec2/lib/vpc.js:489:32)",
+              "Vpc.createSubnets (/private/var/folders/16/_3_cngb5685764_0qj0csbp00000gn/T/jsii-kernel-p28STz/node_modules/@aws-cdk/aws-ec2/lib/vpc.js:485:18)",
+              "new Vpc (/private/var/folders/16/_3_cngb5685764_0qj0csbp00000gn/T/jsii-kernel-p28STz/node_modules/@aws-cdk/aws-ec2/lib/vpc.js:306:14)",
+              "/Users/chris.jones/repos/qb4j-mvc/QueryBuilder4JMVC/cdk/.env/lib/python3.7/site-packages/jsii/_embedded/jsii/jsii-runtime.js:7838:49",
+              "Kernel._wrapSandboxCode (/Users/chris.jones/repos/qb4j-mvc/QueryBuilder4JMVC/cdk/.env/lib/python3.7/site-packages/jsii/_embedded/jsii/jsii-runtime.js:8298:20)",
+              "Kernel._create (/Users/chris.jones/repos/qb4j-mvc/QueryBuilder4JMVC/cdk/.env/lib/python3.7/site-packages/jsii/_embedded/jsii/jsii-runtime.js:7838:26)",
+              "Kernel.create (/Users/chris.jones/repos/qb4j-mvc/QueryBuilder4JMVC/cdk/.env/lib/python3.7/site-packages/jsii/_embedded/jsii/jsii-runtime.js:7585:21)",
+              "KernelHost.processRequest (/Users/chris.jones/repos/qb4j-mvc/QueryBuilder4JMVC/cdk/.env/lib/python3.7/site-packages/jsii/_embedded/jsii/jsii-runtime.js:7372:28)",
+              "KernelHost.run (/Users/chris.jones/repos/qb4j-mvc/QueryBuilder4JMVC/cdk/.env/lib/python3.7/site-packages/jsii/_embedded/jsii/jsii-runtime.js:7312:14)",
+              "Immediate._onImmediate (/Users/chris.jones/repos/qb4j-mvc/QueryBuilder4JMVC/cdk/.env/lib/python3.7/site-packages/jsii/_embedded/jsii/jsii-runtime.js:7315:37)",
+              "processImmediate (internal/timers.js:456:21)"
+            ]
+          }
+        ],
+        "/QB4J/Vpc/PrivateSubnet2/RouteTable": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "VpcPrivateSubnet2RouteTableA678073B",
+            "trace": [
+              "new Subnet (/private/var/folders/16/_3_cngb5685764_0qj0csbp00000gn/T/jsii-kernel-p28STz/node_modules/@aws-cdk/aws-ec2/lib/vpc.js:591:23)",
+              "new PrivateSubnet (/private/var/folders/16/_3_cngb5685764_0qj0csbp00000gn/T/jsii-kernel-p28STz/node_modules/@aws-cdk/aws-ec2/lib/vpc.js:753:9)",
+              "/private/var/folders/16/_3_cngb5685764_0qj0csbp00000gn/T/jsii-kernel-p28STz/node_modules/@aws-cdk/aws-ec2/lib/vpc.js:510:43",
+              "Array.forEach (<anonymous>)",
+              "Vpc.createSubnetResources (/private/var/folders/16/_3_cngb5685764_0qj0csbp00000gn/T/jsii-kernel-p28STz/node_modules/@aws-cdk/aws-ec2/lib/vpc.js:489:32)",
+              "Vpc.createSubnets (/private/var/folders/16/_3_cngb5685764_0qj0csbp00000gn/T/jsii-kernel-p28STz/node_modules/@aws-cdk/aws-ec2/lib/vpc.js:485:18)",
+              "new Vpc (/private/var/folders/16/_3_cngb5685764_0qj0csbp00000gn/T/jsii-kernel-p28STz/node_modules/@aws-cdk/aws-ec2/lib/vpc.js:306:14)",
+              "/Users/chris.jones/repos/qb4j-mvc/QueryBuilder4JMVC/cdk/.env/lib/python3.7/site-packages/jsii/_embedded/jsii/jsii-runtime.js:7838:49",
+              "Kernel._wrapSandboxCode (/Users/chris.jones/repos/qb4j-mvc/QueryBuilder4JMVC/cdk/.env/lib/python3.7/site-packages/jsii/_embedded/jsii/jsii-runtime.js:8298:20)",
+              "Kernel._create (/Users/chris.jones/repos/qb4j-mvc/QueryBuilder4JMVC/cdk/.env/lib/python3.7/site-packages/jsii/_embedded/jsii/jsii-runtime.js:7838:26)",
+              "Kernel.create (/Users/chris.jones/repos/qb4j-mvc/QueryBuilder4JMVC/cdk/.env/lib/python3.7/site-packages/jsii/_embedded/jsii/jsii-runtime.js:7585:21)",
+              "KernelHost.processRequest (/Users/chris.jones/repos/qb4j-mvc/QueryBuilder4JMVC/cdk/.env/lib/python3.7/site-packages/jsii/_embedded/jsii/jsii-runtime.js:7372:28)",
+              "KernelHost.run (/Users/chris.jones/repos/qb4j-mvc/QueryBuilder4JMVC/cdk/.env/lib/python3.7/site-packages/jsii/_embedded/jsii/jsii-runtime.js:7312:14)",
+              "Immediate._onImmediate (/Users/chris.jones/repos/qb4j-mvc/QueryBuilder4JMVC/cdk/.env/lib/python3.7/site-packages/jsii/_embedded/jsii/jsii-runtime.js:7315:37)",
+              "processImmediate (internal/timers.js:456:21)"
+            ]
+          }
+        ],
+        "/QB4J/Vpc/PrivateSubnet2/RouteTableAssociation": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "VpcPrivateSubnet2RouteTableAssociationA89CAD56",
+            "trace": [
+              "new Subnet (/private/var/folders/16/_3_cngb5685764_0qj0csbp00000gn/T/jsii-kernel-p28STz/node_modules/@aws-cdk/aws-ec2/lib/vpc.js:596:9)",
+              "new PrivateSubnet (/private/var/folders/16/_3_cngb5685764_0qj0csbp00000gn/T/jsii-kernel-p28STz/node_modules/@aws-cdk/aws-ec2/lib/vpc.js:753:9)",
+              "/private/var/folders/16/_3_cngb5685764_0qj0csbp00000gn/T/jsii-kernel-p28STz/node_modules/@aws-cdk/aws-ec2/lib/vpc.js:510:43",
+              "Array.forEach (<anonymous>)",
+              "Vpc.createSubnetResources (/private/var/folders/16/_3_cngb5685764_0qj0csbp00000gn/T/jsii-kernel-p28STz/node_modules/@aws-cdk/aws-ec2/lib/vpc.js:489:32)",
+              "Vpc.createSubnets (/private/var/folders/16/_3_cngb5685764_0qj0csbp00000gn/T/jsii-kernel-p28STz/node_modules/@aws-cdk/aws-ec2/lib/vpc.js:485:18)",
+              "new Vpc (/private/var/folders/16/_3_cngb5685764_0qj0csbp00000gn/T/jsii-kernel-p28STz/node_modules/@aws-cdk/aws-ec2/lib/vpc.js:306:14)",
+              "/Users/chris.jones/repos/qb4j-mvc/QueryBuilder4JMVC/cdk/.env/lib/python3.7/site-packages/jsii/_embedded/jsii/jsii-runtime.js:7838:49",
+              "Kernel._wrapSandboxCode (/Users/chris.jones/repos/qb4j-mvc/QueryBuilder4JMVC/cdk/.env/lib/python3.7/site-packages/jsii/_embedded/jsii/jsii-runtime.js:8298:20)",
+              "Kernel._create (/Users/chris.jones/repos/qb4j-mvc/QueryBuilder4JMVC/cdk/.env/lib/python3.7/site-packages/jsii/_embedded/jsii/jsii-runtime.js:7838:26)",
+              "Kernel.create (/Users/chris.jones/repos/qb4j-mvc/QueryBuilder4JMVC/cdk/.env/lib/python3.7/site-packages/jsii/_embedded/jsii/jsii-runtime.js:7585:21)",
+              "KernelHost.processRequest (/Users/chris.jones/repos/qb4j-mvc/QueryBuilder4JMVC/cdk/.env/lib/python3.7/site-packages/jsii/_embedded/jsii/jsii-runtime.js:7372:28)",
+              "KernelHost.run (/Users/chris.jones/repos/qb4j-mvc/QueryBuilder4JMVC/cdk/.env/lib/python3.7/site-packages/jsii/_embedded/jsii/jsii-runtime.js:7312:14)",
+              "Immediate._onImmediate (/Users/chris.jones/repos/qb4j-mvc/QueryBuilder4JMVC/cdk/.env/lib/python3.7/site-packages/jsii/_embedded/jsii/jsii-runtime.js:7315:37)",
+              "processImmediate (internal/timers.js:456:21)"
+            ]
+          }
+        ],
+        "/QB4J/Vpc/PrivateSubnet2/DefaultRoute": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "VpcPrivateSubnet2DefaultRoute060D2087",
+            "trace": [
+              "PrivateSubnet.addRoute (/private/var/folders/16/_3_cngb5685764_0qj0csbp00000gn/T/jsii-kernel-p28STz/node_modules/@aws-cdk/aws-ec2/lib/vpc.js:657:23)",
+              "NatGateway.configureSubnet (/private/var/folders/16/_3_cngb5685764_0qj0csbp00000gn/T/jsii-kernel-p28STz/node_modules/@aws-cdk/aws-ec2/lib/nat.js:63:16)",
+              "NatGateway.configureNat (/private/var/folders/16/_3_cngb5685764_0qj0csbp00000gn/T/jsii-kernel-p28STz/node_modules/@aws-cdk/aws-ec2/lib/nat.js:57:18)",
+              "Vpc.createNatGateways (/private/var/folders/16/_3_cngb5685764_0qj0csbp00000gn/T/jsii-kernel-p28STz/node_modules/@aws-cdk/aws-ec2/lib/vpc.js:463:18)",
+              "new Vpc (/private/var/folders/16/_3_cngb5685764_0qj0csbp00000gn/T/jsii-kernel-p28STz/node_modules/@aws-cdk/aws-ec2/lib/vpc.js:322:22)",
+              "/Users/chris.jones/repos/qb4j-mvc/QueryBuilder4JMVC/cdk/.env/lib/python3.7/site-packages/jsii/_embedded/jsii/jsii-runtime.js:7838:49",
+              "Kernel._wrapSandboxCode (/Users/chris.jones/repos/qb4j-mvc/QueryBuilder4JMVC/cdk/.env/lib/python3.7/site-packages/jsii/_embedded/jsii/jsii-runtime.js:8298:20)",
+              "Kernel._create (/Users/chris.jones/repos/qb4j-mvc/QueryBuilder4JMVC/cdk/.env/lib/python3.7/site-packages/jsii/_embedded/jsii/jsii-runtime.js:7838:26)",
+              "Kernel.create (/Users/chris.jones/repos/qb4j-mvc/QueryBuilder4JMVC/cdk/.env/lib/python3.7/site-packages/jsii/_embedded/jsii/jsii-runtime.js:7585:21)",
+              "KernelHost.processRequest (/Users/chris.jones/repos/qb4j-mvc/QueryBuilder4JMVC/cdk/.env/lib/python3.7/site-packages/jsii/_embedded/jsii/jsii-runtime.js:7372:28)",
+              "KernelHost.run (/Users/chris.jones/repos/qb4j-mvc/QueryBuilder4JMVC/cdk/.env/lib/python3.7/site-packages/jsii/_embedded/jsii/jsii-runtime.js:7312:14)",
+              "Immediate._onImmediate (/Users/chris.jones/repos/qb4j-mvc/QueryBuilder4JMVC/cdk/.env/lib/python3.7/site-packages/jsii/_embedded/jsii/jsii-runtime.js:7315:37)",
+              "processImmediate (internal/timers.js:456:21)"
+            ]
+          }
+        ],
+        "/QB4J/Vpc/IGW": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "VpcIGWD7BA715C",
+            "trace": [
+              "new Vpc (/private/var/folders/16/_3_cngb5685764_0qj0csbp00000gn/T/jsii-kernel-p28STz/node_modules/@aws-cdk/aws-ec2/lib/vpc.js:310:25)",
+              "/Users/chris.jones/repos/qb4j-mvc/QueryBuilder4JMVC/cdk/.env/lib/python3.7/site-packages/jsii/_embedded/jsii/jsii-runtime.js:7838:49",
+              "Kernel._wrapSandboxCode (/Users/chris.jones/repos/qb4j-mvc/QueryBuilder4JMVC/cdk/.env/lib/python3.7/site-packages/jsii/_embedded/jsii/jsii-runtime.js:8298:20)",
+              "Kernel._create (/Users/chris.jones/repos/qb4j-mvc/QueryBuilder4JMVC/cdk/.env/lib/python3.7/site-packages/jsii/_embedded/jsii/jsii-runtime.js:7838:26)",
+              "Kernel.create (/Users/chris.jones/repos/qb4j-mvc/QueryBuilder4JMVC/cdk/.env/lib/python3.7/site-packages/jsii/_embedded/jsii/jsii-runtime.js:7585:21)",
+              "KernelHost.processRequest (/Users/chris.jones/repos/qb4j-mvc/QueryBuilder4JMVC/cdk/.env/lib/python3.7/site-packages/jsii/_embedded/jsii/jsii-runtime.js:7372:28)",
+              "KernelHost.run (/Users/chris.jones/repos/qb4j-mvc/QueryBuilder4JMVC/cdk/.env/lib/python3.7/site-packages/jsii/_embedded/jsii/jsii-runtime.js:7312:14)",
+              "Immediate._onImmediate (/Users/chris.jones/repos/qb4j-mvc/QueryBuilder4JMVC/cdk/.env/lib/python3.7/site-packages/jsii/_embedded/jsii/jsii-runtime.js:7315:37)",
+              "processImmediate (internal/timers.js:456:21)"
+            ]
+          }
+        ],
+        "/QB4J/Vpc/VPCGW": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "VpcVPCGWBF912B6E",
+            "trace": [
+              "new Vpc (/private/var/folders/16/_3_cngb5685764_0qj0csbp00000gn/T/jsii-kernel-p28STz/node_modules/@aws-cdk/aws-ec2/lib/vpc.js:312:25)",
+              "/Users/chris.jones/repos/qb4j-mvc/QueryBuilder4JMVC/cdk/.env/lib/python3.7/site-packages/jsii/_embedded/jsii/jsii-runtime.js:7838:49",
+              "Kernel._wrapSandboxCode (/Users/chris.jones/repos/qb4j-mvc/QueryBuilder4JMVC/cdk/.env/lib/python3.7/site-packages/jsii/_embedded/jsii/jsii-runtime.js:8298:20)",
+              "Kernel._create (/Users/chris.jones/repos/qb4j-mvc/QueryBuilder4JMVC/cdk/.env/lib/python3.7/site-packages/jsii/_embedded/jsii/jsii-runtime.js:7838:26)",
+              "Kernel.create (/Users/chris.jones/repos/qb4j-mvc/QueryBuilder4JMVC/cdk/.env/lib/python3.7/site-packages/jsii/_embedded/jsii/jsii-runtime.js:7585:21)",
+              "KernelHost.processRequest (/Users/chris.jones/repos/qb4j-mvc/QueryBuilder4JMVC/cdk/.env/lib/python3.7/site-packages/jsii/_embedded/jsii/jsii-runtime.js:7372:28)",
+              "KernelHost.run (/Users/chris.jones/repos/qb4j-mvc/QueryBuilder4JMVC/cdk/.env/lib/python3.7/site-packages/jsii/_embedded/jsii/jsii-runtime.js:7312:14)",
+              "Immediate._onImmediate (/Users/chris.jones/repos/qb4j-mvc/QueryBuilder4JMVC/cdk/.env/lib/python3.7/site-packages/jsii/_embedded/jsii/jsii-runtime.js:7315:37)",
+              "processImmediate (internal/timers.js:456:21)"
+            ]
+          }
+        ],
+        "/QB4J/FargateCluster/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "FargateCluster7CCD5F93",
+            "trace": [
+              "new Cluster (/private/var/folders/16/_3_cngb5685764_0qj0csbp00000gn/T/jsii-kernel-p28STz/node_modules/@aws-cdk/aws-ecs/lib/cluster.js:33:25)",
+              "/Users/chris.jones/repos/qb4j-mvc/QueryBuilder4JMVC/cdk/.env/lib/python3.7/site-packages/jsii/_embedded/jsii/jsii-runtime.js:7838:49",
+              "Kernel._wrapSandboxCode (/Users/chris.jones/repos/qb4j-mvc/QueryBuilder4JMVC/cdk/.env/lib/python3.7/site-packages/jsii/_embedded/jsii/jsii-runtime.js:8298:20)",
+              "Kernel._create (/Users/chris.jones/repos/qb4j-mvc/QueryBuilder4JMVC/cdk/.env/lib/python3.7/site-packages/jsii/_embedded/jsii/jsii-runtime.js:7838:26)",
+              "Kernel.create (/Users/chris.jones/repos/qb4j-mvc/QueryBuilder4JMVC/cdk/.env/lib/python3.7/site-packages/jsii/_embedded/jsii/jsii-runtime.js:7585:21)",
+              "KernelHost.processRequest (/Users/chris.jones/repos/qb4j-mvc/QueryBuilder4JMVC/cdk/.env/lib/python3.7/site-packages/jsii/_embedded/jsii/jsii-runtime.js:7372:28)",
+              "KernelHost.run (/Users/chris.jones/repos/qb4j-mvc/QueryBuilder4JMVC/cdk/.env/lib/python3.7/site-packages/jsii/_embedded/jsii/jsii-runtime.js:7312:14)",
+              "Immediate._onImmediate (/Users/chris.jones/repos/qb4j-mvc/QueryBuilder4JMVC/cdk/.env/lib/python3.7/site-packages/jsii/_embedded/jsii/jsii-runtime.js:7315:37)",
+              "processImmediate (internal/timers.js:456:21)"
+            ]
+          }
+        ],
+        "/QB4J/FargateCluster/DefaultServiceDiscoveryNamespace/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "FargateClusterDefaultServiceDiscoveryNamespace04381E1E",
+            "trace": [
+              "new PublicDnsNamespace (/private/var/folders/16/_3_cngb5685764_0qj0csbp00000gn/T/jsii-kernel-p28STz/node_modules/@aws-cdk/aws-servicediscovery/lib/public-dns-namespace.js:13:20)",
+              "Cluster.addDefaultCloudMapNamespace (/private/var/folders/16/_3_cngb5685764_0qj0csbp00000gn/T/jsii-kernel-p28STz/node_modules/@aws-cdk/aws-ecs/lib/cluster.js:74:13)",
+              "new Cluster (/private/var/folders/16/_3_cngb5685764_0qj0csbp00000gn/T/jsii-kernel-p28STz/node_modules/@aws-cdk/aws-ecs/lib/cluster.js:45:20)",
+              "/Users/chris.jones/repos/qb4j-mvc/QueryBuilder4JMVC/cdk/.env/lib/python3.7/site-packages/jsii/_embedded/jsii/jsii-runtime.js:7838:49",
+              "Kernel._wrapSandboxCode (/Users/chris.jones/repos/qb4j-mvc/QueryBuilder4JMVC/cdk/.env/lib/python3.7/site-packages/jsii/_embedded/jsii/jsii-runtime.js:8298:20)",
+              "Kernel._create (/Users/chris.jones/repos/qb4j-mvc/QueryBuilder4JMVC/cdk/.env/lib/python3.7/site-packages/jsii/_embedded/jsii/jsii-runtime.js:7838:26)",
+              "Kernel.create (/Users/chris.jones/repos/qb4j-mvc/QueryBuilder4JMVC/cdk/.env/lib/python3.7/site-packages/jsii/_embedded/jsii/jsii-runtime.js:7585:21)",
+              "KernelHost.processRequest (/Users/chris.jones/repos/qb4j-mvc/QueryBuilder4JMVC/cdk/.env/lib/python3.7/site-packages/jsii/_embedded/jsii/jsii-runtime.js:7372:28)",
+              "KernelHost.run (/Users/chris.jones/repos/qb4j-mvc/QueryBuilder4JMVC/cdk/.env/lib/python3.7/site-packages/jsii/_embedded/jsii/jsii-runtime.js:7312:14)",
+              "Immediate._onImmediate (/Users/chris.jones/repos/qb4j-mvc/QueryBuilder4JMVC/cdk/.env/lib/python3.7/site-packages/jsii/_embedded/jsii/jsii-runtime.js:7315:37)",
+              "processImmediate (internal/timers.js:456:21)"
+            ]
+          }
+        ],
+        "/QB4J/EcsService/Service": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "EcsService81FC6EF6",
+            "trace": [
+              "new BaseService (/private/var/folders/16/_3_cngb5685764_0qj0csbp00000gn/T/jsii-kernel-p28STz/node_modules/@aws-cdk/aws-ecs/lib/base/base-service.js:110:25)",
+              "new FargateService (/private/var/folders/16/_3_cngb5685764_0qj0csbp00000gn/T/jsii-kernel-p28STz/node_modules/@aws-cdk/aws-ecs/lib/fargate/fargate-service.js:35:9)",
+              "/Users/chris.jones/repos/qb4j-mvc/QueryBuilder4JMVC/cdk/.env/lib/python3.7/site-packages/jsii/_embedded/jsii/jsii-runtime.js:7838:49",
+              "Kernel._wrapSandboxCode (/Users/chris.jones/repos/qb4j-mvc/QueryBuilder4JMVC/cdk/.env/lib/python3.7/site-packages/jsii/_embedded/jsii/jsii-runtime.js:8298:20)",
+              "Kernel._create (/Users/chris.jones/repos/qb4j-mvc/QueryBuilder4JMVC/cdk/.env/lib/python3.7/site-packages/jsii/_embedded/jsii/jsii-runtime.js:7838:26)",
+              "Kernel.create (/Users/chris.jones/repos/qb4j-mvc/QueryBuilder4JMVC/cdk/.env/lib/python3.7/site-packages/jsii/_embedded/jsii/jsii-runtime.js:7585:21)",
+              "KernelHost.processRequest (/Users/chris.jones/repos/qb4j-mvc/QueryBuilder4JMVC/cdk/.env/lib/python3.7/site-packages/jsii/_embedded/jsii/jsii-runtime.js:7372:28)",
+              "KernelHost.run (/Users/chris.jones/repos/qb4j-mvc/QueryBuilder4JMVC/cdk/.env/lib/python3.7/site-packages/jsii/_embedded/jsii/jsii-runtime.js:7312:14)",
+              "Immediate._onImmediate (/Users/chris.jones/repos/qb4j-mvc/QueryBuilder4JMVC/cdk/.env/lib/python3.7/site-packages/jsii/_embedded/jsii/jsii-runtime.js:7315:37)",
+              "processImmediate (internal/timers.js:456:21)"
+            ]
+          }
+        ],
+        "/QB4J/EcsService/SecurityGroup/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "EcsServiceSecurityGroup8FDFD52F",
+            "trace": [
+              "new SecurityGroup (/private/var/folders/16/_3_cngb5685764_0qj0csbp00000gn/T/jsii-kernel-p28STz/node_modules/@aws-cdk/aws-ec2/lib/security-group.js:173:30)",
+              "FargateService.configureAwsVpcNetworking (/private/var/folders/16/_3_cngb5685764_0qj0csbp00000gn/T/jsii-kernel-p28STz/node_modules/@aws-cdk/aws-ecs/lib/base/base-service.js:337:29)",
+              "new FargateService (/private/var/folders/16/_3_cngb5685764_0qj0csbp00000gn/T/jsii-kernel-p28STz/node_modules/@aws-cdk/aws-ecs/lib/fargate/fargate-service.js:46:14)",
+              "/Users/chris.jones/repos/qb4j-mvc/QueryBuilder4JMVC/cdk/.env/lib/python3.7/site-packages/jsii/_embedded/jsii/jsii-runtime.js:7838:49",
+              "Kernel._wrapSandboxCode (/Users/chris.jones/repos/qb4j-mvc/QueryBuilder4JMVC/cdk/.env/lib/python3.7/site-packages/jsii/_embedded/jsii/jsii-runtime.js:8298:20)",
+              "Kernel._create (/Users/chris.jones/repos/qb4j-mvc/QueryBuilder4JMVC/cdk/.env/lib/python3.7/site-packages/jsii/_embedded/jsii/jsii-runtime.js:7838:26)",
+              "Kernel.create (/Users/chris.jones/repos/qb4j-mvc/QueryBuilder4JMVC/cdk/.env/lib/python3.7/site-packages/jsii/_embedded/jsii/jsii-runtime.js:7585:21)",
+              "KernelHost.processRequest (/Users/chris.jones/repos/qb4j-mvc/QueryBuilder4JMVC/cdk/.env/lib/python3.7/site-packages/jsii/_embedded/jsii/jsii-runtime.js:7372:28)",
+              "KernelHost.run (/Users/chris.jones/repos/qb4j-mvc/QueryBuilder4JMVC/cdk/.env/lib/python3.7/site-packages/jsii/_embedded/jsii/jsii-runtime.js:7312:14)",
+              "Immediate._onImmediate (/Users/chris.jones/repos/qb4j-mvc/QueryBuilder4JMVC/cdk/.env/lib/python3.7/site-packages/jsii/_embedded/jsii/jsii-runtime.js:7315:37)",
+              "processImmediate (internal/timers.js:456:21)"
+            ]
+          }
+        ],
+        "/QB4J/EcsService/CloudmapService/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "EcsServiceCloudmapService4AFEE54E",
+            "trace": [
+              "new Service (/private/var/folders/16/_3_cngb5685764_0qj0csbp00000gn/T/jsii-kernel-p28STz/node_modules/@aws-cdk/aws-servicediscovery/lib/service.js:74:25)",
+              "FargateService.enableCloudMap (/private/var/folders/16/_3_cngb5685764_0qj0csbp00000gn/T/jsii-kernel-p28STz/node_modules/@aws-cdk/aws-ecs/lib/base/base-service.js:284:33)",
+              "/Users/chris.jones/repos/qb4j-mvc/QueryBuilder4JMVC/cdk/.env/lib/python3.7/site-packages/jsii/_embedded/jsii/jsii-runtime.js:7665:51",
+              "Kernel._wrapSandboxCode (/Users/chris.jones/repos/qb4j-mvc/QueryBuilder4JMVC/cdk/.env/lib/python3.7/site-packages/jsii/_embedded/jsii/jsii-runtime.js:8298:20)",
+              "/Users/chris.jones/repos/qb4j-mvc/QueryBuilder4JMVC/cdk/.env/lib/python3.7/site-packages/jsii/_embedded/jsii/jsii-runtime.js:7665:25",
+              "Kernel._ensureSync (/Users/chris.jones/repos/qb4j-mvc/QueryBuilder4JMVC/cdk/.env/lib/python3.7/site-packages/jsii/_embedded/jsii/jsii-runtime.js:8274:20)",
+              "Kernel.invoke (/Users/chris.jones/repos/qb4j-mvc/QueryBuilder4JMVC/cdk/.env/lib/python3.7/site-packages/jsii/_embedded/jsii/jsii-runtime.js:7664:26)",
               "KernelHost.processRequest (/Users/chris.jones/repos/qb4j-mvc/QueryBuilder4JMVC/cdk/.env/lib/python3.7/site-packages/jsii/_embedded/jsii/jsii-runtime.js:7372:28)",
               "KernelHost.run (/Users/chris.jones/repos/qb4j-mvc/QueryBuilder4JMVC/cdk/.env/lib/python3.7/site-packages/jsii/_embedded/jsii/jsii-runtime.js:7312:14)",
               "Immediate._onImmediate (/Users/chris.jones/repos/qb4j-mvc/QueryBuilder4JMVC/cdk/.env/lib/python3.7/site-packages/jsii/_embedded/jsii/jsii-runtime.js:7315:37)",
@@ -135,6 +657,20 @@
       "@aws-cdk/aws-sam": "1.26.0",
       "@aws-cdk/aws-secretsmanager": "1.26.0",
       "@aws-cdk/aws-codebuild": "1.26.0",
+      "@aws-cdk/aws-autoscaling-common": "1.26.0",
+      "@aws-cdk/aws-applicationautoscaling": "1.26.0",
+      "@aws-cdk/aws-elasticloadbalancing": "1.26.0",
+      "@aws-cdk/aws-route53": "1.26.0",
+      "@aws-cdk/aws-certificatemanager": "1.26.0",
+      "@aws-cdk/aws-elasticloadbalancingv2": "1.26.0",
+      "@aws-cdk/aws-autoscaling": "1.26.0",
+      "@aws-cdk/aws-sns-subscriptions": "1.26.0",
+      "@aws-cdk/aws-autoscaling-hooktargets": "1.26.0",
+      "@aws-cdk/aws-apigateway": "1.26.0",
+      "@aws-cdk/aws-cloudfront": "1.26.0",
+      "@aws-cdk/aws-route53-targets": "1.26.0",
+      "@aws-cdk/aws-servicediscovery": "1.26.0",
+      "@aws-cdk/aws-ecs": "1.26.0",
       "jsii-runtime": "Python/3.7.2"
     }
   }
