@@ -1,76 +1,11 @@
-from aws_cdk import core, aws_codebuild, aws_s3, aws_iam, aws_ecs, aws_servicediscovery, aws_ec2
+from aws_cdk import core, aws_iam, aws_ecs, aws_servicediscovery, aws_ec2
 
 
-class Qb4jStack(core.Stack):
+class EcsServiceStack(core.Stack):
 
     def __init__(self, scope: core.Construct, id: str, env: str, **kwargs) -> None:
         super().__init__(scope, id, **kwargs)
 
-        # # Create cache bucket
-        # cache_bucket = aws_s3.Bucket(
-        #     self, 'CodeBuildDependencyCacheBucket',
-        #     bucket_name='m2-dependencies',
-        #     block_public_access=aws_s3.BlockPublicAccess(
-        #         restrict_public_buckets=True,
-        #         block_public_policy=True
-        #     )
-        # )
-        #
-        # # Codebuild project.
-        # codebuild_project = aws_codebuild.Project(
-        #     self, 'CodeBuildProject',
-        #     project_name='QueryBuilder4JMVC',
-        #     badge=True,
-        #     cache=aws_codebuild.Cache.bucket(
-        #         bucket=cache_bucket
-        #     ),
-        #     source=aws_codebuild.Source.git_hub(
-        #         owner='jones-chris',
-        #         repo='QueryBuilder4JMVC',
-        #         branch_or_ref='master',
-        #         clone_depth=1),
-        #     artifacts=aws_codebuild.Artifacts.s3(
-        #         bucket=aws_s3.Bucket(
-        #             self, 'CodeBuildArtifactBucket',
-        #             bucket_name='qb4j-mvc',
-        #             block_public_access=aws_s3.BlockPublicAccess(
-        #                 restrict_public_buckets=True,
-        #                 block_public_policy=True
-        #             )),
-        #         name=f'querybuilder4jmvc-{env}.jar',
-        #         include_build_id=True,
-        #         path='build/'),
-        #     environment=aws_codebuild.BuildEnvironment(
-        #         privileged=True  # This allows codebuild access to docker in order to build docker images.
-        #     )
-        # )
-        #
-        # # Add permissions to S3 bucket that contains maven settings.xml.
-        # codebuild_project.role.add_to_policy(aws_iam.PolicyStatement(
-        #     effect=aws_iam.Effect.ALLOW,
-        #     actions=[
-        #         's3:GetObject',
-        #         's3:GetBucket',
-        #         's3:List*'
-        #     ],
-        #     resources=[
-        #         'arn:aws:s3:::maven-build-settings',
-        #         'arn:aws:s3:::maven-build-settings/*'
-        #     ]
-        # ))
-        #
-        # # Add permissions for SSM so they can be pulled in during the CodeBuild builds.
-        # codebuild_project.role.add_to_policy(aws_iam.PolicyStatement(
-        #     effect=aws_iam.Effect.ALLOW,
-        #     actions=[
-        #         'ssm:GetParameters'
-        #     ],
-        #     resources=[
-        #         '*'
-        #     ]
-        # ))
-
-        # ECS
         # execution role
         role = aws_iam.Role(
             self, 'TaskDefinitionExecutionRole',
@@ -151,7 +86,7 @@ class Qb4jStack(core.Stack):
             self, 'FargateCluster',
             cluster_name='qb4j-mvc',
             default_cloud_map_namespace=aws_ecs.CloudMapNamespaceOptions(
-                name='querybuilder4j2.net',
+                name='querybuilder4j.net',
                 type=aws_servicediscovery.NamespaceType.DNS_PUBLIC,
                 vpc=vpc
             ),
@@ -162,7 +97,7 @@ class Qb4jStack(core.Stack):
         ecs_service = aws_ecs.FargateService(
             self, 'EcsService',
             task_definition=task_definition,
-            # assign_public_ip=True,
+            assign_public_ip=True,
             cluster=fargate_cluster
             # vpc_subnets=None  # todo:  do these need to be public subnets?
         )
@@ -176,3 +111,6 @@ class Qb4jStack(core.Stack):
         # target group
 
         # Define CW alarm with SNS topic?
+
+        # rds test
+
