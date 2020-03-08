@@ -83,60 +83,47 @@
                     ]
                   }
                 }
-              }
-            }
-          },
-          "TaskDefinition": {
-            "id": "TaskDefinition",
-            "path": "EcsServiceStack/TaskDefinition",
-            "children": {
-              "Resource": {
-                "id": "Resource",
-                "path": "EcsServiceStack/TaskDefinition/Resource",
-                "attributes": {
-                  "aws:cdk:cloudformation:type": "AWS::ECS::TaskDefinition",
-                  "aws:cdk:cloudformation:props": {
-                    "containerDefinitions": [
-                      {
-                        "essential": true,
-                        "image": "joneschris/qb4j-mvc:1",
-                        "name": "ContainerDefinition",
-                        "portMappings": [
+              },
+              "DefaultPolicy": {
+                "id": "DefaultPolicy",
+                "path": "EcsServiceStack/TaskDefinitionExecutionRole/DefaultPolicy",
+                "children": {
+                  "Resource": {
+                    "id": "Resource",
+                    "path": "EcsServiceStack/TaskDefinitionExecutionRole/DefaultPolicy/Resource",
+                    "attributes": {
+                      "aws:cdk:cloudformation:type": "AWS::IAM::Policy",
+                      "aws:cdk:cloudformation:props": {
+                        "policyDocument": {
+                          "Statement": [
+                            {
+                              "Action": [
+                                "logs:CreateLogStream",
+                                "logs:PutLogEvents"
+                              ],
+                              "Effect": "Allow",
+                              "Resource": {
+                                "Fn::GetAtt": [
+                                  "LoadBalancedFargateServiceTaskDefwebLogGroup8A3DD153",
+                                  "Arn"
+                                ]
+                              }
+                            }
+                          ],
+                          "Version": "2012-10-17"
+                        },
+                        "policyName": "TaskDefinitionExecutionRoleDefaultPolicyFBB0C586",
+                        "roles": [
                           {
-                            "containerPort": 8080,
-                            "hostPort": 8080,
-                            "protocol": "tcp"
+                            "Ref": "TaskDefinitionExecutionRole3138A4FF"
                           }
                         ]
                       }
-                    ],
-                    "cpu": "256",
-                    "executionRoleArn": {
-                      "Fn::GetAtt": [
-                        "TaskDefinitionExecutionRole3138A4FF",
-                        "Arn"
-                      ]
-                    },
-                    "family": "EcsServiceStackTaskDefinition2D44209B",
-                    "memory": "512",
-                    "networkMode": "awsvpc",
-                    "requiresCompatibilities": [
-                      "FARGATE"
-                    ],
-                    "taskRoleArn": {
-                      "Fn::GetAtt": [
-                        "TaskDefinitionExecutionRole3138A4FF",
-                        "Arn"
-                      ]
                     }
                   }
                 }
               }
             }
-          },
-          "ContainerDefinition": {
-            "id": "ContainerDefinition",
-            "path": "EcsServiceStack/ContainerDefinition"
           },
           "Vpc": {
             "id": "Vpc",
@@ -653,61 +640,29 @@
               }
             }
           },
-          "FargateCluster": {
-            "id": "FargateCluster",
-            "path": "EcsServiceStack/FargateCluster",
+          "LoadBalancedFargateService": {
+            "id": "LoadBalancedFargateService",
+            "path": "EcsServiceStack/LoadBalancedFargateService",
             "children": {
-              "Resource": {
-                "id": "Resource",
-                "path": "EcsServiceStack/FargateCluster/Resource",
-                "attributes": {
-                  "aws:cdk:cloudformation:type": "AWS::ECS::Cluster",
-                  "aws:cdk:cloudformation:props": {
-                    "clusterName": "qb4j-mvc"
-                  }
-                }
-              },
-              "DefaultServiceDiscoveryNamespace": {
-                "id": "DefaultServiceDiscoveryNamespace",
-                "path": "EcsServiceStack/FargateCluster/DefaultServiceDiscoveryNamespace",
+              "LB": {
+                "id": "LB",
+                "path": "EcsServiceStack/LoadBalancedFargateService/LB",
                 "children": {
                   "Resource": {
                     "id": "Resource",
-                    "path": "EcsServiceStack/FargateCluster/DefaultServiceDiscoveryNamespace/Resource",
+                    "path": "EcsServiceStack/LoadBalancedFargateService/LB/Resource",
                     "attributes": {
-                      "aws:cdk:cloudformation:type": "AWS::ServiceDiscovery::PublicDnsNamespace",
+                      "aws:cdk:cloudformation:type": "AWS::ElasticLoadBalancingV2::LoadBalancer",
                       "aws:cdk:cloudformation:props": {
-                        "name": "querybuilder4j.net"
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          },
-          "EcsService": {
-            "id": "EcsService",
-            "path": "EcsServiceStack/EcsService",
-            "children": {
-              "Service": {
-                "id": "Service",
-                "path": "EcsServiceStack/EcsService/Service",
-                "attributes": {
-                  "aws:cdk:cloudformation:type": "AWS::ECS::Service",
-                  "aws:cdk:cloudformation:props": {
-                    "cluster": {
-                      "Ref": "FargateCluster7CCD5F93"
-                    },
-                    "deploymentConfiguration": {
-                      "maximumPercent": 200,
-                      "minimumHealthyPercent": 50
-                    },
-                    "desiredCount": 1,
-                    "enableEcsManagedTags": false,
-                    "launchType": "FARGATE",
-                    "networkConfiguration": {
-                      "awsvpcConfiguration": {
-                        "assignPublicIp": "ENABLED",
+                        "scheme": "internet-facing",
+                        "securityGroups": [
+                          {
+                            "Fn::GetAtt": [
+                              "LoadBalancedFargateServiceLBSecurityGroupD490C37A",
+                              "GroupId"
+                            ]
+                          }
+                        ],
                         "subnets": [
                           {
                             "Ref": "VpcPublicSubnet1Subnet5C2D37C4"
@@ -716,95 +671,323 @@
                             "Ref": "VpcPublicSubnet2Subnet691E08A3"
                           }
                         ],
-                        "securityGroups": [
-                          {
-                            "Fn::GetAtt": [
-                              "EcsServiceSecurityGroup8FDFD52F",
-                              "GroupId"
-                            ]
-                          }
-                        ]
+                        "type": "application"
                       }
-                    },
-                    "serviceRegistries": [
-                      {
-                        "registryArn": {
+                    }
+                  },
+                  "SecurityGroup": {
+                    "id": "SecurityGroup",
+                    "path": "EcsServiceStack/LoadBalancedFargateService/LB/SecurityGroup",
+                    "children": {
+                      "Resource": {
+                        "id": "Resource",
+                        "path": "EcsServiceStack/LoadBalancedFargateService/LB/SecurityGroup/Resource",
+                        "attributes": {
+                          "aws:cdk:cloudformation:type": "AWS::EC2::SecurityGroup",
+                          "aws:cdk:cloudformation:props": {
+                            "groupDescription": "Automatically created Security Group for ELB EcsServiceStackLoadBalancedFargateServiceLB964400F6",
+                            "securityGroupIngress": [
+                              {
+                                "cidrIp": "0.0.0.0/0",
+                                "ipProtocol": "tcp",
+                                "fromPort": 80,
+                                "toPort": 80,
+                                "description": "Allow from anyone on port 80"
+                              }
+                            ],
+                            "vpcId": {
+                              "Ref": "Vpc8378EB38"
+                            }
+                          }
+                        }
+                      },
+                      "to EcsServiceStackLoadBalancedFargateServiceSecurityGroupAAD1E9CC:8080": {
+                        "id": "to EcsServiceStackLoadBalancedFargateServiceSecurityGroupAAD1E9CC:8080",
+                        "path": "EcsServiceStack/LoadBalancedFargateService/LB/SecurityGroup/to EcsServiceStackLoadBalancedFargateServiceSecurityGroupAAD1E9CC:8080",
+                        "attributes": {
+                          "aws:cdk:cloudformation:type": "AWS::EC2::SecurityGroupEgress",
+                          "aws:cdk:cloudformation:props": {
+                            "groupId": {
+                              "Fn::GetAtt": [
+                                "LoadBalancedFargateServiceLBSecurityGroupD490C37A",
+                                "GroupId"
+                              ]
+                            },
+                            "ipProtocol": "tcp",
+                            "description": "Load balancer to target",
+                            "destinationSecurityGroupId": {
+                              "Fn::GetAtt": [
+                                "LoadBalancedFargateServiceSecurityGroup886FFD49",
+                                "GroupId"
+                              ]
+                            },
+                            "fromPort": 8080,
+                            "toPort": 8080
+                          }
+                        }
+                      }
+                    }
+                  },
+                  "PublicListener": {
+                    "id": "PublicListener",
+                    "path": "EcsServiceStack/LoadBalancedFargateService/LB/PublicListener",
+                    "children": {
+                      "Resource": {
+                        "id": "Resource",
+                        "path": "EcsServiceStack/LoadBalancedFargateService/LB/PublicListener/Resource",
+                        "attributes": {
+                          "aws:cdk:cloudformation:type": "AWS::ElasticLoadBalancingV2::Listener",
+                          "aws:cdk:cloudformation:props": {
+                            "defaultActions": [
+                              {
+                                "targetGroupArn": {
+                                  "Ref": "LoadBalancedFargateServiceLBPublicListenerECSGroupA24AD192"
+                                },
+                                "type": "forward"
+                              }
+                            ],
+                            "loadBalancerArn": {
+                              "Ref": "LoadBalancedFargateServiceLB454B0F67"
+                            },
+                            "port": 80,
+                            "protocol": "HTTP"
+                          }
+                        }
+                      },
+                      "ECSGroup": {
+                        "id": "ECSGroup",
+                        "path": "EcsServiceStack/LoadBalancedFargateService/LB/PublicListener/ECSGroup",
+                        "children": {
+                          "Resource": {
+                            "id": "Resource",
+                            "path": "EcsServiceStack/LoadBalancedFargateService/LB/PublicListener/ECSGroup/Resource",
+                            "attributes": {
+                              "aws:cdk:cloudformation:type": "AWS::ElasticLoadBalancingV2::TargetGroup",
+                              "aws:cdk:cloudformation:props": {
+                                "port": 80,
+                                "protocol": "HTTP",
+                                "targetType": "ip",
+                                "vpcId": {
+                                  "Ref": "Vpc8378EB38"
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              },
+              "LoadBalancerDNS": {
+                "id": "LoadBalancerDNS",
+                "path": "EcsServiceStack/LoadBalancedFargateService/LoadBalancerDNS"
+              },
+              "ServiceURL": {
+                "id": "ServiceURL",
+                "path": "EcsServiceStack/LoadBalancedFargateService/ServiceURL"
+              },
+              "TaskDef": {
+                "id": "TaskDef",
+                "path": "EcsServiceStack/LoadBalancedFargateService/TaskDef",
+                "children": {
+                  "Resource": {
+                    "id": "Resource",
+                    "path": "EcsServiceStack/LoadBalancedFargateService/TaskDef/Resource",
+                    "attributes": {
+                      "aws:cdk:cloudformation:type": "AWS::ECS::TaskDefinition",
+                      "aws:cdk:cloudformation:props": {
+                        "containerDefinitions": [
+                          {
+                            "essential": true,
+                            "image": "joneschris/qb4j-mvc:1",
+                            "name": "web",
+                            "portMappings": [
+                              {
+                                "containerPort": 8080,
+                                "protocol": "tcp"
+                              }
+                            ],
+                            "logConfiguration": {
+                              "logDriver": "awslogs",
+                              "options": {
+                                "awslogs-group": {
+                                  "Ref": "LoadBalancedFargateServiceTaskDefwebLogGroup8A3DD153"
+                                },
+                                "awslogs-stream-prefix": "LoadBalancedFargateService",
+                                "awslogs-region": {
+                                  "Ref": "AWS::Region"
+                                }
+                              }
+                            }
+                          }
+                        ],
+                        "cpu": "256",
+                        "executionRoleArn": {
                           "Fn::GetAtt": [
-                            "EcsServiceCloudmapService4AFEE54E",
+                            "TaskDefinitionExecutionRole3138A4FF",
+                            "Arn"
+                          ]
+                        },
+                        "family": "EcsServiceStackLoadBalancedFargateServiceTaskDef55A885EA",
+                        "memory": "512",
+                        "networkMode": "awsvpc",
+                        "requiresCompatibilities": [
+                          "FARGATE"
+                        ],
+                        "taskRoleArn": {
+                          "Fn::GetAtt": [
+                            "TaskDefinitionExecutionRole3138A4FF",
                             "Arn"
                           ]
                         }
                       }
-                    ],
-                    "taskDefinition": {
-                      "Ref": "TaskDefinitionB36D86D9"
+                    }
+                  },
+                  "web": {
+                    "id": "web",
+                    "path": "EcsServiceStack/LoadBalancedFargateService/TaskDef/web",
+                    "children": {
+                      "LogGroup": {
+                        "id": "LogGroup",
+                        "path": "EcsServiceStack/LoadBalancedFargateService/TaskDef/web/LogGroup",
+                        "children": {
+                          "Resource": {
+                            "id": "Resource",
+                            "path": "EcsServiceStack/LoadBalancedFargateService/TaskDef/web/LogGroup/Resource",
+                            "attributes": {
+                              "aws:cdk:cloudformation:type": "AWS::Logs::LogGroup",
+                              "aws:cdk:cloudformation:props": {}
+                            }
+                          }
+                        }
+                      }
                     }
                   }
                 }
               },
-              "SecurityGroup": {
-                "id": "SecurityGroup",
-                "path": "EcsServiceStack/EcsService/SecurityGroup",
+              "Service": {
+                "id": "Service",
+                "path": "EcsServiceStack/LoadBalancedFargateService/Service",
                 "children": {
-                  "Resource": {
-                    "id": "Resource",
-                    "path": "EcsServiceStack/EcsService/SecurityGroup/Resource",
+                  "Service": {
+                    "id": "Service",
+                    "path": "EcsServiceStack/LoadBalancedFargateService/Service/Service",
                     "attributes": {
-                      "aws:cdk:cloudformation:type": "AWS::EC2::SecurityGroup",
+                      "aws:cdk:cloudformation:type": "AWS::ECS::Service",
                       "aws:cdk:cloudformation:props": {
-                        "groupDescription": "EcsServiceStack/EcsService/SecurityGroup",
-                        "securityGroupEgress": [
+                        "cluster": {
+                          "Ref": "EcsDefaultClusterMnL3mNNYNVpc18E0451A"
+                        },
+                        "deploymentConfiguration": {
+                          "maximumPercent": 200,
+                          "minimumHealthyPercent": 50
+                        },
+                        "desiredCount": 1,
+                        "enableEcsManagedTags": false,
+                        "healthCheckGracePeriodSeconds": 60,
+                        "launchType": "FARGATE",
+                        "loadBalancers": [
                           {
-                            "cidrIp": "0.0.0.0/0",
-                            "description": "Allow all outbound traffic by default",
-                            "ipProtocol": "-1"
+                            "targetGroupArn": {
+                              "Ref": "LoadBalancedFargateServiceLBPublicListenerECSGroupA24AD192"
+                            },
+                            "containerName": "web",
+                            "containerPort": 8080
                           }
                         ],
-                        "vpcId": {
-                          "Ref": "Vpc8378EB38"
+                        "networkConfiguration": {
+                          "awsvpcConfiguration": {
+                            "assignPublicIp": "ENABLED",
+                            "subnets": [
+                              {
+                                "Ref": "VpcPublicSubnet1Subnet5C2D37C4"
+                              },
+                              {
+                                "Ref": "VpcPublicSubnet2Subnet691E08A3"
+                              }
+                            ],
+                            "securityGroups": [
+                              {
+                                "Fn::GetAtt": [
+                                  "LoadBalancedFargateServiceSecurityGroup886FFD49",
+                                  "GroupId"
+                                ]
+                              }
+                            ]
+                          }
+                        },
+                        "taskDefinition": {
+                          "Ref": "LoadBalancedFargateServiceTaskDef16FE5251"
+                        }
+                      }
+                    }
+                  },
+                  "SecurityGroup": {
+                    "id": "SecurityGroup",
+                    "path": "EcsServiceStack/LoadBalancedFargateService/Service/SecurityGroup",
+                    "children": {
+                      "Resource": {
+                        "id": "Resource",
+                        "path": "EcsServiceStack/LoadBalancedFargateService/Service/SecurityGroup/Resource",
+                        "attributes": {
+                          "aws:cdk:cloudformation:type": "AWS::EC2::SecurityGroup",
+                          "aws:cdk:cloudformation:props": {
+                            "groupDescription": "EcsServiceStack/LoadBalancedFargateService/Service/SecurityGroup",
+                            "securityGroupEgress": [
+                              {
+                                "cidrIp": "0.0.0.0/0",
+                                "description": "Allow all outbound traffic by default",
+                                "ipProtocol": "-1"
+                              }
+                            ],
+                            "vpcId": {
+                              "Ref": "Vpc8378EB38"
+                            }
+                          }
+                        }
+                      },
+                      "from EcsServiceStackLoadBalancedFargateServiceLBSecurityGroup187B980A:8080": {
+                        "id": "from EcsServiceStackLoadBalancedFargateServiceLBSecurityGroup187B980A:8080",
+                        "path": "EcsServiceStack/LoadBalancedFargateService/Service/SecurityGroup/from EcsServiceStackLoadBalancedFargateServiceLBSecurityGroup187B980A:8080",
+                        "attributes": {
+                          "aws:cdk:cloudformation:type": "AWS::EC2::SecurityGroupIngress",
+                          "aws:cdk:cloudformation:props": {
+                            "ipProtocol": "tcp",
+                            "description": "Load balancer to target",
+                            "fromPort": 8080,
+                            "groupId": {
+                              "Fn::GetAtt": [
+                                "LoadBalancedFargateServiceSecurityGroup886FFD49",
+                                "GroupId"
+                              ]
+                            },
+                            "sourceSecurityGroupId": {
+                              "Fn::GetAtt": [
+                                "LoadBalancedFargateServiceLBSecurityGroupD490C37A",
+                                "GroupId"
+                              ]
+                            },
+                            "toPort": 8080
+                          }
                         }
                       }
                     }
                   }
                 }
-              },
-              "CloudmapService": {
-                "id": "CloudmapService",
-                "path": "EcsServiceStack/EcsService/CloudmapService",
-                "children": {
-                  "Resource": {
-                    "id": "Resource",
-                    "path": "EcsServiceStack/EcsService/CloudmapService/Resource",
-                    "attributes": {
-                      "aws:cdk:cloudformation:type": "AWS::ServiceDiscovery::Service",
-                      "aws:cdk:cloudformation:props": {
-                        "dnsConfig": {
-                          "dnsRecords": [
-                            {
-                              "type": "A",
-                              "ttl": 60
-                            }
-                          ],
-                          "namespaceId": {
-                            "Fn::GetAtt": [
-                              "FargateClusterDefaultServiceDiscoveryNamespace04381E1E",
-                              "Id"
-                            ]
-                          },
-                          "routingPolicy": "MULTIVALUE"
-                        },
-                        "healthCheckCustomConfig": {
-                          "failureThreshold": 1
-                        },
-                        "namespaceId": {
-                          "Fn::GetAtt": [
-                            "FargateClusterDefaultServiceDiscoveryNamespace04381E1E",
-                            "Id"
-                          ]
-                        }
-                      }
-                    }
-                  }
+              }
+            }
+          },
+          "EcsDefaultClusterMnL3mNNYNVpc": {
+            "id": "EcsDefaultClusterMnL3mNNYNVpc",
+            "path": "EcsServiceStack/EcsDefaultClusterMnL3mNNYNVpc",
+            "children": {
+              "Resource": {
+                "id": "Resource",
+                "path": "EcsServiceStack/EcsDefaultClusterMnL3mNNYNVpc/Resource",
+                "attributes": {
+                  "aws:cdk:cloudformation:type": "AWS::ECS::Cluster",
+                  "aws:cdk:cloudformation:props": {}
                 }
               }
             }
