@@ -1,0 +1,53 @@
+version: 0.2
+
+env:
+  parameter-store:
+    DOCKERHUB_TOKEN:  DOCKERHUB_TOKEN
+#    CODECOV_TOKEN: CODECOV_TOKEN  # CodeBuild will retrieve this from Systems Manager Parameter Store.
+
+
+phases:
+  install:
+    runtime-versions:
+      docker: 18
+      java: openjdk8
+    commands:
+      # Get information about this image, the current directory, maven version, docker version, then update apt-get.
+      - lsb_release -a
+      - pwd
+      - mvn --version
+      - docker --version
+      - docker info
+      - apt-get update
+
+  #      - echo $CODECOV_TOKEN
+
+  pre_build:
+    commands:
+      aws s3 cp s3://maven-build-settings/qb4j_settings.xml /root/.m2/settings.xml
+
+  build:
+    commands:
+      - mvn clean install  # Builds uber jar.  Includes running unit tests.
+      - docker image build -t joneschris/qb4j-mvc:1 --build-arg environment=prod .
+
+  post_build:
+    commands:
+      - echo $DOCKERHUB_TOKEN | docker login --username joneschris --password-stdin  # Use password-stdin so that password does not go to shell's logs.
+      - docker push joneschris/qb4j-mvc:1
+#      - curl -s https://codecov.io/bash > codecov.sh
+#      - bash codecov.sh -t $CODECOV_TOKEN
+
+artifacts:
+  files:
+    - target/querybuilder4jmvc-1.jar
+  name: querybuilder4jmvc
+  discard-paths: yes
+#  secondary-artifacts:
+#    code_coverage:
+#      files:
+#        - target/site/jacoco/**/*  # All files recursively in jacoco directory.
+#      name: code_coverage.zip
+cache:
+  paths:
+    - '/root/.m2/**/*'
