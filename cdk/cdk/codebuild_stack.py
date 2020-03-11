@@ -71,6 +71,29 @@ class CodeBuildStack(core.Stack):
                                 resources=[
                                     '*'
                                 ]
+                            ),
+                            aws_iam.PolicyStatement(  # Policy to allow codebuild role to deploy cloudformation template.
+                                effect=aws_iam.Effect.ALLOW,
+                                actions=[
+                                    'cloudformation:*'
+                                ],
+                                resources=[
+                                    '*'
+                                ]
+                            ),
+                            aws_iam.PolicyStatement(  # Policy to allow role to create/update necessary resources via cloudformation during deployment
+                                effect=aws_iam.Effect.ALLOW,
+                                actions=[
+                                    'ecs:*',
+                                    'ec2:*',
+                                    'iam:*',
+                                    'logs:*',
+                                    'elasticloadbalancing:*',
+                                    'elasticloadbalancingv2:*'
+                                ],
+                                resources=[
+                                    '*'
+                                ]
                             )
                         ]
                     )

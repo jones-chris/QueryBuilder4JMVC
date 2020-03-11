@@ -898,13 +898,13 @@
                         ],
                         "networkConfiguration": {
                           "awsvpcConfiguration": {
-                            "assignPublicIp": "ENABLED",
+                            "assignPublicIp": "DISABLED",
                             "subnets": [
                               {
-                                "Ref": "VpcPublicSubnet1Subnet5C2D37C4"
+                                "Ref": "VpcPrivateSubnet1Subnet536B997A"
                               },
                               {
-                                "Ref": "VpcPublicSubnet2Subnet691E08A3"
+                                "Ref": "VpcPrivateSubnet2Subnet3788AAA1"
                               }
                             ],
                             "securityGroups": [
@@ -1087,6 +1087,23 @@
                             },
                             {
                               "Action": "ssm:GetParameters",
+                              "Effect": "Allow",
+                              "Resource": "*"
+                            },
+                            {
+                              "Action": "cloudformation:*",
+                              "Effect": "Allow",
+                              "Resource": "*"
+                            },
+                            {
+                              "Action": [
+                                "ecs:*",
+                                "ec2:*",
+                                "iam:*",
+                                "logs:*",
+                                "elasticloadbalancing:*",
+                                "elasticloadbalancingv2:*"
+                              ],
                               "Effect": "Allow",
                               "Resource": "*"
                             }

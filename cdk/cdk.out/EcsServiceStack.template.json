@@ -62,6 +62,9 @@
             "PolicyName": "policy_0"
           }
         ]
+      },
+      "Metadata": {
+        "aws:cdk:path": "EcsServiceStack/TaskDefinitionExecutionRole/Resource"
       }
     },
     "TaskDefinitionExecutionRoleDefaultPolicyFBB0C586": {
@@ -91,6 +94,9 @@
             "Ref": "TaskDefinitionExecutionRole3138A4FF"
           }
         ]
+      },
+      "Metadata": {
+        "aws:cdk:path": "EcsServiceStack/TaskDefinitionExecutionRole/DefaultPolicy/Resource"
       }
     },
     "Vpc8378EB38": {
@@ -106,6 +112,9 @@
             "Value": "EcsServiceStack/Vpc"
           }
         ]
+      },
+      "Metadata": {
+        "aws:cdk:path": "EcsServiceStack/Vpc/Resource"
       }
     },
     "VpcPublicSubnet1Subnet5C2D37C4": {
@@ -138,6 +147,9 @@
             "Value": "Public"
           }
         ]
+      },
+      "Metadata": {
+        "aws:cdk:path": "EcsServiceStack/Vpc/PublicSubnet1/Subnet"
       }
     },
     "VpcPublicSubnet1RouteTable6C95E38E": {
@@ -152,6 +164,9 @@
             "Value": "EcsServiceStack/Vpc/PublicSubnet1"
           }
         ]
+      },
+      "Metadata": {
+        "aws:cdk:path": "EcsServiceStack/Vpc/PublicSubnet1/RouteTable"
       }
     },
     "VpcPublicSubnet1RouteTableAssociation97140677": {
@@ -163,6 +178,9 @@
         "SubnetId": {
           "Ref": "VpcPublicSubnet1Subnet5C2D37C4"
         }
+      },
+      "Metadata": {
+        "aws:cdk:path": "EcsServiceStack/Vpc/PublicSubnet1/RouteTableAssociation"
       }
     },
     "VpcPublicSubnet1DefaultRoute3DA9E72A": {
@@ -178,7 +196,10 @@
       },
       "DependsOn": [
         "VpcVPCGWBF912B6E"
-      ]
+      ],
+      "Metadata": {
+        "aws:cdk:path": "EcsServiceStack/Vpc/PublicSubnet1/DefaultRoute"
+      }
     },
     "VpcPublicSubnet1EIPD7E02669": {
       "Type": "AWS::EC2::EIP",
@@ -190,6 +211,9 @@
             "Value": "EcsServiceStack/Vpc/PublicSubnet1"
           }
         ]
+      },
+      "Metadata": {
+        "aws:cdk:path": "EcsServiceStack/Vpc/PublicSubnet1/EIP"
       }
     },
     "VpcPublicSubnet1NATGateway4D7517AA": {
@@ -210,6 +234,9 @@
             "Value": "EcsServiceStack/Vpc/PublicSubnet1"
           }
         ]
+      },
+      "Metadata": {
+        "aws:cdk:path": "EcsServiceStack/Vpc/PublicSubnet1/NATGateway"
       }
     },
     "VpcPublicSubnet2Subnet691E08A3": {
@@ -242,6 +269,9 @@
             "Value": "Public"
           }
         ]
+      },
+      "Metadata": {
+        "aws:cdk:path": "EcsServiceStack/Vpc/PublicSubnet2/Subnet"
       }
     },
     "VpcPublicSubnet2RouteTable94F7E489": {
@@ -256,6 +286,9 @@
             "Value": "EcsServiceStack/Vpc/PublicSubnet2"
           }
         ]
+      },
+      "Metadata": {
+        "aws:cdk:path": "EcsServiceStack/Vpc/PublicSubnet2/RouteTable"
       }
     },
     "VpcPublicSubnet2RouteTableAssociationDD5762D8": {
@@ -267,6 +300,9 @@
         "SubnetId": {
           "Ref": "VpcPublicSubnet2Subnet691E08A3"
         }
+      },
+      "Metadata": {
+        "aws:cdk:path": "EcsServiceStack/Vpc/PublicSubnet2/RouteTableAssociation"
       }
     },
     "VpcPublicSubnet2DefaultRoute97F91067": {
@@ -282,7 +318,10 @@
       },
       "DependsOn": [
         "VpcVPCGWBF912B6E"
-      ]
+      ],
+      "Metadata": {
+        "aws:cdk:path": "EcsServiceStack/Vpc/PublicSubnet2/DefaultRoute"
+      }
     },
     "VpcPublicSubnet2EIP3C605A87": {
       "Type": "AWS::EC2::EIP",
@@ -294,6 +333,9 @@
             "Value": "EcsServiceStack/Vpc/PublicSubnet2"
           }
         ]
+      },
+      "Metadata": {
+        "aws:cdk:path": "EcsServiceStack/Vpc/PublicSubnet2/EIP"
       }
     },
     "VpcPublicSubnet2NATGateway9182C01D": {
@@ -314,6 +356,9 @@
             "Value": "EcsServiceStack/Vpc/PublicSubnet2"
           }
         ]
+      },
+      "Metadata": {
+        "aws:cdk:path": "EcsServiceStack/Vpc/PublicSubnet2/NATGateway"
       }
     },
     "VpcPrivateSubnet1Subnet536B997A": {
@@ -346,6 +391,9 @@
             "Value": "Private"
           }
         ]
+      },
+      "Metadata": {
+        "aws:cdk:path": "EcsServiceStack/Vpc/PrivateSubnet1/Subnet"
       }
     },
     "VpcPrivateSubnet1RouteTableB2C5B500": {
@@ -360,6 +408,9 @@
             "Value": "EcsServiceStack/Vpc/PrivateSubnet1"
           }
         ]
+      },
+      "Metadata": {
+        "aws:cdk:path": "EcsServiceStack/Vpc/PrivateSubnet1/RouteTable"
       }
     },
     "VpcPrivateSubnet1RouteTableAssociation70C59FA6": {
@@ -371,6 +422,9 @@
         "SubnetId": {
           "Ref": "VpcPrivateSubnet1Subnet536B997A"
         }
+      },
+      "Metadata": {
+        "aws:cdk:path": "EcsServiceStack/Vpc/PrivateSubnet1/RouteTableAssociation"
       }
     },
     "VpcPrivateSubnet1DefaultRouteBE02A9ED": {
@@ -383,6 +437,9 @@
         "NatGatewayId": {
           "Ref": "VpcPublicSubnet1NATGateway4D7517AA"
         }
+      },
+      "Metadata": {
+        "aws:cdk:path": "EcsServiceStack/Vpc/PrivateSubnet1/DefaultRoute"
       }
     },
     "VpcPrivateSubnet2Subnet3788AAA1": {
@@ -415,6 +472,9 @@
             "Value": "Private"
           }
         ]
+      },
+      "Metadata": {
+        "aws:cdk:path": "EcsServiceStack/Vpc/PrivateSubnet2/Subnet"
       }
     },
     "VpcPrivateSubnet2RouteTableA678073B": {
@@ -429,6 +489,9 @@
             "Value": "EcsServiceStack/Vpc/PrivateSubnet2"
           }
         ]
+      },
+      "Metadata": {
+        "aws:cdk:path": "EcsServiceStack/Vpc/PrivateSubnet2/RouteTable"
       }
     },
     "VpcPrivateSubnet2RouteTableAssociationA89CAD56": {
@@ -440,6 +503,9 @@
         "SubnetId": {
           "Ref": "VpcPrivateSubnet2Subnet3788AAA1"
         }
+      },
+      "Metadata": {
+        "aws:cdk:path": "EcsServiceStack/Vpc/PrivateSubnet2/RouteTableAssociation"
       }
     },
     "VpcPrivateSubnet2DefaultRoute060D2087": {
@@ -452,6 +518,9 @@
         "NatGatewayId": {
           "Ref": "VpcPublicSubnet2NATGateway9182C01D"
         }
+      },
+      "Metadata": {
+        "aws:cdk:path": "EcsServiceStack/Vpc/PrivateSubnet2/DefaultRoute"
       }
     },
     "VpcIGWD7BA715C": {
@@ -463,6 +532,9 @@
             "Value": "EcsServiceStack/Vpc"
           }
         ]
+      },
+      "Metadata": {
+        "aws:cdk:path": "EcsServiceStack/Vpc/IGW"
       }
     },
     "VpcVPCGWBF912B6E": {
@@ -474,6 +546,9 @@
         "InternetGatewayId": {
           "Ref": "VpcIGWD7BA715C"
         }
+      },
+      "Metadata": {
+        "aws:cdk:path": "EcsServiceStack/Vpc/VPCGW"
       }
     },
     "LoadBalancedFargateServiceLB454B0F67": {
@@ -501,7 +576,10 @@
       "DependsOn": [
         "VpcPublicSubnet1DefaultRoute3DA9E72A",
         "VpcPublicSubnet2DefaultRoute97F91067"
-      ]
+      ],
+      "Metadata": {
+        "aws:cdk:path": "EcsServiceStack/LoadBalancedFargateService/LB/Resource"
+      }
     },
     "LoadBalancedFargateServiceLBSecurityGroupD490C37A": {
       "Type": "AWS::EC2::SecurityGroup",
@@ -519,6 +597,9 @@
         "VpcId": {
           "Ref": "Vpc8378EB38"
         }
+      },
+      "Metadata": {
+        "aws:cdk:path": "EcsServiceStack/LoadBalancedFargateService/LB/SecurityGroup/Resource"
       }
     },
     "LoadBalancedFargateServiceLBSecurityGrouptoEcsServiceStackLoadBalancedFargateServiceSecurityGroupAAD1E9CC8080AECBAB9C": {
@@ -540,6 +621,9 @@
         },
         "FromPort": 8080,
         "ToPort": 8080
+      },
+      "Metadata": {
+        "aws:cdk:path": "EcsServiceStack/LoadBalancedFargateService/LB/SecurityGroup/to EcsServiceStackLoadBalancedFargateServiceSecurityGroupAAD1E9CC:8080"
       }
     },
     "LoadBalancedFargateServiceLBPublicListenerF2E6CEBE": {
@@ -558,6 +642,9 @@
         },
         "Port": 80,
         "Protocol": "HTTP"
+      },
+      "Metadata": {
+        "aws:cdk:path": "EcsServiceStack/LoadBalancedFargateService/LB/PublicListener/Resource"
       }
     },
     "LoadBalancedFargateServiceLBPublicListenerECSGroupA24AD192": {
@@ -569,6 +656,9 @@
         "VpcId": {
           "Ref": "Vpc8378EB38"
         }
+      },
+      "Metadata": {
+        "aws:cdk:path": "EcsServiceStack/LoadBalancedFargateService/LB/PublicListener/ECSGroup/Resource"
       }
     },
     "LoadBalancedFargateServiceTaskDef16FE5251": {
@@ -618,12 +708,18 @@
             "Arn"
           ]
         }
+      },
+      "Metadata": {
+        "aws:cdk:path": "EcsServiceStack/LoadBalancedFargateService/TaskDef/Resource"
       }
     },
     "LoadBalancedFargateServiceTaskDefwebLogGroup8A3DD153": {
       "Type": "AWS::Logs::LogGroup",
       "UpdateReplacePolicy": "Retain",
-      "DeletionPolicy": "Retain"
+      "DeletionPolicy": "Retain",
+      "Metadata": {
+        "aws:cdk:path": "EcsServiceStack/LoadBalancedFargateService/TaskDef/web/LogGroup/Resource"
+      }
     },
     "LoadBalancedFargateServiceCB95839D": {
       "Type": "AWS::ECS::Service",
@@ -650,7 +746,7 @@
         ],
         "NetworkConfiguration": {
           "AwsvpcConfiguration": {
-            "AssignPublicIp": "ENABLED",
+            "AssignPublicIp": "DISABLED",
             "SecurityGroups": [
               {
                 "Fn::GetAtt": [
@@ -661,10 +757,10 @@
             ],
             "Subnets": [
               {
-                "Ref": "VpcPublicSubnet1Subnet5C2D37C4"
+                "Ref": "VpcPrivateSubnet1Subnet536B997A"
               },
               {
-                "Ref": "VpcPublicSubnet2Subnet691E08A3"
+                "Ref": "VpcPrivateSubnet2Subnet3788AAA1"
               }
             ]
           }
@@ -676,7 +772,10 @@
       "DependsOn": [
         "LoadBalancedFargateServiceLBPublicListenerECSGroupA24AD192",
         "LoadBalancedFargateServiceLBPublicListenerF2E6CEBE"
-      ]
+      ],
+      "Metadata": {
+        "aws:cdk:path": "EcsServiceStack/LoadBalancedFargateService/Service/Service"
+      }
     },
     "LoadBalancedFargateServiceSecurityGroup886FFD49": {
       "Type": "AWS::EC2::SecurityGroup",
@@ -692,6 +791,9 @@
         "VpcId": {
           "Ref": "Vpc8378EB38"
         }
+      },
+      "Metadata": {
+        "aws:cdk:path": "EcsServiceStack/LoadBalancedFargateService/Service/SecurityGroup/Resource"
       }
     },
     "LoadBalancedFargateServiceSecurityGroupfromEcsServiceStackLoadBalancedFargateServiceLBSecurityGroup187B980A8080D004565B": {
@@ -713,10 +815,16 @@
           ]
         },
         "ToPort": 8080
+      },
+      "Metadata": {
+        "aws:cdk:path": "EcsServiceStack/LoadBalancedFargateService/Service/SecurityGroup/from EcsServiceStackLoadBalancedFargateServiceLBSecurityGroup187B980A:8080"
       }
     },
     "EcsDefaultClusterMnL3mNNYNVpc18E0451A": {
-      "Type": "AWS::ECS::Cluster"
+      "Type": "AWS::ECS::Cluster",
+      "Metadata": {
+        "aws:cdk:path": "EcsServiceStack/EcsDefaultClusterMnL3mNNYNVpc/Resource"
+      }
     }
   },
   "Outputs": {

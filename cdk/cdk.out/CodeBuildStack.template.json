@@ -10,7 +10,10 @@
         }
       },
       "UpdateReplacePolicy": "Retain",
-      "DeletionPolicy": "Retain"
+      "DeletionPolicy": "Retain",
+      "Metadata": {
+        "aws:cdk:path": "CodeBuildStack/CodeBuildDependencyCacheBucket/Resource"
+      }
     },
     "CodeBuildArtifactBucket2C7834D4": {
       "Type": "AWS::S3::Bucket",
@@ -22,7 +25,10 @@
         }
       },
       "UpdateReplacePolicy": "Retain",
-      "DeletionPolicy": "Retain"
+      "DeletionPolicy": "Retain",
+      "Metadata": {
+        "aws:cdk:path": "CodeBuildStack/CodeBuildArtifactBucket/Resource"
+      }
     },
     "CodeBuildRole728CBADE": {
       "Type": "AWS::IAM::Role",
@@ -59,6 +65,23 @@
                   "Action": "ssm:GetParameters",
                   "Effect": "Allow",
                   "Resource": "*"
+                },
+                {
+                  "Action": "cloudformation:*",
+                  "Effect": "Allow",
+                  "Resource": "*"
+                },
+                {
+                  "Action": [
+                    "ecs:*",
+                    "ec2:*",
+                    "iam:*",
+                    "logs:*",
+                    "elasticloadbalancing:*",
+                    "elasticloadbalancingv2:*"
+                  ],
+                  "Effect": "Allow",
+                  "Resource": "*"
                 }
               ],
               "Version": "2012-10-17"
@@ -66,6 +89,9 @@
             "PolicyName": "policy_0"
           }
         ]
+      },
+      "Metadata": {
+        "aws:cdk:path": "CodeBuildStack/CodeBuildRole/Resource"
       }
     },
     "CodeBuildRoleDefaultPolicy829527DE": {
@@ -205,6 +231,9 @@
             "Ref": "CodeBuildRole728CBADE"
           }
         ]
+      },
+      "Metadata": {
+        "aws:cdk:path": "CodeBuildStack/CodeBuildRole/DefaultPolicy/Resource"
       }
     },
     "CodeBuildProject4B91CF3F": {
@@ -257,6 +286,9 @@
         },
         "Name": "QueryBuilder4JMVC",
         "SourceVersion": "master"
+      },
+      "Metadata": {
+        "aws:cdk:path": "CodeBuildStack/CodeBuildProject/Resource"
       }
     }
   }
