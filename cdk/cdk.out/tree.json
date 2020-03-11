@@ -1094,6 +1094,18 @@
                               "Action": "cloudformation:*",
                               "Effect": "Allow",
                               "Resource": "*"
+                            },
+                            {
+                              "Action": [
+                                "ecs:*",
+                                "ec2:*",
+                                "iam:*",
+                                "logs:*",
+                                "elasticloadbalancing:*",
+                                "elasticloadbalancingv2:*"
+                              ],
+                              "Effect": "Allow",
+                              "Resource": "*"
                             }
                           ],
                           "Version": "2012-10-17"

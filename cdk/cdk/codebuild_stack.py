@@ -84,12 +84,12 @@ class CodeBuildStack(core.Stack):
                             aws_iam.PolicyStatement(  # Policy to allow role to create/update necessary resources via cloudformation during deployment
                                 effect=aws_iam.Effect.ALLOW,
                                 actions=[
-                                    'ec2:CreateInternetGateway',
-                                    'ec2:allocateAddress',
-                                    'iam:CreateRole',
-                                    'ec2:CreateVpc',
-                                    'logs:CreateLogGroup',
-                                    'ecs:CreateCluster'
+                                    'ecs:*',
+                                    'ec2:*',
+                                    'iam:*',
+                                    'logs:*',
+                                    'elasticloadbalancing:*',
+                                    'elasticloadbalancingv2:*'
                                 ],
                                 resources=[
                                     '*'
