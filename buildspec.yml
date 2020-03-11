@@ -35,8 +35,14 @@ phases:
     commands:
       - echo $DOCKERHUB_TOKEN | docker login --username joneschris --password-stdin  # Use password-stdin so that password does not go to shell's logs.
       - docker push joneschris/qb4j-mvc:1
-#      - curl -s https://codecov.io/bash > codecov.sh
-#      - bash codecov.sh -t $CODECOV_TOKEN
+
+        # Upload code coverage files.
+        #      - curl -s https://codecov.io/bash > codecov.sh
+        #      - bash codecov.sh -t $CODECOV_TOKEN
+
+      # Get cloudformation files and deploy to AWS if the cloudformation file is not the codebuild stack.
+      - chmod +x ./cdk/cloudformation_deployment.sh
+      - sh ./cdk/cloudformation_deployment.sh
 
 artifacts:
   files:
