@@ -1089,6 +1089,11 @@
                               "Action": "ssm:GetParameters",
                               "Effect": "Allow",
                               "Resource": "*"
+                            },
+                            {
+                              "Action": "cloudformation:*",
+                              "Effect": "Allow",
+                              "Resource": "*"
                             }
                           ],
                           "Version": "2012-10-17"

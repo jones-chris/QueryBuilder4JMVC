@@ -71,6 +71,15 @@ class CodeBuildStack(core.Stack):
                                 resources=[
                                     '*'
                                 ]
+                            ),
+                            aws_iam.PolicyStatement(
+                                effect=aws_iam.Effect.ALLOW,
+                                actions=[
+                                    'cloudformation:*'
+                                ],
+                                resources=[
+                                    '*'
+                                ]
                             )
                         ]
                     )
