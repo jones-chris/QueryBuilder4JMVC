@@ -1,8 +1,8 @@
 -e .
-aws-cdk.assets==1.25.0
-aws-cdk.aws-cloudwatch==1.25.0
-aws-cdk.aws-ecs==1.26.0
-aws-cdk.aws-codebuild==1.26.0
-aws-cdk.aws-servicediscovery==1.26.0
-aws-cdk.aws-elasticloadbalancingv2==1.26.0
-aws-cdk.aws-ecs-patterns==1.27.0
+aws-cdk.assets
+aws-cdk.aws-cloudwatch
+aws-cdk.aws-ecs
+aws-cdk.aws-codebuild
+aws-cdk.aws-servicediscovery
+aws-cdk.aws-elasticloadbalancingv2
+aws-cdk.aws-ecs-patterns
