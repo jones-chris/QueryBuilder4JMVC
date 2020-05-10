@@ -9,7 +9,6 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.scheduling.annotation.Scheduled;
 
-import javax.sql.DataSource;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -24,7 +23,8 @@ public class DatabaseMetadataCacheRefresher {
         this.databaseMetadataCacheDao = databaseMetadataCacheDao;
     }
 
-    @Scheduled(cron = "0 0 0 * * SUN-FRI") // Run at the 0th second, 0th minute, and 0th hour every day (aka:  midnight)
+    // Run on start up AND every 24 hours thereafter.
+    @Scheduled(initialDelay = 0, fixedRate = 8640000000L)
     public void refreshDatabaseMetadataCache() {
         try {
             System.out.println("Starting the refreshDatabaseMetadataCache method");

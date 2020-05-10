@@ -6,3 +6,4 @@ aws-cdk.aws-codebuild
 aws-cdk.aws-servicediscovery
 aws-cdk.aws-elasticloadbalancingv2
 aws-cdk.aws-ecs-patterns
+aws-cdk.aws-apigateway
