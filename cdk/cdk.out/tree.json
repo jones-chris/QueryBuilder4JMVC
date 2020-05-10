@@ -991,6 +991,165 @@
                 }
               }
             }
+          },
+          "RestApi": {
+            "id": "RestApi",
+            "path": "EcsServiceStack/RestApi",
+            "children": {
+              "Resource": {
+                "id": "Resource",
+                "path": "EcsServiceStack/RestApi/Resource",
+                "attributes": {
+                  "aws:cdk:cloudformation:type": "AWS::ApiGateway::RestApi",
+                  "aws:cdk:cloudformation:props": {
+                    "name": "RestApi"
+                  }
+                }
+              },
+              "Deployment": {
+                "id": "Deployment",
+                "path": "EcsServiceStack/RestApi/Deployment",
+                "children": {
+                  "Resource": {
+                    "id": "Resource",
+                    "path": "EcsServiceStack/RestApi/Deployment/Resource",
+                    "attributes": {
+                      "aws:cdk:cloudformation:type": "AWS::ApiGateway::Deployment",
+                      "aws:cdk:cloudformation:props": {
+                        "restApiId": {
+                          "Ref": "RestApi0C43BF4B"
+                        },
+                        "description": "Automatically created by the RestApi construct"
+                      }
+                    }
+                  }
+                }
+              },
+              "DeploymentStage.prod": {
+                "id": "DeploymentStage.prod",
+                "path": "EcsServiceStack/RestApi/DeploymentStage.prod",
+                "children": {
+                  "Resource": {
+                    "id": "Resource",
+                    "path": "EcsServiceStack/RestApi/DeploymentStage.prod/Resource",
+                    "attributes": {
+                      "aws:cdk:cloudformation:type": "AWS::ApiGateway::Stage",
+                      "aws:cdk:cloudformation:props": {
+                        "restApiId": {
+                          "Ref": "RestApi0C43BF4B"
+                        },
+                        "deploymentId": {
+                          "Ref": "RestApiDeployment180EC50348f7a726821db991ee12e1ecabb0e292"
+                        },
+                        "stageName": "prod"
+                      }
+                    }
+                  }
+                }
+              },
+              "Endpoint": {
+                "id": "Endpoint",
+                "path": "EcsServiceStack/RestApi/Endpoint"
+              },
+              "CloudWatchRole": {
+                "id": "CloudWatchRole",
+                "path": "EcsServiceStack/RestApi/CloudWatchRole",
+                "children": {
+                  "Resource": {
+                    "id": "Resource",
+                    "path": "EcsServiceStack/RestApi/CloudWatchRole/Resource",
+                    "attributes": {
+                      "aws:cdk:cloudformation:type": "AWS::IAM::Role",
+                      "aws:cdk:cloudformation:props": {
+                        "assumeRolePolicyDocument": {
+                          "Statement": [
+                            {
+                              "Action": "sts:AssumeRole",
+                              "Effect": "Allow",
+                              "Principal": {
+                                "Service": "apigateway.amazonaws.com"
+                              }
+                            }
+                          ],
+                          "Version": "2012-10-17"
+                        },
+                        "managedPolicyArns": [
+                          {
+                            "Fn::Join": [
+                              "",
+                              [
+                                "arn:",
+                                {
+                                  "Ref": "AWS::Partition"
+                                },
+                                ":iam::aws:policy/service-role/AmazonAPIGatewayPushToCloudWatchLogs"
+                              ]
+                            ]
+                          }
+                        ]
+                      }
+                    }
+                  }
+                }
+              },
+              "Account": {
+                "id": "Account",
+                "path": "EcsServiceStack/RestApi/Account",
+                "attributes": {
+                  "aws:cdk:cloudformation:type": "AWS::ApiGateway::Account",
+                  "aws:cdk:cloudformation:props": {
+                    "cloudWatchRoleArn": {
+                      "Fn::GetAtt": [
+                        "RestApiCloudWatchRoleE3ED6605",
+                        "Arn"
+                      ]
+                    }
+                  }
+                }
+              },
+              "Default": {
+                "id": "Default",
+                "path": "EcsServiceStack/RestApi/Default",
+                "children": {
+                  "GET": {
+                    "id": "GET",
+                    "path": "EcsServiceStack/RestApi/Default/GET",
+                    "children": {
+                      "Resource": {
+                        "id": "Resource",
+                        "path": "EcsServiceStack/RestApi/Default/GET/Resource",
+                        "attributes": {
+                          "aws:cdk:cloudformation:type": "AWS::ApiGateway::Method",
+                          "aws:cdk:cloudformation:props": {
+                            "httpMethod": "GET",
+                            "resourceId": {
+                              "Fn::GetAtt": [
+                                "RestApi0C43BF4B",
+                                "RootResourceId"
+                              ]
+                            },
+                            "restApiId": {
+                              "Ref": "RestApi0C43BF4B"
+                            },
+                            "authorizationType": "NONE",
+                            "integration": {
+                              "type": "HTTP_PROXY",
+                              "uri": {
+                                "Fn::GetAtt": [
+                                  "LoadBalancedFargateServiceLB454B0F67",
+                                  "DNSName"
+                                ]
+                              },
+                              "integrationHttpMethod": "GET"
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
           }
         }
       },

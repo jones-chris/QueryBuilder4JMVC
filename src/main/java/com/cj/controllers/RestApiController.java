@@ -1,8 +1,8 @@
 package com.cj.controllers;
 
-import com.cj.config.Constants;
 import com.cj.config.Qb4jConfig;
 import com.cj.model.Column;
+import com.cj.model.Database;
 import com.cj.model.Schema;
 import com.cj.model.Table;
 import com.cj.service.database.audit.DatabaseAuditService;
@@ -10,12 +10,11 @@ import com.cj.service.database.data.DatabaseDataService;
 import com.cj.service.database.healer.DatabaseHealerService;
 import com.cj.service.database.metadata.DatabaseMetaDataService;
 import com.cj.service.querytemplate.QueryTemplateService;
-import com.cj.utils.TableauColumnSchema;
-import com.cj.utils.TableauColumns;
-import com.cj.utils.TableauTableSchema;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.google.gson.Gson;
+import com.google.gson.JsonObject;
 import com.querybuilder4j.databasemetadata.QueryTemplateDao;
 import com.querybuilder4j.statements.SelectStatement;
 import org.json.JSONObject;
@@ -32,7 +31,7 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.stream.Collectors;
 
-@CrossOrigin(origins = "http://localhost:4200")
+@CrossOrigin(origins = "http://localhost:3000")
 @RestController
 public class RestApiController {
     private DatabaseAuditService databaseAuditService;
@@ -63,13 +62,15 @@ public class RestApiController {
     /**
      *
      */
-    @GetMapping(value = "/metadata/databases")
-    public ResponseEntity<String> getDatabases() throws JsonProcessingException {
-        List<String> databases = qb4jConfig.getTargetDataSources().stream()
-                .map(Qb4jConfig.TargetDataSource::getName)
+    @GetMapping(value = "/metadata/database")
+    public ResponseEntity<List<Database>> getDatabases() throws JsonProcessingException {
+        List<Database> databases = qb4jConfig.getTargetDataSources().stream()
+                .map(targetDataSource -> new Database(targetDataSource.getName()))
+//                .map(Qb4jConfig.TargetDataSource::getName)
                 .collect(Collectors.toList());
 
-        return new ResponseEntity<>(new ObjectMapper().writeValueAsString(databases),  HttpStatus.OK);
+        return ResponseEntity.ok(databases);
+//        return new ResponseEntity<>(new ObjectMapper().writeValueAsString(databases),  HttpStatus.OK);
     }
 
     /**
@@ -80,7 +81,7 @@ public class RestApiController {
      * @param ascending
      * @return
      */
-    @GetMapping(value = "/queryTemplates")
+    @GetMapping(value = "/query-template")
     public ResponseEntity<String> getQueryTemplates(@RequestParam(required = false) Integer limit,
                                                     @RequestParam(required = false) Integer offset,
                                                     @RequestParam(required = false) boolean ascending) throws Exception {
@@ -94,7 +95,7 @@ public class RestApiController {
      * @param name
      * @return
      */
-    @GetMapping(value = "/queryTemplates/{name}")
+    @GetMapping(value = "/query-template/{name}")
     public ResponseEntity<String> getQueryTemplateById(@PathVariable String name) {
         String queryTemplate = queryTemplateService.findByName(name);
         return new ResponseEntity<>(queryTemplate, HttpStatus.OK);
@@ -106,7 +107,7 @@ public class RestApiController {
      * @param selectStatement
      * @return
      */
-    @PostMapping(value = "/saveQueryTemplate")
+    @PostMapping(value = "/query-template")
     public ResponseEntity<String> saveQueryTemplate(@RequestBody SelectStatement selectStatement) {
         if (selectStatement.getName() == null) {
             throw new RuntimeException("The name of the select statement cannot be null when saving the statement " +
@@ -126,7 +127,7 @@ public class RestApiController {
      *
      * @return
      */
-    @GetMapping(value = "/metadata/{database}/schemas")
+    @GetMapping(value = "/metadata/{database}/schema")
     public ResponseEntity<List<Schema>> getSchemas(@PathVariable String database) throws Exception {
         List<Schema> schemas = databaseMetaDataService.getSchemas(database);
         return ResponseEntity.ok(schemas);
@@ -138,7 +139,7 @@ public class RestApiController {
      * @param schema
      * @return
      */
-    @GetMapping(value = "/metadata/{database}/{schema}/tables-and-views")
+    @GetMapping(value = "/metadata/{database}/{schema}/table-and-view")
     public ResponseEntity<List<Table>> getTablesAndViews(@PathVariable String database,
                                                          @PathVariable String schema) throws Exception {
         List<Table> tables = databaseMetaDataService.getTablesAndViews(database, schema);
@@ -152,7 +153,7 @@ public class RestApiController {
      * @param tables
      * @return
      */
-    @GetMapping(value = "/metadata/{database}/{schema}/{tables}/columns")
+    @GetMapping(value = "/metadata/{database}/{schema}/{tables}/column")
     public ResponseEntity<List<Column>> getColumns(@PathVariable String database,
                                              @PathVariable String schema,
                                              @PathVariable String tables) throws Exception {
@@ -180,7 +181,7 @@ public class RestApiController {
      * @param search
      * @return
      */
-    @GetMapping(value = "/data/{database}/{schema}/{table}/{column}/column-members")
+    @GetMapping(value = "/data/{database}/{schema}/{table}/{column}/column-member")
     public ResponseEntity<String> getColumnMembers(@PathVariable String database,
                                                    @PathVariable String schema,
                                                    @PathVariable String table,

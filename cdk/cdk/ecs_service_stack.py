@@ -1,4 +1,4 @@
-from aws_cdk import core, aws_iam, aws_ecs, aws_ec2, aws_elasticloadbalancingv2, aws_ecs_patterns
+from aws_cdk import core, aws_iam, aws_ecs, aws_ec2, aws_elasticloadbalancingv2, aws_ecs_patterns, aws_apigateway
 
 
 class EcsServiceStack(core.Stack):
@@ -51,7 +51,7 @@ class EcsServiceStack(core.Stack):
             )
         )
 
-        aws_ecs_patterns.ApplicationLoadBalancedFargateService(
+        app_load_balanced_ecs_fargate_service = aws_ecs_patterns.ApplicationLoadBalancedFargateService(
             self, 'LoadBalancedFargateService',
             assign_public_ip=False,  # todo:  could make this false since the load balancer is public.
             cpu=256,
@@ -73,6 +73,32 @@ class EcsServiceStack(core.Stack):
                 self, 'Vpc'
             )
         )
+
+        # api gateway
+        rest_api = aws_apigateway.RestApi(
+            self, 'RestApi',
+        )
+        rest_api.root.add_method(
+            'GET',
+            aws_apigateway.HttpIntegration(
+                url=app_load_balanced_ecs_fargate_service.load_balancer.load_balancer_dns_name,
+                http_method='GET',
+                proxy=True
+            )
+        )
+
+        # api_method = aws_apigateway.Method(
+        #     self, 'ApiMethod',
+        #     http_method='GET',
+        #     resource=aws_apigateway.RestApi(
+        #         self, id='RestApi'
+        #     ),
+        #     integration=aws_apigateway.HttpIntegration(
+        #         url=app_load_balanced_ecs_fargate_service.load_balancer.load_balancer_dns_name,
+        #         http_method='GET',
+        #         proxy=True
+        #     )
+        # )
 
         # Define CW alarm with SNS topic?
 
