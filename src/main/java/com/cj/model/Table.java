@@ -2,14 +2,24 @@ package com.cj.model;
 
 public class Table {
 
+    private String fullyQualifiedName;
     private String databaseName;
     private String schemaName;
     private String tableName;
 
     public Table(String databaseName, String schemaName, String tableName) {
+        this.fullyQualifiedName = String.format("%s.%s.%s", databaseName, schemaName, tableName);
         this.databaseName = databaseName;
         this.schemaName = schemaName;
         this.tableName = tableName;
+    }
+
+    public String getFullyQualifiedName() {
+        return fullyQualifiedName;
+    }
+
+    public void setFullyQualifiedName(String fullyQualifiedName) {
+        this.fullyQualifiedName = fullyQualifiedName;
     }
 
     public String getDatabaseName() {

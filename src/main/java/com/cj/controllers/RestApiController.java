@@ -136,14 +136,20 @@ public class RestApiController {
     /**
      * Returns all database tables and views that a given user has access to.
      *
-     * @param schema
+     * @param schemas
      * @return
      */
-    @GetMapping(value = "/metadata/{database}/{schema}/table-and-view")
+    @GetMapping(value = "/metadata/{database}/{schemas}/table-and-view")
     public ResponseEntity<List<Table>> getTablesAndViews(@PathVariable String database,
-                                                         @PathVariable String schema) throws Exception {
-        List<Table> tables = databaseMetaDataService.getTablesAndViews(database, schema);
-        return ResponseEntity.ok(tables);
+                                                         @PathVariable String schemas) throws Exception {
+        String[] splitSchemas = schemas.split("&");
+        List<Table> allTables = new ArrayList<>();
+        for (String schema : splitSchemas) {
+            List<Table> tables = databaseMetaDataService.getTablesAndViews(database, schema);
+            allTables.addAll(tables);
+        }
+
+        return ResponseEntity.ok(allTables);
     }
 
     /**
@@ -153,16 +159,16 @@ public class RestApiController {
      * @param tables
      * @return
      */
-    @GetMapping(value = "/metadata/{database}/{schema}/{tables}/column")
-    public ResponseEntity<List<Column>> getColumns(@PathVariable String database,
-                                             @PathVariable String schema,
-                                             @PathVariable String tables) throws Exception {
-        String[] splitTables = tables.split("&");
-
+    @PostMapping(value = "/metadata/database/schema/table/column")
+    public ResponseEntity<List<Column>> getColumns(@RequestBody List<Table> tables) throws Exception {
         List<Column> allColumns = new ArrayList<>();
         // todo:  instead  of making a cache trip for each table, make cache SQL include WHERE IN clause?
-        for (String table : splitTables) {
-            List<Column> columns = databaseMetaDataService.getColumns(database, schema, table);
+        for (Table table : tables) {
+            String databaseName = table.getDatabaseName();
+            String schemaName = table.getSchemaName();
+            String tableName = table.getTableName();
+
+            List<Column> columns = databaseMetaDataService.getColumns(databaseName, schemaName, tableName);
             allColumns.addAll(columns);
         }
 
