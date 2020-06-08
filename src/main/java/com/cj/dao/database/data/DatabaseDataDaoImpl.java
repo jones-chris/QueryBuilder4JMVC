@@ -1,11 +1,13 @@
 package com.cj.dao.database.data;
 
 import com.cj.config.Qb4jConfig;
+import com.cj.model.QueryResult;
 import com.cj.utils.Converter;
 import com.querybuilder4j.statements.Column;
 import com.querybuilder4j.statements.Criteria;
 import com.querybuilder4j.statements.Operator;
 import com.querybuilder4j.statements.SelectStatement;
+import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
 
@@ -26,13 +28,14 @@ public class DatabaseDataDaoImpl implements DatabaseDataDao {
     }
 
     @Override
-    public String executeQuery(String databaseName, String sql) throws Exception {
+    public QueryResult executeQuery(String databaseName, String sql) throws Exception {
         DataSource dataSource = qb4jConfig.getTargetDataSourceAsDataSource(databaseName);
 
         try (Connection conn = dataSource.getConnection();
              Statement stmt = conn.createStatement()) {
             ResultSet rs = stmt.executeQuery(sql);
-            return Converter.convertToJSON(rs).toString();
+            return new QueryResult(rs, sql);
+//            return Converter.convertToJSON(rs);
         } catch (Exception ex) {
             throw ex;
         }

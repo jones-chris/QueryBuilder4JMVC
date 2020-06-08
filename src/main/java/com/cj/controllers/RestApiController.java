@@ -1,10 +1,7 @@
 package com.cj.controllers;
 
 import com.cj.config.Qb4jConfig;
-import com.cj.model.Column;
-import com.cj.model.Database;
-import com.cj.model.Schema;
-import com.cj.model.Table;
+import com.cj.model.*;
 import com.cj.service.database.audit.DatabaseAuditService;
 import com.cj.service.database.data.DatabaseDataService;
 import com.cj.service.database.healer.DatabaseHealerService;
@@ -208,19 +205,14 @@ public class RestApiController {
      * @return
      */
     @PostMapping(value = "/data/{database}/query")
-    public ResponseEntity<String> getQueryResults(@PathVariable String database,
+    public ResponseEntity<QueryResult> getQueryResults(@PathVariable String database,
                                                   @RequestBody SelectStatement selectStatement) throws Exception {
         selectStatement.setQueryTemplateDao(queryTemplateDao);
         Properties properties = this.qb4jConfig.getTargetDataSource(database).getProperties();
         String sql = selectStatement.toSql(properties);
-        String queryResults = databaseDataService.executeQuery(database, sql);
+        QueryResult queryResult = databaseDataService.executeQuery(database, sql);
 
-//        JSONObject jsonObject = getDatabaseAuditResults(database, selectStatement, sql);
-        JSONObject jsonObject = new JSONObject();
-        jsonObject.append("queryResults", queryResults);
-        jsonObject.append("sqlResult", sql);
-
-        return new ResponseEntity<>(jsonObject.toString(4), HttpStatus.OK);
+        return new ResponseEntity<>(queryResult, HttpStatus.OK);
     }
 
 //    @PostMapping("/{database}/tableau-wdc-types")
