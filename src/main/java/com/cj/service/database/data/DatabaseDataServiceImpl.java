@@ -1,6 +1,7 @@
 package com.cj.service.database.data;
 
 import com.cj.dao.database.data.DatabaseDataDao;
+import com.cj.model.QueryResult;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -15,7 +16,7 @@ public class DatabaseDataServiceImpl implements DatabaseDataService {
     }
 
     @Override
-    public String executeQuery(String databaseName, String sql) throws Exception {
+    public QueryResult executeQuery(String databaseName, String sql) throws Exception {
         return databaseDataDao.executeQuery(databaseName, sql);
     }
 

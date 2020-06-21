@@ -74,31 +74,5 @@ class EcsServiceStack(core.Stack):
             )
         )
 
-        # api gateway
-        rest_api = aws_apigateway.RestApi(
-            self, 'RestApi',
-        )
-        rest_api.root.add_method(
-            'GET',
-            aws_apigateway.HttpIntegration(
-                url=app_load_balanced_ecs_fargate_service.load_balancer.load_balancer_dns_name,
-                http_method='GET',
-                proxy=True
-            )
-        )
-
-        # api_method = aws_apigateway.Method(
-        #     self, 'ApiMethod',
-        #     http_method='GET',
-        #     resource=aws_apigateway.RestApi(
-        #         self, id='RestApi'
-        #     ),
-        #     integration=aws_apigateway.HttpIntegration(
-        #         url=app_load_balanced_ecs_fargate_service.load_balancer.load_balancer_dns_name,
-        #         http_method='GET',
-        #         proxy=True
-        #     )
-        # )
-
         # Define CW alarm with SNS topic?
 

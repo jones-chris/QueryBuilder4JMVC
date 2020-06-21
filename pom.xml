@@ -149,6 +149,14 @@
             <version>1</version>
         </dependency>
 
+<!--        This is for local development purposes only when working on the qb4j library and the QueryBuilder4JMVC web app at the same time.-->
+<!--        <dependency>-->
+<!--            <groupId>com.querybuilder4j</groupId>-->
+<!--            <artifactId>querybuilder4j</artifactId>-->
+<!--            <version>1</version>-->
+<!--            <systemPath>/Users/chris.jones/repos/QueryBuilder4J/target/querybuilder4j-1.jar</systemPath>-->
+<!--        </dependency>-->
+
         <!-- https://mvnrepository.com/artifact/org.json/json -->
         <dependency>
             <groupId>org.json</groupId>
