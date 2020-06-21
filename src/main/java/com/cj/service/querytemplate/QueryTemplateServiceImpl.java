@@ -25,18 +25,12 @@ public class QueryTemplateServiceImpl implements QueryTemplateService {
     }
 
     @Override
-    public String findByName(String name) {
-        SelectStatement stmt = queryTemplateDao.getQueryTemplateByName(name);
-        return new Gson().toJson(stmt);
+    public SelectStatement findByName(String name) {
+        return queryTemplateDao.getQueryTemplateByName(name);
     }
 
     @Override
-    public String getNames(Integer limit, Integer offset, boolean ascending) throws Exception {
-        List<String> queryNames = queryTemplateDao.getNames(limit, offset, ascending);
-
-        JSONObject jsonObject = new JSONObject()
-                .put("queryTemplateNames", queryNames);
-
-        return jsonObject.toString();
+    public List<String> getNames(Integer limit, Integer offset, boolean ascending) throws Exception {
+         return queryTemplateDao.getNames(limit, offset, ascending);
     }
 }

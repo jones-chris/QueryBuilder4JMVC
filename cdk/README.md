@@ -56,3 +56,9 @@ command.
  * `cdk docs`        open CDK documentation
 
 Enjoy!
+
+### Usage
+
+* `cd /QueryBuilder4JMVC/cdk`
+* `source ./env/bin/activate` to activate virtual environment containing AWS CDK dependencies.
+* `cdk synth` creates the CloudFormation templates in `cdk.out`.

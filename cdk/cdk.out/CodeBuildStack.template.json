@@ -243,7 +243,7 @@
           "Location": {
             "Ref": "CodeBuildArtifactBucket2C7834D4"
           },
-          "Name": "querybuilder4jmvc-prod.jar",
+          "Name": "querybuilder4jmvc-None.jar",
           "NamespaceType": "BUILD_ID",
           "Packaging": "ZIP",
           "Path": "build/",

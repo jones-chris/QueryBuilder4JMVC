@@ -79,11 +79,11 @@ public class RestApiController {
      * @return
      */
     @GetMapping(value = "/query-template")
-    public ResponseEntity<String> getQueryTemplates(@RequestParam(required = false) Integer limit,
+    public ResponseEntity<List<String>> getQueryTemplates(@RequestParam(required = false) Integer limit,
                                                     @RequestParam(required = false) Integer offset,
                                                     @RequestParam(required = false) boolean ascending) throws Exception {
-        String jsonResults = queryTemplateService.getNames(limit, offset, ascending);
-        return new ResponseEntity<>(jsonResults, HttpStatus.OK);
+        List<String> queryTemplateNames = queryTemplateService.getNames(limit, offset, ascending);
+        return ResponseEntity.ok(queryTemplateNames);
     }
 
     /**
@@ -93,9 +93,9 @@ public class RestApiController {
      * @return
      */
     @GetMapping(value = "/query-template/{name}")
-    public ResponseEntity<String> getQueryTemplateById(@PathVariable String name) {
-        String queryTemplate = queryTemplateService.findByName(name);
-        return new ResponseEntity<>(queryTemplate, HttpStatus.OK);
+    public ResponseEntity<SelectStatement> getQueryTemplateById(@PathVariable String name) {
+        SelectStatement queryTemplate = queryTemplateService.findByName(name);
+        return ResponseEntity.ok(queryTemplate);
     }
 
     /**
