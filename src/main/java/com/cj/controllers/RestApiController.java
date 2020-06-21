@@ -28,7 +28,7 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.stream.Collectors;
 
-@CrossOrigin(origins = "http://localhost:3000")
+@CrossOrigin(origins = { "http://localhost:3000", "http://querybuilder4j.net" })
 @RestController
 public class RestApiController {
     private DatabaseAuditService databaseAuditService;
@@ -63,11 +63,9 @@ public class RestApiController {
     public ResponseEntity<List<Database>> getDatabases() throws JsonProcessingException {
         List<Database> databases = qb4jConfig.getTargetDataSources().stream()
                 .map(targetDataSource -> new Database(targetDataSource.getName()))
-//                .map(Qb4jConfig.TargetDataSource::getName)
                 .collect(Collectors.toList());
 
         return ResponseEntity.ok(databases);
-//        return new ResponseEntity<>(new ObjectMapper().writeValueAsString(databases),  HttpStatus.OK);
     }
 
     /**
