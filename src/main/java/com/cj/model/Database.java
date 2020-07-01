@@ -1,10 +1,14 @@
 package com.cj.model;
 
+import com.querybuilder4j.statements.DatabaseType;
+
 public class Database {
     private String databaseName;
+    private DatabaseType databaseType;
 
-    public Database(String databaseName) {
+    public Database(String databaseName, DatabaseType databaseType) {
         this.databaseName = databaseName;
+        this.databaseType = databaseType;
     }
 
     public String getDatabaseName() {
@@ -13,5 +17,13 @@ public class Database {
 
     public void setDatabaseName(String databaseName) {
         this.databaseName = databaseName;
+    }
+
+    public DatabaseType getDatabaseType() {
+        return databaseType;
+    }
+
+    public void setDatabaseType(DatabaseType databaseType) {
+        this.databaseType = databaseType;
     }
 }
