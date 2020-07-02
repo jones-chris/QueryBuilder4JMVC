@@ -1,6 +1,7 @@
 version: 0.2
 
 env:
+  # These secrets come from Secrets Manager Parameter Store.
   parameter-store:
     DOCKERHUB_TOKEN:  DOCKERHUB_TOKEN
 #    CODECOV_TOKEN: CODECOV_TOKEN  # CodeBuild will retrieve this from Systems Manager Parameter Store.
@@ -20,33 +21,61 @@ phases:
       - docker info
       - apt-get update
 
-  #      - echo $CODECOV_TOKEN
-
   pre_build:
     commands:
+      # Get project's version from pom.xml.
+      PROJECT_VERSION=$(mvn help:evaluate -Dexpression=project.version -q -DforceStdout)
+
       aws s3 cp s3://maven-build-settings/qb4j_settings.xml /root/.m2/settings.xml
 
   build:
     commands:
-      - mvn clean install  # Builds uber jar.  Includes running unit tests.
-      - docker image build -t joneschris/qb4j-mvc:1 --build-arg environment=prod .
+      # Builds uber jar.  Includes running unit tests.
+      - mvn clean install
+
+      # Check if the image exists in docker hub already.
+      - IMAGE_EXISTS=$(docker pull joneschris/qb4j-mvc:"$PROJECT_VERSION" > /dev/null && echo "true" || echo "false")
+
+      - echo "Does the image exist?  $IMAGE_EXISTS"
+
+      - if [[ "$IMAGE_EXISTS" == "true" ]]; then
+            # If image already exists, then stop script execution and fail the pipeline build.
+            echo "joneschris/qb4j-mvc:$PROJECT_VERSION already exists"
+            exit 1
+        else
+            docker image build -t joneschris/qb4j-mvc:"$PROJECT_VERSION" --build-arg environment=prod .
+        fi
 
   post_build:
     commands:
-      - echo $DOCKERHUB_TOKEN | docker login --username joneschris --password-stdin  # Use password-stdin so that password does not go to shell's logs.
-      - docker push joneschris/qb4j-mvc:1
+      # Use password-stdin so that password does not go to shell's logs.
+      - echo $DOCKERHUB_TOKEN | docker login --username joneschris --password-stdin
+
+      - docker push joneschris/qb4j-mvc:"$PROJECT_VERSION"
 
         # Upload code coverage files.
         #      - curl -s https://codecov.io/bash > codecov.sh
         #      - bash codecov.sh -t $CODECOV_TOKEN
 
-      # Get cloudformation files and deploy to AWS if the cloudformation file is not the codebuild stack.
-      - chmod +x ./cdk/cloudformation_deployment.sh
-      - sh ./cdk/cloudformation_deployment.sh
+      # If PROD env variable, then deploy CloudFormation.
+      # If DEV env variable, then deploy to Lightsail.
+      - echo "ENV environment variable is $ENV"
+
+      - if [[ $ENV == "dev" ]]; then
+            chmod +x ./cicd/deployment/deployment_dev.sh
+            sh ./cicd/deployment/deployment_dev.sh "$DOCKERHUB_TOKEN"
+        elif [[ $ENV == "prod" ]]; then
+            chmod +x ./cicd/deployment/deployment_prod.sh
+            sh ./cicd/deployment/deployment_prod.sh
+        else
+            echo "Did not recognize the ENV, $ENV.  Not deploying."
+        fi
+
+
 
 artifacts:
   files:
-    - target/querybuilder4jmvc-1.jar
+    - target/querybuilder4jmvc-$"PROJECT_VERSION".jar
   name: querybuilder4jmvc
   discard-paths: yes
 #  secondary-artifacts:
