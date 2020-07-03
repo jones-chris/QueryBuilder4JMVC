@@ -30,52 +30,17 @@ phases:
 
   build:
     commands:
-      # Builds uber jar.  Includes running unit tests.
-      - mvn clean install
-
-      # Check if the image exists in docker hub already.
-      - IMAGE_EXISTS=$(docker pull joneschris/qb4j-mvc:"$PROJECT_VERSION" > /dev/null && echo "true" || echo "false")
-
-      - echo "Does the image exist?  $IMAGE_EXISTS"
-
-      - if [[ "$IMAGE_EXISTS" == "true" ]]; then
-            # If image already exists, then stop script execution and fail the pipeline build.
-            echo "joneschris/qb4j-mvc:$PROJECT_VERSION already exists"
-            exit 1
-        else
-            docker image build -t joneschris/qb4j-mvc:"$PROJECT_VERSION" --build-arg environment=prod .
-        fi
+      - bash ./cicd/buildspec_steps/0_build.bash
 
   post_build:
     commands:
-      # Use password-stdin so that password does not go to shell's logs.
-      - echo $DOCKERHUB_TOKEN | docker login --username joneschris --password-stdin
-
-      - docker push joneschris/qb4j-mvc:"$PROJECT_VERSION"
-
-        # Upload code coverage files.
-        #      - curl -s https://codecov.io/bash > codecov.sh
-        #      - bash codecov.sh -t $CODECOV_TOKEN
-
-      # If PROD env variable, then deploy CloudFormation.
-      # If DEV env variable, then deploy to Lightsail.
-      - echo "ENV environment variable is $ENV"
-
-      - if [[ $ENV == "dev" ]]; then
-            chmod +x ./cicd/deployment/deployment_dev.sh
-            sh ./cicd/deployment/deployment_dev.sh "$DOCKERHUB_TOKEN"
-        elif [[ $ENV == "prod" ]]; then
-            chmod +x ./cicd/deployment/deployment_prod.sh
-            sh ./cicd/deployment/deployment_prod.sh
-        else
-            echo "Did not recognize the ENV, $ENV.  Not deploying."
-        fi
+      - bash ./cicd/buildspec_steps/1_post_build.bash
 
 
 
 artifacts:
   files:
-    - target/querybuilder4jmvc-$"PROJECT_VERSION".jar
+    - target/querybuilder4jmvc-$PROJECT_VERSION.jar
   name: querybuilder4jmvc
   discard-paths: yes
 #  secondary-artifacts:
