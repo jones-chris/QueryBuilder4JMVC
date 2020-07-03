@@ -21,7 +21,7 @@ chmod 600 private_key.txt
 
 echo "Changed permissions on private_key.txt to 600"
 
-ssh -i private_key.txt "$USER_NAME@$IP_ADDRESS"
+ssh -i private_key.txt -tt "$USER_NAME@$IP_ADDRESS"
 
 echo "Successful ssh connection"
 
