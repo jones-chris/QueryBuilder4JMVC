@@ -26,15 +26,20 @@ phases:
       # Get project's version from pom.xml.
       PROJECT_VERSION=$(mvn help:evaluate -Dexpression=project.version -q -DforceStdout)
 
+      # Copy custom maven settings from S3 bucket.
       aws s3 cp s3://maven-build-settings/qb4j_settings.xml /root/.m2/settings.xml
+
+      # Check if the image exists in docker hub already.
+      IMAGE_EXISTS=$(docker pull joneschris/qb4j-mvc:"$PROJECT_VERSION" > /dev/null && echo "true" || echo "false")
+      echo "Does the image exist?  $IMAGE_EXISTS"
 
   build:
     commands:
-      - bash ./cicd/buildspec_steps/0_build.bash
+      - bash ./cicd/buildspec_steps/0_build.bash "$IMAGE_EXISTS"
 
   post_build:
     commands:
-      - bash ./cicd/buildspec_steps/1_post_build.bash "$DOCKERHUB_TOKEN" "$PROJECT_VERSION"
+      - bash ./cicd/buildspec_steps/1_post_build.bash "$DOCKERHUB_TOKEN" "$PROJECT_VERSION" "$IMAGE_EXISTS"
 
 
 

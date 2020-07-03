@@ -6,16 +6,19 @@
 
 DOCKERHUB_TOKEN=$1
 PROJECT_VERSION=$2
+IMAGE_EXISTS=$3
 
 # If the previous script, 0_build.bash, exited without a 0 status, then don't deploy.
-if [ "$?" != 0 ]; then
-    echo "Exiting 1_post_build.bash because exit status of previous script is not 0"
-    exit 1
+#if [ "$?" != 0 ]; then
+#    echo "Exiting 1_post_build.bash because exit status of previous script is not 0"
+#    exit 1
+#fi
+
+# If image does not already exist, then log into DockerHub and push image that was built by 0_build.bash.
+if [ "$IMAGE_EXISTS" == "false" ]; then
+    echo "$DOCKERHUB_TOKEN" | docker login --username joneschris --password-stdin
+    docker push joneschris/qb4j-mvc:"$PROJECT_VERSION"
 fi
-
-echo "$DOCKERHUB_TOKEN" | docker login --username joneschris --password-stdin
-
-docker push joneschris/qb4j-mvc:"$PROJECT_VERSION"
 
 echo "ENV environment variable is $ENV"
 
