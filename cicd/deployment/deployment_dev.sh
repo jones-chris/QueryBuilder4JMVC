@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # This script should log into the lightsail instance using the SSH private key, stop the qb4j-api docker container, pull down the new image, start the qb4j-api docker container.
-echo "Docker image tag argument is: $1"
+echo "Docker image tag / Project Version argument is: $1"
 
 # Get the private key, user name, and IP address for the lightsail instance to ssh into the lightsail instance.
 PRIVATE_KEY=$(aws ssm get-parameter --name /dev/qb4j_api_lightsail/ssh_key --with-decryption --output text --query Parameter.Value)

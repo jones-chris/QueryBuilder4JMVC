@@ -9,7 +9,7 @@ IMAGE_EXISTS=$(docker pull joneschris/qb4j-mvc:"$PROJECT_VERSION" > /dev/null &&
 echo "Does the image exist?  $IMAGE_EXISTS"
 
 # If image already exists, then stop script execution and fail the pipeline build.
-if [ "$IMAGE_EXISTS" == "true" ]; then
+if [ "$IMAGE_EXISTS" == "true" ]; then #todo:  build image locally regardless but don't push if image tag already exists?
     echo joneschris/qb4j-mvc:$PROJECT_VERSION already exists
     exit 1
 else

@@ -24,7 +24,7 @@ echo "ENV environment variable is $ENV"
 if [ "$ENV" == "dev" ]; then
     echo "Deploying to DEV"
     chmod +x ./cicd/deployment/deployment_dev.sh
-    sh ./cicd/deployment/deployment_dev.sh "$DOCKERHUB_TOKEN"
+    sh ./cicd/deployment/deployment_dev.sh "$PROJECT_VERSION"
 elif [ "$ENV" == "prod" ]; then
     echo "Deploying to PROD"
     chmod +x ./cicd/deployment/deployment_prod.sh
