@@ -14,4 +14,5 @@ if [ "$IMAGE_EXISTS" == "true" ]; then
     exit 1
 else
     docker image build -t joneschris/qb4j-mvc:"$PROJECT_VERSION" --build-arg environment=prod .
+    exit 0
 fi
