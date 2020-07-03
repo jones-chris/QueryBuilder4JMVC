@@ -34,7 +34,7 @@ phases:
 
   post_build:
     commands:
-      - bash ./cicd/buildspec_steps/1_post_build.bash
+      - bash ./cicd/buildspec_steps/1_post_build.bash "$DOCKERHUB_TOKEN" "$PROJECT_VERSION"
 
 
 
