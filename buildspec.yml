@@ -2,13 +2,12 @@ version: 0.2
 
 env:
   shell: bash
-  # These secrets come from Secrets Manager Parameter Store.
   parameter-store:
     DOCKERHUB_TOKEN:  DOCKERHUB_TOKEN
+#    CODECOV_TOKEN: CODECOV_TOKEN
   exported-variables:
     - PROJECT_VERSION
     - IMAGE_EXISTS
-#    CODECOV_TOKEN: CODECOV_TOKEN  # CodeBuild will retrieve this from Systems Manager Parameter Store.
 
 phases:
   install:
@@ -44,7 +43,11 @@ phases:
 
   build:
     commands:
-      - bash ./cicd/buildspec_steps/0_build.bash "$IMAGE_EXISTS"
+      # Build the uber jar and run unit tests.
+      - mvn clean install
+
+      # Build docker image
+      - docker image build -t joneschris/qb4j-mvc:"$PROJECT_VERSION" --build-arg environment=prod --build-arg project_version="$PROJECT_VERSION" .
 
   post_build:
     commands:
