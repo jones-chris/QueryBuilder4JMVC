@@ -51,7 +51,7 @@ phases:
 
   post_build:
     commands:
-      - bash ./cicd/buildspec_steps/1_post_build.bash "$DOCKERHUB_TOKEN" "$PROJECT_VERSION" "$IMAGE_EXISTS"
+      - bash ./cicd/buildspec_steps/1_post_build.bash "$DOCKERHUB_TOKEN" "$PROJECT_VERSION"
 
 artifacts:
   files:

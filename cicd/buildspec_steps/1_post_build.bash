@@ -6,14 +6,9 @@
 
 DOCKERHUB_TOKEN=$1
 PROJECT_VERSION=$2
-IMAGE_EXISTS=$3
 
-# If image does not already exist, then log into DockerHub and push image that was built by 0_build.bash.
-if [ "$IMAGE_EXISTS" == "false" ]; then
-    echo "The docker image tag does not already exist, so logging into DockerHub and push the image"
-    echo "$DOCKERHUB_TOKEN" | docker login --username joneschris --password-stdin
-    docker push joneschris/qb4j-mvc:"$PROJECT_VERSION"
-fi
+echo "$DOCKERHUB_TOKEN" | docker login --username joneschris --password-stdin
+docker push joneschris/qb4j-mvc:"$PROJECT_VERSION"
 
 echo "ENV environment variable is $ENV"
 
