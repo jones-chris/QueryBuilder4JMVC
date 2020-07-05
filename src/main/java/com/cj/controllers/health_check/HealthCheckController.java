@@ -1,4 +1,4 @@
-package com.cj.controllers;
+package com.cj.controllers.health_check;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;

@@ -35,7 +35,6 @@ public class DatabaseDataDaoImpl implements DatabaseDataDao {
              Statement stmt = conn.createStatement()) {
             ResultSet rs = stmt.executeQuery(sql);
             return new QueryResult(rs, sql);
-//            return Converter.convertToJSON(rs);
         } catch (Exception ex) {
             throw ex;
         }
@@ -57,6 +56,7 @@ public class DatabaseDataDaoImpl implements DatabaseDataDao {
             criterion.setColumn(tableAndColumn);
             criterion.setOperator(Operator.like);
             criterion.setFilter(search);
+
             selectStatement.getCriteria().add(criterion);
         }
         selectStatement.setLimit(Integer.toUnsignedLong(limit));
