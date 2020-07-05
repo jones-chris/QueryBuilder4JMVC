@@ -1,5 +1,7 @@
 #!/bin/bash
 
+# This script is meant to be a bootstrap
+
 DOCKER_USERNAME=$1
 DOCKER_PASSWORD=$2
 DOCKER_IMAGE_TAG=$3 # Hard code this to `dev`?
@@ -44,4 +46,4 @@ sudo docker login --username "$DOCKER_USERNAME" --password "$DOCKER_PASSWORD"
 sudo docker pull joneschris/qb4j-mvc:"$DOCKER_IMAGE_TAG"
 
 # Run docker image in a container
-sudo nohup docker container run --publish 8080:8080 joneschris/qb4j-mvc:$"DOCKER_IMAGE_TAG"
+sudo nohup docker container run --publish 8080:8080 --detach joneschris/qb4j-mvc:$"DOCKER_IMAGE_TAG"

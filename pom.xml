@@ -3,7 +3,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>com.cj.querybuilder4jmvc</groupId>
     <artifactId>querybuilder4jmvc</artifactId>
-    <version>1</version>
+    <version>0.0.1</version>
     <packaging>jar</packaging>
 
     <name>querybuilder4jmvc</name>
@@ -190,6 +190,13 @@
             <groupId>javax.activation</groupId>
             <artifactId>activation</artifactId>
             <version>1.1.1</version>
+        </dependency>
+
+        <!-- This is used to get the pom's project version number (<version></version>)-->
+        <dependency>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-help-plugin</artifactId>
+            <version>3.2.0</version>
         </dependency>
 
     </dependencies>
