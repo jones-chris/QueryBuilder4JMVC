@@ -1,9 +1,8 @@
 package com.cj.dao.querytemplate;
 
 import com.cj.config.Qb4jConfig;
+import com.cj.model.select_statement.SelectStatement;
 import com.google.gson.Gson;
-import com.querybuilder4j.databasemetadata.QueryTemplateDao;
-import com.querybuilder4j.statements.SelectStatement;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
@@ -36,7 +35,7 @@ public class QueryTemplateDaoImpl implements QueryTemplateDao {
     }
 
     @Override
-    public List<String> getNames(Integer limit, Integer offset, boolean ascending) throws Exception {
+    public List<String> listNames(Integer limit, Integer offset, boolean ascending) throws Exception {
         // Throw exception if offset is not null and limit is null.  SQL does not allow this.
         if (offset != null && limit == null) {
             throw new Exception("Limit cannot be null if offset is not null");
@@ -71,7 +70,7 @@ public class QueryTemplateDaoImpl implements QueryTemplateDao {
     }
 
     @Override
-    public SelectStatement getQueryTemplateByName(String s) {
+    public SelectStatement findByName(String s) {
         String sql = "select query_json " +
                 "from query_templates " +
                 "where name = ? ";

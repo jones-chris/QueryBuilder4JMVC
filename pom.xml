@@ -3,7 +3,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>com.cj.querybuilder4jmvc</groupId>
     <artifactId>querybuilder4jmvc</artifactId>
-    <version>0.0.2</version>
+    <version>0.0.3</version>
     <packaging>jar</packaging>
 
     <name>querybuilder4jmvc</name>
@@ -99,20 +99,12 @@
             <scope>test</scope>
         </dependency>
 
-        <!--todo:  update this!!-->
-        <!-- https://mvnrepository.com/artifact/org.springframework.boot/spring-boot-starter-thymeleaf -->
-<!--        <dependency>-->
-<!--            <groupId>org.springframework.boot</groupId>-->
-<!--            <artifactId>spring-boot-starter-thymeleaf</artifactId>-->
-<!--            <version>1.4.3.RELEASE</version>-->
-<!--        </dependency>-->
         <!-- https://mvnrepository.com/artifact/org.springframework.boot/spring-boot-starter-thymeleaf -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-thymeleaf</artifactId>
             <version>2.2.3.RELEASE</version>
         </dependency>
-
 
         <!-- https://mvnrepository.com/artifact/org.hashids/hashids -->
         <dependency>
@@ -143,18 +135,18 @@
         </dependency>
 
         <!--This comes from S3-->
-        <dependency>
-            <groupId>com.querybuilder4j</groupId>
-            <artifactId>querybuilder4j</artifactId>
-            <version>1</version>
-        </dependency>
+<!--        <dependency>-->
+<!--            <groupId>com.querybuilder4j</groupId>-->
+<!--            <artifactId>querybuilder4j</artifactId>-->
+<!--            <version>1</version>-->
+<!--        </dependency>-->
 
 <!--        This is for local development purposes only when working on the qb4j library and the QueryBuilder4JMVC web app at the same time.-->
 <!--        <dependency>-->
 <!--            <groupId>com.querybuilder4j</groupId>-->
 <!--            <artifactId>querybuilder4j</artifactId>-->
-<!--            <version>1</version>-->
-<!--            <systemPath>/Users/chris.jones/repos/QueryBuilder4J/target/querybuilder4j-1.jar</systemPath>-->
+<!--&lt;!&ndash;            <version>1</version>&ndash;&gt;-->
+<!--            <systemPath>/Users/chris.jones/repos/QueryBuilder4J/target/querybuilder4j-0.0.1.jar</systemPath>-->
 <!--        </dependency>-->
 
         <!-- https://mvnrepository.com/artifact/org.json/json -->

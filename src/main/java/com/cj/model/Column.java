@@ -69,4 +69,8 @@ public class Column {
     public void setDataType(int dataType) {
         this.dataType = dataType;
     }
+
+    public String toSql(char beginningDelimiter, char endingDelimiter) {
+        return String.format("  ")
+    }
 }

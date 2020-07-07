@@ -1,10 +1,16 @@
 package com.cj.model;
 
-import com.querybuilder4j.statements.DatabaseType;
+
+import com.cj.constants.DatabaseType;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class Database {
+
     private String databaseName;
     private DatabaseType databaseType;
+    private transient List<Schema> schemas = new ArrayList<>();
 
     public Database(String databaseName, DatabaseType databaseType) {
         this.databaseName = databaseName;
@@ -26,4 +32,13 @@ public class Database {
     public void setDatabaseType(DatabaseType databaseType) {
         this.databaseType = databaseType;
     }
+
+    public List<Schema> getSchemas() {
+        return schemas;
+    }
+
+    public void setSchemas(List<Schema> schemas) {
+        this.schemas = schemas;
+    }
+
 }

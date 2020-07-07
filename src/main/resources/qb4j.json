@@ -8,10 +8,6 @@
         "databaseType": "Sqlite"
       }
     ],
-    "databaseMetadataCache": {
-      "url": "jdbc:sqlite:./data/db_metadata_cache.db",
-      "driverClassName": "org.sqlite.JDBC"
-    },
     "queryTemplateDataSource": {
       "url": "jdbc:sqlite:./data/query_templates.db",
       "driverClassName": "org.sqlite.JDBC"
@@ -26,10 +22,6 @@
         "databaseType": "Sqlite"
       }
     ],
-    "databaseMetadataCache": {
-      "url": "jdbc:sqlite:/qb4j/data/db_metadata_cache.db",
-      "driverClassName": "org.sqlite.JDBC"
-    },
     "queryTemplateDataSource": {
       "url": "jdbc:sqlite:/qb4j/data/query_templates.db",
       "driverClassName": "org.sqlite.JDBC"

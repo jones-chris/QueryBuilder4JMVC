@@ -1,6 +1,6 @@
 package com.cj.config;
 
-import com.querybuilder4j.statements.DatabaseType;
+import com.cj.constants.DatabaseType;
 import org.apache.tomcat.dbcp.dbcp2.BasicDataSource;
 
 import javax.sql.DataSource;
@@ -12,15 +12,13 @@ import java.util.stream.Collectors;
 public class Qb4jConfig {
 
     private List<TargetDataSource> targetDataSources;
-    private DatabaseMetadataCache databaseMetadataCache;
     private QueryTemplateDataSource queryTemplateDataSource;
 
     public Qb4jConfig() {}
 
-    public Qb4jConfig(List<TargetDataSource> targetDataSources, DatabaseMetadataCache databaseMetadataCache,
+    public Qb4jConfig(List<TargetDataSource> targetDataSources,
                       QueryTemplateDataSource  queryTemplateDataSource) {
         this.targetDataSources = targetDataSources;
-        this.databaseMetadataCache = databaseMetadataCache;
         this.queryTemplateDataSource = queryTemplateDataSource;
     }
 
@@ -30,14 +28,6 @@ public class Qb4jConfig {
 
     public void setTargetDataSources(List<TargetDataSource> targetDataSources) {
         this.targetDataSources = targetDataSources;
-    }
-
-    public DatabaseMetadataCache getDatabaseMetaDataCache() {
-        return databaseMetadataCache;
-    }
-
-    public void setDatabaseMetadataCache(DatabaseMetadataCache databaseMetadataCache) {
-        this.databaseMetadataCache = databaseMetadataCache;
     }
 
     public QueryTemplateDataSource getQueryTemplateDataSource() {
@@ -158,62 +148,6 @@ public class Qb4jConfig {
             properties.setProperty("databaseType", databaseType.toString());
 
             return properties;
-        }
-    }
-
-    public static class DatabaseMetadataCache {
-
-        private String url;
-        private String driverClassName;
-        private String username;
-        private String password;
-        private DataSource dataSource;
-
-        public DatabaseMetadataCache() {}
-
-        public String getUrl() {
-            return url;
-        }
-
-        public void setUrl(String url) {
-            this.url = url;
-        }
-
-        public String getDriverClassName() {
-            return driverClassName;
-        }
-
-        public void setDriverClassName(String driverClassName) {
-            this.driverClassName = driverClassName;
-        }
-
-        public String getUsername() {
-            return username;
-        }
-
-        public void setUsername(String username) {
-            this.username = username;
-        }
-
-        public String getPassword() {
-            return password;
-        }
-
-        public void setPassword(String password) {
-            this.password = password;
-        }
-
-        public DataSource getDataSource() {
-            if (this.dataSource == null) {
-                BasicDataSource ds = new BasicDataSource();
-                ds.setDriverClassName(driverClassName);
-                ds.setUrl(url);
-                ds.setUsername(username);
-                ds.setPassword(password);
-
-                this.dataSource = ds;
-            }
-            return this.dataSource;
         }
     }
 
