@@ -1,12 +1,13 @@
 package com.cj.model;
 
+import com.cj.sql_builder.SqlCleanser;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import java.util.ArrayList;
 import java.util.List;
 
-public class Table {
+public class Table implements SqlRepresentation {
 
     private String fullyQualifiedName;
     private String databaseName;
@@ -69,5 +70,17 @@ public class Table {
         } catch (JsonProcessingException ignored) {}
 
         return s;
+    }
+
+    @Override
+    public String toSql(char beginningDelimiter, char endingDelimiter) {
+        if (this.schemaName == null) {
+            return String.format(" %s%s%s ",
+                    beginningDelimiter, SqlCleanser.escape(this.tableName), endingDelimiter);
+        } else {
+            return String.format(" %s%s%s.%s%s%s ",
+                    beginningDelimiter, SqlCleanser.escape(this.schemaName), endingDelimiter,
+                    beginningDelimiter, SqlCleanser.escape(this.tableName), endingDelimiter);
+        }
     }
 }

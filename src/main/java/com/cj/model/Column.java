@@ -1,6 +1,10 @@
 package com.cj.model;
 
-public class Column {
+import com.cj.sql_builder.SqlCleanser;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
+public class Column implements SqlRepresentation {
 
     private String fullyQualifiedName;
     private String databaseName;
@@ -8,8 +12,9 @@ public class Column {
     private String tableName;
     private String columnName;
     private int dataType;
+    private String alias;
 
-    public Column(String databaseName, String schemaName, String tableName, String columnName, int dataType) {
+    public Column(String databaseName, String schemaName, String tableName, String columnName, int dataType, String alias) {
         this.fullyQualifiedName = String.format("%s.%s.%s.%s", databaseName, schemaName, tableName, columnName);
         this.databaseName = databaseName;
 
@@ -20,6 +25,7 @@ public class Column {
         this.tableName = tableName;
         this.columnName = columnName;
         this.dataType = dataType;
+        this.alias = alias;
     }
 
     public String getFullyQualifiedName() {
@@ -70,7 +76,82 @@ public class Column {
         this.dataType = dataType;
     }
 
+    public String getAlias() {
+        return alias;
+    }
+
+    public void setAlias(String alias) {
+        this.alias = alias;
+    }
+
+    @Override
+    public String toString() {
+        String s = "";
+        try {
+            s = new ObjectMapper().writeValueAsString(this);
+        } catch (JsonProcessingException ignored) {}
+
+        return s;
+    }
+
+    @Override
     public String toSql(char beginningDelimiter, char endingDelimiter) {
-        return String.format("  ")
+        if (this.schemaName == null) {
+            if (hasAlias()) {
+                return String.format(" %s%s%s.%s%s%s AS %s ",
+                        beginningDelimiter, SqlCleanser.escape(this.tableName), endingDelimiter,
+                        beginningDelimiter, SqlCleanser.escape(this.columnName), endingDelimiter,
+                        this.alias);
+            } else {
+                return String.format(" %s%s%s.%s%s%s ",
+                        beginningDelimiter, SqlCleanser.escape(this.tableName), endingDelimiter,
+                        beginningDelimiter, SqlCleanser.escape(this.columnName), endingDelimiter);
+            }
+        } else {
+            if (hasAlias()) {
+                return String.format(" %s%s%s.%s%s%s.%s%s%s AS %s",
+                        beginningDelimiter, SqlCleanser.escape(this.schemaName), endingDelimiter,
+                        beginningDelimiter, SqlCleanser.escape(this.tableName), endingDelimiter,
+                        beginningDelimiter, SqlCleanser.escape(this.columnName), endingDelimiter,
+                        this.alias);
+            } else {
+                return String.format(" %s%s%s.%s%s%s.%s%s%s ",
+                        beginningDelimiter, SqlCleanser.escape(this.schemaName), endingDelimiter,
+                        beginningDelimiter, SqlCleanser.escape(this.tableName), endingDelimiter,
+                        beginningDelimiter, SqlCleanser.escape(this.columnName), endingDelimiter);
+            }
+
+        }
+
+    }
+
+    /**
+     * Allows you to set the `withAlias` flag based on whether you want the SQL string representation to include the
+     * column alias.
+     *
+     * @param beginningDelimiter
+     * @param endingDelimiter
+     * @param withAlias
+     * @return
+     */
+    public String toSql(char beginningDelimiter, char endingDelimiter, boolean withAlias) {
+        if (withAlias) {
+            return this.toSql(beginningDelimiter, endingDelimiter);
+        } else {
+            if (this.schemaName == null) {
+                return String.format(" %s%s%s.%s%s%s ",
+                        beginningDelimiter, SqlCleanser.escape(this.tableName), endingDelimiter,
+                        beginningDelimiter, SqlCleanser.escape(this.columnName), endingDelimiter);
+            } else {
+                return String.format(" %s%s%s.%s%s%s.%s%s%s ",
+                        beginningDelimiter, SqlCleanser.escape(this.schemaName), endingDelimiter,
+                        beginningDelimiter, SqlCleanser.escape(this.tableName), endingDelimiter,
+                        beginningDelimiter, SqlCleanser.escape(this.columnName), endingDelimiter);
+            }
+        }
+    }
+
+    private boolean hasAlias() {
+        return this.alias != null && ! this.alias.equals("");
     }
 }

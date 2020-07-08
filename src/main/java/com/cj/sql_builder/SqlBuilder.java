@@ -1,12 +1,15 @@
 package com.cj.sql_builder;
 
 import com.cj.model.Column;
+import com.cj.model.Join;
+import com.cj.model.Table;
 import com.cj.model.select_statement.Criterion;
 import com.cj.model.select_statement.Operator;
 import com.cj.model.select_statement.SelectStatement;
 import com.cj.model.select_statement.parser.SubQueryParser;
 import com.cj.model.select_statement.validator.Validator;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -16,6 +19,12 @@ import static com.cj.sql_builder.SqlCleanser.escape;
  * This class uses a SelectStatement to generate a SELECT SQL string.
  */
 public abstract class SqlBuilder {
+
+    /**
+     * Contains the SQL string that this class' methods will create.  Each class method that is responsible for creating
+     * a SQL clause should append it's SQL string to this field.
+     */
+    StringBuilder stringBuilder = new StringBuilder();
 
     /**
      * The character to begin wrapping the table and column in a SQL statement.  For example, PostgreSQL uses a double quote
@@ -34,7 +43,7 @@ public abstract class SqlBuilder {
     /**
      * The SelectStatement that encapsulates the data to generate the SELECT SQL string.
      */
-    protected SelectStatement stmt;
+    protected SelectStatement selectStatement;
 
     /**
      * The class responsible for parsing subqueries.
@@ -42,9 +51,9 @@ public abstract class SqlBuilder {
     protected SubQueryParser subQueryParser;
 
 
-    public SqlBuilder(SelectStatement stmt) throws Exception {
-        this.stmt = stmt;
-        this.subQueryParser = new SubQueryParser(this.stmt);
+    public SqlBuilder(SelectStatement selectStatement) throws Exception {
+        this.selectStatement = selectStatement;
+        this.subQueryParser = new SubQueryParser(this.selectStatement);
     }
 
     public abstract String buildSql() throws Exception;
@@ -54,84 +63,72 @@ public abstract class SqlBuilder {
      *
      * @param distinct Whether the generated SELECT SQL should have a DISTINCT clause.
      * @param columns A list of columns to generate the SELECT SQL statement.
-     * @return StringBuilder If a Column object raises an Exception.
      */
-    protected StringBuilder createSelectClause(boolean distinct, List<Column> columns) throws Exception {
+    protected void createSelectClause(boolean distinct, List<Column> columns) {
         String startSql = (distinct) ? "SELECT DISTINCT " : "SELECT ";
-        StringBuilder sql = new StringBuilder(startSql);
-        for (Column column : columns) {
-            String columnSql = column.toSql(beginningDelimiter, endingDelimiter);
 
-            sql.append(columnSql)
-                    .append(", ");
-        }
+        StringBuilder sb = new StringBuilder(startSql);
 
-        return sql.delete(sql.length() - 2, sql.length()).append(" ");
+        // Get each column's SQL String representation.
+        List<String> columnsSqlStrings = new ArrayList<>();
+        columns.forEach(column -> {
+            String columnSql = column.toSql(this.beginningDelimiter, this.endingDelimiter);
+            columnsSqlStrings.add(columnSql);
+        });
+
+        // Join the column SQL strings with a ", " between each SQL string.
+        String joinedColumnsSqlStrings = String.join(", ", columnsSqlStrings);
+
+         sb.append(joinedColumnsSqlStrings);
+
+         this.stringBuilder.append(sb);
     }
 
     /**
      * Creates the FROM clause of a SELECT SQL statement.
      *
      * @param table The table name.
-     * @return StringBuilder
      */
-    protected StringBuilder createFromClause(String table) {
-        String s = String.format(" FROM %s%s%s ", beginningDelimiter, escape(table), endingDelimiter);
-        return new StringBuilder(s);
+    protected void createFromClause(Table table) {
+        StringBuilder sb = new StringBuilder(" FROM ");
+        String tableSqlString = table.toSql(this.beginningDelimiter, this.endingDelimiter);
+        sb.append(tableSqlString);
+        this.stringBuilder.append(sb);
     }
 
     /**
      * Creates the JOIN clause of a SELECT SQL statement.
      *
      * @param joins A list of Join.
-     * @return StringBuilder
-     * @throws RuntimeException If a Join has differing numbers of parent table columns and target table columns.
      */
-    protected StringBuilder createJoinClause(List<Join> joins) {
+    protected void createJoinClause(List<Join> joins) {
         StringBuilder sb = new StringBuilder();
-        for (int i=0; i<joins.size(); i++) {
-            Join join = joins.get(i);
 
-            if (join.getParentJoinColumns().size() != join.getTargetJoinColumns().size()) {
-                final String joinColumnsSizeDiffMessage = "The parent and target join columns have differing number of elements.";
-                throw new RuntimeException(joinColumnsSizeDiffMessage);
-            }
+        // Get each join's SQL string representation.
+        List<String> joinSqlStrings = new ArrayList<>();
+        joins.forEach(join -> {
+            String joinSqlString = join.toSql(beginningDelimiter, endingDelimiter);
+            joinSqlStrings.add(joinSqlString);
+        });
 
-            sb.append(join.getJoinType().toString());
-            sb.append(String.format(" %s%s%s ", beginningDelimiter, join.getTargetTable(), endingDelimiter));
+        // Join the join SQL strings with a " " between each SQL string.
+        String joinedSqlStrings = String.join(" ", joinSqlStrings);
 
-            for (int j=0; j<join.getParentJoinColumns().size(); j++) {
-                String conjunction = (j == 0) ? "ON" : "AND";
-                String[] parentJoinTableAndColumn = join.getParentJoinColumns().get(j).split("\\.");
-                String[] targetJoinTableAndColumn = join.getTargetJoinColumns().get(j).split("\\.");
+        sb.append(joinedSqlStrings);
 
-                //Format string in the form of " [ON/AND] `table1`.`column1` = `table2`.`column2` ", assuming the database
-                // type is MySql.
-                sb.append(String.format(" %s %s%s%s.%s%s%s = %s%s%s.%s%s%s ",
-                        conjunction,
-                        beginningDelimiter, parentJoinTableAndColumn[0], endingDelimiter,
-                        beginningDelimiter, parentJoinTableAndColumn[1], endingDelimiter,
-                        beginningDelimiter, targetJoinTableAndColumn[0], endingDelimiter,
-                        beginningDelimiter, targetJoinTableAndColumn[1], endingDelimiter));
-            }
-
-        }
-
-        return sb;
+        this.stringBuilder.append(sb);
     }
 
     /**
      * Creates the WHERE clause of a SQL CRUD statement.
      *
      * @param criteria A list of Criteria.
-     * @return StringBuilder
-     * @throws Exception If cloning the a Criteria raises an Exception.
      */
-    protected StringBuilder createWhereClause(List<Criterion> criteria) throws Exception {
-        StringBuilder sql = new StringBuilder();
+    protected void createWhereClause(List<Criterion> criteria) throws Exception {
+        StringBuilder sb = new StringBuilder();
 
         if (! criteria.isEmpty()) {
-            sql.append(" WHERE ");
+            sb.append(" WHERE ");
 
             for (Criterion criterion : criteria) {
                 // The criteria's filter should be the subquery id that can be retrieved from builtSubQueries.
@@ -151,7 +148,7 @@ public abstract class SqlBuilder {
                     } else {
                         filterItem = escape(filterItem);
 
-                        Map<String, Map<String, Integer>> tableColumnTypes = this.stmt.getDatabaseMetaData()
+                        Map<String, Map<String, Integer>> tableColumnTypes = this.selectStatement.getDatabaseMetaData()
                                 .getTablesMetaData()
                                 .getTableColumnsTypes();
 
@@ -173,29 +170,35 @@ public abstract class SqlBuilder {
                 }
 
                 String criteriaSql = criteriaClone.toSql(beginningDelimiter, endingDelimiter);
-                sql.append(criteriaSql).append(" ");
+                sb.append(criteriaSql).append(" ");
             }
         }
 
-        return sql;
+        this.stringBuilder.append(sb);
     }
 
     /**
      * Creates the GROUP BY clause of a SELECT SQL statement.
      *
      * @param columns A list of columns.
-     * @return StringBuilder
-     * @throws Exception If a Column object raises an Excepton.
      */
-    protected StringBuilder createGroupByClause(List<Column> columns) throws Exception {
-        StringBuilder sql = new StringBuilder(" GROUP BY ");
+    @SuppressWarnings("DuplicatedCode")
+    protected void createGroupByClause(List<Column> columns) {
+        StringBuilder sb = new StringBuilder(" GROUP BY ");
 
-        for (Column column : columns) {
-            sql.append(column.toSql(beginningDelimiter, endingDelimiter))
-                    .append(", ");
-        }
+        // Get each column's SQL string representation.
+        List<String> columnsSqlStrings = new ArrayList<>();
+        columns.forEach(column -> {
+            String columnSqlString = column.toSql(beginningDelimiter, endingDelimiter, false);
+            columnsSqlStrings.add(columnSqlString);
+        });
 
-        return sql.delete(sql.length() - 2, sql.length()).append(" ");
+        // Join the column SQL strings with a ", " between each SQL string.
+        String joinedColumnSqlStrings = String.join(", ", columnsSqlStrings);
+
+        sb.append(joinedColumnSqlStrings);
+
+        this.stringBuilder.append(sb);
     }
 
     /**
@@ -203,74 +206,53 @@ public abstract class SqlBuilder {
      *
      * @param columns A list of columns.
      * @param ascending Whether the generated SQL ORDER BY clause should be ascending or not.
-     * @return StringBuilder
-     * @throws Exception If a Column object raises an Exception.
      */
-    protected StringBuilder createOrderByClause(List<Column> columns, boolean ascending) throws Exception {
-        StringBuilder sql = new StringBuilder(" ORDER BY ");
+    @SuppressWarnings("DuplicatedCode")
+    protected StringBuilder createOrderByClause(List<Column> columns, boolean ascending) {
+        StringBuilder sb = new StringBuilder(" ORDER BY ");
 
-        for (Column column : columns) {
-            sql.append(column.toSql(beginningDelimiter, endingDelimiter))
-                    .append(", ");
+        // Get each column's SQL string representation.
+        List<String> columnsSqlStrings = new ArrayList<>();
+        columns.forEach(column -> {
+            String columnSqlString = column.toSql(beginningDelimiter, endingDelimiter, false);
+            columnsSqlStrings.add(columnSqlString);
+        });
+
+        // Join the column SQL strings with a ", " between each SQL string.
+        String joinedColumnSqlStrings = String.join(", ", columnsSqlStrings);
+
+        sb.append(joinedColumnSqlStrings);
+
+        // Append " ASC " or " DESC " depending on the value of the `ascending` parameter.
+        if (ascending) {
+            sb.append(" ASC ");
+        } else {
+            sb.append(" DESC ");
         }
 
-        sql.delete(sql.length() - 2, sql.length()).append(" ");
-        return (ascending) ? sql.append(" ASC ") : sql.append(" DESC ");
+        this.stringBuilder.append(sb);
     }
 
     /**
      * Creates the LIMIT clause of a SELECT SQL statement.
      *
      * @param limit The limit.
-     * @return StringBuilder
      */
-    protected StringBuilder createLimitClause(Long limit) throws IllegalArgumentException {
-        if (limit == null) {
-            return new StringBuilder();
+    protected void createLimitClause(Long limit) {
+        if (limit != null) {
+            this.stringBuilder.append(String.format(" LIMIT %s ", limit));
         }
-
-        return new StringBuilder(String.format(" LIMIT %s ", limit));
     }
 
     /**
      * Creates the OFFSET clause of a SELECT SQL statement.
      *
      * @param offset The offset.
-     * @return StringBuilder
      */
-    protected StringBuilder createOffsetClause(Long offset) throws IllegalArgumentException {
-        if (offset == null) {
-            return new StringBuilder();
+    protected void createOffsetClause(Long offset) {
+        if (offset != null) {
+            this.stringBuilder.append(String.format(" OFFSET %s ", offset));
         }
-
-        return new StringBuilder(String.format(" OFFSET %s ", offset));
-    }
-
-    /**
-     * Creates a WHERE clause condition that all columns in the columns parameter cannot be null.  This condition
-     * should is used to not return records where all selected columns have a null value.
-     *
-     * @param columns A list of columns.
-     * @return StringBuilder
-     * @throws Exception If a Column object raises an Exception.
-     */
-    protected StringBuilder createSuppressNullsClause(List<Column> columns) throws Exception {
-        StringBuilder sql = new StringBuilder();
-
-        for (int i=0; i<columns.size(); i++) {
-            Column column = columns.get(i);
-            if (i == 0) {
-                sql.append("(")
-                        .append(column.toSql(beginningDelimiter, endingDelimiter))
-                        .append(" IS NOT NULL ");
-            } else {
-                sql.append(" OR ")
-                        .append(column.toSql(beginningDelimiter, endingDelimiter))
-                        .append(" IS NOT NULL ");
-            }
-        }
-
-        return sql.append(") ");
     }
 
 }

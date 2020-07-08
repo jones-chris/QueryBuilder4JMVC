@@ -37,7 +37,11 @@ public class DatabaseMetadataCache {
         refreshCache();
     }
 
-    // Run on start up AND every 24 hours thereafter.
+    /**
+     * Run on start up AND every 24 hours thereafter.
+     *
+     * @throws Exception If an exception is raised when querying one of the target data sources.
+     */
     @Scheduled(initialDelay = 0, fixedRate = 8640000000L)
     public void refreshCache() throws Exception {
         // Get list of databases from qb4jConfig's target data sources.

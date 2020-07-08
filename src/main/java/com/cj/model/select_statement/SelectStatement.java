@@ -1,19 +1,24 @@
 package com.cj.model.select_statement;
 
 import com.cj.model.Column;
+import com.cj.model.Database;
+import com.cj.model.Join;
 import com.cj.model.Table;
 import com.cj.model.select_statement.parser.SubQueryParser;
 import com.cj.model.select_statement.validator.Validator;
+import com.cj.sql_builder.SqlBuilder;
+import com.cj.sql_builder.SqlBuilderFactory;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.inject.internal.util.Join;
 
-import javax.validation.Valid;
 import java.util.*;
+
+import static com.cj.model.Join.JoinType.*;
 
 public class SelectStatement {
 
     private String name = "";
+    private Database database;
     private List<Column> columns = new ArrayList<>();
     private Table table;
     private List<Criterion> criteria = new ArrayList<>();
@@ -45,6 +50,14 @@ public class SelectStatement {
 
     public void setName(String name) {
         this.name = name;
+    }
+
+    public Database getDatabase() {
+        return database;
+    }
+
+    public void setDatabase(Database database) {
+        this.database = database;
     }
 
     public List<Column> getColumns() {
@@ -237,9 +250,13 @@ public class SelectStatement {
         this.criteriaParameters = criteriaParameters;
     }
 
-    public String toSql(Properties properties) {
+    public String toSql() {
         try {
             addExcludingJoinCriteria();
+
+            if (this.suppressNulls) {
+                addSuppressNullsCriteria();
+            }
 
             // If subQueries has not been set (if this is the case, it will have a 0 size), then set subQueries.
             // This is done because if this SelectStatement is a subquery, then it will already have subQueries and we
@@ -252,7 +269,7 @@ public class SelectStatement {
 
             Validator.passesBasicValidation(this);
 
-            Validator.passesDatabaseValidation();
+            Validator.passesDatabaseValidation(this);
 
             SqlBuilder sqlBuilder = SqlBuilderFactory.buildSqlBuilder(this); // subQueries get built here.
             return sqlBuilder.buildSql(); // root query gets built here.
@@ -273,14 +290,14 @@ public class SelectStatement {
      * criteriaArguments.  After doing so, it attempts to replace the parameters in the criteria (again, not the
      * criteriaParameters field) with the relevant value from criteriaArguments.
      *
-     * @throws NoMatchingParameterException if the parameter cannot be found as a key in criteriaArguments.
+     * @throws Exception if the parameter cannot be found as a key in criteriaArguments.
      */
-    private void replaceParameters() throws NoMatchingParameterException {
+    private void replaceParameters() throws Exception {
         // Now that we know there are equal number of parameters and arguments, try replacing the parameters with arguments.
         if (criteriaArguments.size() != 0) {
-            for (Criteria criterion : criteria) {
+            for (Criterion criterion : criteria) {
 
-                String filter = criterion.filter;
+                String filter = criterion.getFilter();
                 String[] splitFilters = filter.split(",");
                 List<String> resultFilters = new ArrayList<>();
 
@@ -292,7 +309,7 @@ public class SelectStatement {
                             resultFilters.add(paramValue);
                         } else {
                             String message = String.format("No criteria parameter was found with the name, %s", paramName);
-                            throw new NoMatchingParameterException(message);
+                            throw new Exception(message);
                         }
                     }
                 }
@@ -317,13 +334,36 @@ public class SelectStatement {
                 } else if (joinType.equals(RIGHT_EXCLUDING)) {
                     addCriteriaForExcludingJoin(join.getParentJoinColumns());
                 } else if (joinType.equals(FULL_OUTER_EXCLUDING)) {
-                    List<String> allJoinColumnns = new ArrayList<>();
-                    allJoinColumnns.addAll(join.getParentJoinColumns());
-                    allJoinColumnns.addAll(join.getTargetJoinColumns());
-                    addCriteriaForExcludingJoin(allJoinColumnns);
+                    List<String> allJoinColumns = new ArrayList<>();
+                    allJoinColumns.addAll(join.getParentJoinColumns());
+                    allJoinColumns.addAll(join.getTargetJoinColumns());
+                    addCriteriaForExcludingJoin(allJoinColumns);
                 }
             }
         }
+    }
+
+    /**
+     * Add a criterion to the SelectStatement for each of the SelectStatement's columns so that a "suppress nulls" clause
+     * is included in the SelectStatement's SQL string representation's WHERE clause.
+     */
+    private void addSuppressNullsCriteria() {
+        // Create root criteria for first column.
+        boolean addAndConjunction = ! this.criteria.isEmpty();
+        Conjunction conjunction = (addAndConjunction) ? Conjunction.And : Conjunction.Empty;
+        Criterion parentCriterion = new Criterion(null, conjunction, this.columns.get(0), Operator.isNotNull, null, null);
+
+        // Create list of children criteria, which are all columns except for the first column.
+        List<Criterion> childCriteria = Collections.emptyList();
+        this.columns.forEach(column -> {
+            Criterion childCriterion = new Criterion(parentCriterion, Conjunction.And, column, Operator.isNotNull, null, null);
+        });
+
+        // Add child criteria to parent criterion.
+        parentCriterion.setChildCriteria(childCriteria);
+
+        // Add parent criterion to SelectStatement's criteria.
+        this.criteria.add(parentCriterion);
     }
 
     private void addCriteriaForExcludingJoin(List<String> columns) {
