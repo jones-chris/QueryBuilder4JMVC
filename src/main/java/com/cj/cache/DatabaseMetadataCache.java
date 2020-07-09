@@ -13,10 +13,7 @@ import org.springframework.stereotype.Repository;
 
 import java.sql.Connection;
 import java.sql.ResultSet;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Repository
@@ -100,6 +97,34 @@ public class DatabaseMetadataCache {
                 .orElseThrow(Exception::new);
     }
 
+    public int getColumnDataType(Column column) throws Exception {
+        String databaseName = column.getDatabaseName();
+        String schemaName = column.getSchemaName();
+        String tableName = column.getTableName();
+        String columnName = column.getColumnName();
+
+        return this.findColumns(databaseName, schemaName, tableName).stream()
+                .filter(col -> col.getColumnName().equals(columnName))
+                .map(Column::getDataType)
+                .findAny()
+                .orElseThrow(Exception::new);
+    }
+
+    public boolean columnExists(Column column) {
+        String databaseName = column.getDatabaseName();
+        String schemaName = column.getSchemaName();
+        String tableName = column.getTableName();
+        String columnName = column.getColumnName();
+
+        try {
+            return this.findColumns(databaseName, schemaName, tableName).stream()
+                    .anyMatch(col -> col.getColumnName().equals(columnName));
+        } catch (Exception ex) {
+            return false;
+        }
+
+    }
+
     private List<Schema> getSchemas() throws Exception {
         List<Schema> schemas = new ArrayList<>();
         for (Qb4jConfig.TargetDataSource targetDataSource : qb4jConfig.getTargetDataSources()) {
@@ -163,7 +188,7 @@ public class DatabaseMetadataCache {
                     String columnName = rs.getString("COLUMN_NAME");
                     int dataType = rs.getInt("DATA_TYPE");
 
-                    Column column = new Column(databaseName, schemaName, tableName, columnName, dataType);
+                    Column column = new Column(databaseName, schemaName, tableName, columnName, dataType, null);
 
                     columns.add(column);
                 }

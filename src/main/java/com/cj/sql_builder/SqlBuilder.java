@@ -1,18 +1,18 @@
 package com.cj.sql_builder;
 
+import com.cj.cache.DatabaseMetadataCache;
 import com.cj.model.Column;
 import com.cj.model.Join;
 import com.cj.model.Table;
-import com.cj.model.select_statement.Criterion;
-import com.cj.model.select_statement.Operator;
-import com.cj.model.select_statement.SelectStatement;
+import com.cj.model.select_statement.*;
 import com.cj.model.select_statement.parser.SubQueryParser;
-import com.cj.model.select_statement.validator.Validator;
+import com.cj.model.select_statement.validator.DatabaseMetadataCacheValidator;
+import org.springframework.beans.factory.annotation.Autowired;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
+import java.util.stream.Collectors;
 
+import static com.cj.model.Join.JoinType.*;
 import static com.cj.sql_builder.SqlCleanser.escape;
 
 /**
@@ -46,14 +46,48 @@ public abstract class SqlBuilder {
     protected SelectStatement selectStatement;
 
     /**
-     * The class responsible for parsing subqueries.
+     * The cache of the target data source(s) and query template data source, which is built from the Qb4jConfig.json file.
+     */
+    protected DatabaseMetadataCache databaseMetadataCache;
+
+    /**
+     * The class responsible for parsing sub queries.
      */
     protected SubQueryParser subQueryParser;
 
+    protected DatabaseMetadataCacheValidator databaseMetadataCacheValidator;
 
     public SqlBuilder(SelectStatement selectStatement) throws Exception {
         this.selectStatement = selectStatement;
         this.subQueryParser = new SubQueryParser(this.selectStatement);
+
+
+        // Prepare the SelectStatement.
+        this.addExcludingJoinCriteria();
+
+        if (this.selectStatement.isSuppressNulls()) {
+            this.addSuppressNullsCriteria();
+        }
+
+        // If subQueries has not been set (if this is the case, it will have a 0 size), then set subQueries.
+        // This is done because if this SelectStatement is a subquery, then it will already have subQueries and we
+        // don't want to change them.
+        if (! this.selectStatement.getSubQueries().isEmpty()) {
+            this.interpolateSubQueries();
+        }
+
+        this.replaceParameters();
+        this.quoteCriteriaFilterItems();
+    }
+
+    @Autowired
+    public void setDatabaseMetadataCache(DatabaseMetadataCache databaseMetadataCache) {
+        this.databaseMetadataCache = databaseMetadataCache;
+    }
+
+    @Autowired
+    public void setDatabaseMetadataCacheValidator(DatabaseMetadataCacheValidator databaseMetadataCacheValidator) {
+        this.databaseMetadataCacheValidator = databaseMetadataCacheValidator;
     }
 
     public abstract String buildSql() throws Exception;
@@ -125,56 +159,15 @@ public abstract class SqlBuilder {
      * @param criteria A list of Criteria.
      */
     protected void createWhereClause(List<Criterion> criteria) throws Exception {
-        StringBuilder sb = new StringBuilder();
+        CriteriaSqlStringHolder criteriaSqlStringHolder = new CriteriaSqlStringHolder();
 
-        if (! criteria.isEmpty()) {
-            sb.append(" WHERE ");
+        this.selectStatement.getCriteria().forEach(criterion -> {
+            criterion.toSqlDeep(this.beginningDelimiter, this.endingDelimiter, criteriaSqlStringHolder);
+        });
 
-            for (Criterion criterion : criteria) {
-                // The criteria's filter should be the subquery id that can be retrieved from builtSubQueries.
-                String[] filterItems = criterion.getFilter().split(",");
-                String[] newFilterItems = filterItems.clone();
-                for (int i=0; i<filterItems.length; i++) {
-                    String filterItem = filterItems[i];
-
-                    if (SubQueryParser.argIsSubQuery(filterItem)) {
-                        String subquery = subQueryParser.getBuiltSubQueries().get(filterItem);
-
-                        if (subquery == null) {
-                            throw new RuntimeException("Could not find subquery with name:  " + filterItem);
-                        }
-
-                        newFilterItems[i] = "(" + subquery + ")";
-                    } else {
-                        filterItem = escape(filterItem);
-
-                        Map<String, Map<String, Integer>> tableColumnTypes = this.selectStatement.getDatabaseMetaData()
-                                .getTablesMetaData()
-                                .getTableColumnsTypes();
-
-                        boolean shouldHaveQuotes = Validator.isColumnQuoted(table, column, tableColumnTypes); //todo:  make this a method in a Util class?
-                        if (shouldHaveQuotes) {
-                            filterItem = "'" + escape(filterItem) + "'";
-                        }
-
-                        newFilterItems[i] = filterItem;
-                    }
-                }
-                criterion.setFilter(String.join(",", newFilterItems));
-
-                // If the filter is 1) IN or NOT IN and 2) the first char is "(" or the last char is ")", then wrap in
-                // parenthesises.
-                if ((criteriaClone.operator.equals(Operator.in) || criteriaClone.operator.equals(Operator.notIn)) &&
-                        (criteriaClone.filter.charAt(0) != '(' || criteriaClone.filter.charAt(criteriaClone.filter.length()-1) != ')')) {
-                    criteriaClone.filter = "(" + criteriaClone.filter + ")";
-                }
-
-                String criteriaSql = criteriaClone.toSql(beginningDelimiter, endingDelimiter);
-                sb.append(criteriaSql).append(" ");
-            }
-        }
-
-        this.stringBuilder.append(sb);
+        this.stringBuilder.append(" WHERE ");
+        String joinedCriteriaSqlStrings = String.join(" ", criteriaSqlStringHolder.getCriterionSqlStrings());
+        this.stringBuilder.append(joinedCriteriaSqlStrings);
     }
 
     /**
@@ -208,7 +201,7 @@ public abstract class SqlBuilder {
      * @param ascending Whether the generated SQL ORDER BY clause should be ascending or not.
      */
     @SuppressWarnings("DuplicatedCode")
-    protected StringBuilder createOrderByClause(List<Column> columns, boolean ascending) {
+    protected void createOrderByClause(List<Column> columns, boolean ascending) {
         StringBuilder sb = new StringBuilder(" ORDER BY ");
 
         // Get each column's SQL string representation.
@@ -252,6 +245,163 @@ public abstract class SqlBuilder {
     protected void createOffsetClause(Long offset) {
         if (offset != null) {
             this.stringBuilder.append(String.format(" OFFSET %s ", offset));
+        }
+    }
+
+    /**
+     * Adds isNull criterion to criteria if any of the statement's joins are an 'excluding' join, such as LEFT_JOIN_EXCLUDING,
+     * RIGHT_JOIN_EXCLUDING, or FULL_OUTER_JOIN_EXCLUDING.
+     */
+    private void addExcludingJoinCriteria() {
+        this.selectStatement.getJoins().forEach(join -> {
+            Join.JoinType joinType = join.getJoinType();
+            if (joinType.equals(LEFT_EXCLUDING)) {
+                this.addCriterionForExcludingJoin(join.getTargetJoinColumns());
+            }
+            else if (joinType.equals(RIGHT_EXCLUDING)) {
+                this.addCriterionForExcludingJoin(join.getParentJoinColumns());
+            }
+            else if (joinType.equals(FULL_OUTER_EXCLUDING)) {
+                List<Column> allJoinColumns = join.getParentJoinColumns().stream()
+                        .collect(Collectors.toCollection(join::getTargetJoinColumns));
+
+                this.addCriterionForExcludingJoin(allJoinColumns);
+            }
+        });
+    }
+
+    private void addCriterionForExcludingJoin(List<Column> columns) {
+        // Create parent criterion.
+        Column firstColumn = columns.get(0);
+        Criterion parentCriterion = new Criterion(null, Conjunction.And, firstColumn, Operator.isNull, null, null);
+
+        // Create child criteria, if there is more than one column.
+        List<Criterion> childCriteria = new ArrayList<>();
+        if (columns.size() > 1) {
+            for (int i=1; i<columns.size(); i++) {
+                Column column = columns.get(i);
+                Criterion childCriterion = new Criterion(parentCriterion, Conjunction.Or, column, Operator.isNull, null, null);
+                childCriteria.add(childCriterion);
+            }
+
+            parentCriterion.setChildCriteria(childCriteria);
+        }
+
+        // Add parent criterion to this class' criteria.
+        this.selectStatement.getCriteria().add(parentCriterion);
+    }
+
+    /**
+     * Add a criterion to the SelectStatement for each of the SelectStatement's columns so that a "suppress nulls" clause
+     * is included in the SelectStatement's SQL string representation's WHERE clause.
+     */
+    private void addSuppressNullsCriteria() {
+        // Create root criteria for first column.
+        boolean addAndConjunction = ! this.selectStatement.getCriteria().isEmpty();
+        Conjunction conjunction = (addAndConjunction) ? Conjunction.And : Conjunction.Empty;
+        Column firstColumn = this.selectStatement.getColumns().get(0);
+        Criterion parentCriterion = new Criterion(null, conjunction, firstColumn, Operator.isNotNull, null, null);
+
+        // Create list of children criteria, which are all columns except for the first column.
+        List<Criterion> childCriteria = Collections.emptyList();
+        this.selectStatement.getColumns().forEach(column -> {
+            Criterion childCriterion = new Criterion(parentCriterion, Conjunction.And, column, Operator.isNotNull, null, null);
+        });
+
+        // Add child criteria to parent criterion.
+        parentCriterion.setChildCriteria(childCriteria);
+
+        // Add parent criterion to SelectStatement's criteria.
+        this.selectStatement.getCriteria().add(parentCriterion);
+    }
+
+    /**
+     * Replaces sub queries in each criterion.  The criterion's filter should be the subquery id that can be retrieved
+     * from this class' subQueryParser's builtSubQueries method.
+     */
+    private void interpolateSubQueries() {
+        for (Criterion criterion : this.selectStatement.getCriteria()) {
+            String filter = criterion.getFilter();
+            String newFilter = filter;
+
+            if (SubQueryParser.argIsSubQuery(filter)) {
+                String subquery = this.subQueryParser.getBuiltSubQueries().get(filter);
+
+                if (subquery == null) {
+                    throw new RuntimeException("Could not find subquery with name:  " + filter);
+                }
+
+                newFilter = "(" + subquery + ")";
+            }
+
+            // Join newFilterItems with a "," and set the criterion's filter to the resulting string.
+            criterion.setFilter(newFilter);
+        }
+    }
+
+    /**
+     * Checks that there is an equal number of parameters in the criteria (not the criteriaParameters field) and
+     * criteriaArguments.  After doing so, it attempts to replace the parameters in the criteria (again, not the
+     * criteriaParameters field) with the relevant value from criteriaArguments.
+     *
+     * @throws Exception if the parameter cannot be found as a key in criteriaArguments.
+     */
+    private void replaceParameters() throws Exception {
+        // Now that we know there are equal number of parameters and arguments, try replacing the parameters with arguments.
+        if (this.selectStatement.getCriteriaArguments().size() != 0) {
+            for (Criterion criterion : this.selectStatement.getCriteria()) {
+
+                String filter = criterion.getFilter();
+                String[] splitFilters = filter.split(",");
+                List<String> resultFilters = new ArrayList<>();
+
+                for (String splitFilter : splitFilters) {
+                    if (splitFilter.length() >= 1 && splitFilter.substring(0, 1).equals("@")) {
+                        String paramName = splitFilter.substring(1);
+                        String paramValue = this.selectStatement.getCriteriaArguments().get(paramName);
+                        if (paramValue != null) {
+                            resultFilters.add(paramValue);
+                        } else {
+                            String message = String.format("No criteria parameter was found with the name, %s", paramName);
+                            throw new Exception(message);
+                        }
+                    }
+                }
+
+                if (resultFilters.size() != 0) {
+                    String joinedResultFilters = String.join(",", resultFilters);
+                    criterion.setFilter(joinedResultFilters);
+                }
+            }
+        }
+    }
+
+    /**
+     * Wrap each column's filter items (after splitting on ",") in quotes based on the column's data type.
+     *
+     * @throws Exception
+     */
+    private void quoteCriteriaFilterItems() throws Exception {
+        for (Criterion criterion : this.selectStatement.getCriteria()) {
+            String[] filterItems = criterion.getFilter().split(",");
+            String[] newFilterItems = filterItems.clone();
+            for (int i=0; i<filterItems.length; i++) {
+                String filterItem = filterItems[i];
+
+                filterItem = escape(filterItem);
+
+                // Get the column's data type from the cache, because we don't trust the column's data type that the client
+                // sent.
+                int columnDataType = this.databaseMetadataCache.getColumnDataType(criterion.getColumn());
+                boolean shouldHaveQuotes = this.databaseMetadataCacheValidator.isColumnQuoted(columnDataType);
+                if (shouldHaveQuotes) {
+                    filterItem = String.format("'%s'", filterItem);
+                }
+
+                newFilterItems[i] = filterItem;
+            }
+
+            criterion.setFilter(String.join(",", newFilterItems));
         }
     }
 

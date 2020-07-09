@@ -1,9 +1,7 @@
 package com.cj.service.querytemplate;
 
-import com.google.gson.Gson;
-import com.querybuilder4j.databasemetadata.QueryTemplateDao;
-import com.querybuilder4j.statements.SelectStatement;
-import org.json.JSONObject;
+import com.cj.dao.querytemplate.QueryTemplateDao;
+import com.cj.model.select_statement.SelectStatement;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -26,11 +24,11 @@ public class QueryTemplateServiceImpl implements QueryTemplateService {
 
     @Override
     public SelectStatement findByName(String name) {
-        return queryTemplateDao.getQueryTemplateByName(name);
+        return queryTemplateDao.findByName(name);
     }
 
     @Override
     public List<String> getNames(Integer limit, Integer offset, boolean ascending) throws Exception {
-         return queryTemplateDao.getNames(limit, offset, ascending);
+         return queryTemplateDao.listNames(limit, offset, ascending);
     }
 }

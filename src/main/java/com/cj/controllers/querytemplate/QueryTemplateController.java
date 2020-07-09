@@ -1,9 +1,10 @@
 package com.cj.controllers.querytemplate;
 
+
+import com.cj.model.select_statement.SelectStatement;
 import com.cj.service.querytemplate.QueryTemplateService;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.querybuilder4j.statements.SelectStatement;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;

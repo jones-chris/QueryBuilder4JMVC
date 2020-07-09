@@ -1,6 +1,7 @@
 package com.cj.service.querytemplate;
 
-import com.querybuilder4j.statements.SelectStatement;
+
+import com.cj.model.select_statement.SelectStatement;
 
 import java.util.List;
 

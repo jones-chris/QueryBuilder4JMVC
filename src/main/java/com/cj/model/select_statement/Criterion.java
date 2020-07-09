@@ -2,17 +2,20 @@ package com.cj.model.select_statement;
 
 import com.cj.model.Column;
 import com.cj.model.SqlRepresentation;
+import com.cj.model.select_statement.validator.Validator;
 import com.cj.sql_builder.SqlCleanser;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
+import static com.cj.sql_builder.SqlCleanser.sqlIsClean;
 import static java.util.Optional.ofNullable;
 
-public class Criterion implements SqlRepresentation {
+public class Criterion implements SqlRepresentation, Validator {
 
     private Criterion parentCriterion;
     private Parenthesis openingParenthesis = Parenthesis.Empty;
@@ -65,8 +68,8 @@ public class Criterion implements SqlRepresentation {
         this.filter = filter;
     }
 
-    public Parenthesis getClosingParenthesis() {
-        return ofNullable(this.closingParenthesis).orElse(Parenthesis.Empty);
+    public List<Parenthesis> getClosingParenthesis() {
+        return ofNullable(this.closingParenthesis).orElse(Collections.singletonList(Parenthesis.Empty));
     }
 
     public List<Criterion> getChildCriteria() {
@@ -174,8 +177,9 @@ public class Criterion implements SqlRepresentation {
      *
      * @param beginningDelimiter The beginning delimiter based on the SQL dialect.
      * @param endingDelimiter The ending delimiter based on the SQL dialect.
-     * @param criterionSqlStrings The list of crtierion SQL string representations that acts as a holder/container for the
-     *                           criterion and it's children as it's passed through the tree.
+     * @param criteriaSqlStringHolder An object that encapsulates the list of crtierion SQL string representations that
+     *                                acts as a holder/container for the criterion and it's children as it's passed through
+     *                                the tree.
      * @return The SQL string representation of the criteria tree.
      */
     // todo:  keep track of opening parenthesis in branch of tree.  When at the last child in the tree, make sure ending ending parenthesis
@@ -218,7 +222,7 @@ public class Criterion implements SqlRepresentation {
             return false;
         }
 
-        return true;
+        return sqlIsClean(this);
     }
 
 }

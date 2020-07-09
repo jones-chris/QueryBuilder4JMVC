@@ -5,6 +5,7 @@ import com.cj.model.select_statement.SelectStatement;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.Map;
 
 public class SubQueryParser {
@@ -26,10 +27,15 @@ public class SubQueryParser {
      */
     protected SelectStatement stmt;
 
+    /**
+     * The DAO that will be used to get query templates.
+     */
     private transient QueryTemplateDao queryTemplateDao;
 
     public SubQueryParser(SelectStatement stmt) throws Exception {
         this.stmt = stmt;
+
+        setSubqueries();
 
         // First, get all SelectStatements that are listed in subqueries.  Later we will replace the params in each subquery.
         // TODO:  this eager loads the subqueries.  It may be beneficial to consider having a class boolean field for lazy loading.
@@ -127,7 +133,7 @@ public class SubQueryParser {
                 stmt.setSubQueries(getRelevantSubQueries(subQueryArgs));
             }
 
-            String sql = stmt.toSql(this.stmt.getDatabaseMetaData().getProperties());
+            String sql = stmt.toSql();
             builtSubQueries.put(subQueryId, sql);
         }
     }
@@ -187,6 +193,79 @@ public class SubQueryParser {
                 }
             }
 
+        }
+    }
+
+    /**
+     * Automatically sets the subQueries field assuming that the subQuery calls are hand-written into a criterion's filter.
+     * If you want to set the subQueries field manually, use the public setSubQueries method.
+     */
+    //todo:  move to the SubQueryParser class or put in a new class?
+    void setSubqueries() throws IllegalArgumentException {
+        if (! this.stmt.getCriteria().isEmpty()) {
+            this.stmt.getCriteria().forEach((criterion) -> {
+                if (SubQueryParser.argIsSubQuery(criterion.getFilter())) {
+                    LinkedList<Integer> begSubQueryIndeces = new LinkedList<>();
+                    LinkedList<Integer> endSubQueryIndeces = new LinkedList<>();
+                    char[] filterChars = criterion.getFilter().toCharArray();
+
+                    for (int i=0; i<filterChars.length; i++) {
+                        if (filterChars[i] == '$') {
+                            begSubQueryIndeces.add(i);
+                        } else if (filterChars[i] == ')') {
+                            endSubQueryIndeces.add(i);
+                        }
+                    }
+
+                    // Check that there are equal number of beginning and ending subQuery indeces - otherwise we have
+                    // a malformed subQuery call.
+                    if (begSubQueryIndeces.size() == endSubQueryIndeces.size()) {
+                        // It's okay to make the while condition based on only one of the LinkedLists because we know at this
+                        // point that both LinkedLists are equal sizes.
+                        String newFilter = new String(criterion.getFilter());
+                        while (begSubQueryIndeces.size() != 0) {
+                            String subQueryId = "$" + this.stmt.getSubQueries().size();
+                            int begSubQueryIndex = begSubQueryIndeces.removeLast();
+                            int endSubQueryIndex = 1000;
+                            // Find ending index that is greater than beginning index, but closest to ending index.
+                            for (Integer endIndex : endSubQueryIndeces) {
+                                if (endIndex > begSubQueryIndex) {
+                                    if ((endIndex - begSubQueryIndex) < (endSubQueryIndex - begSubQueryIndex)) {
+                                        endSubQueryIndex = endIndex;
+                                    }
+                                }
+                            }
+                            endSubQueryIndeces.remove(new Integer(endSubQueryIndex));
+
+                            // Now, get the subQueryCall from filter (which does not change)
+                            String subQueryCall = newFilter.substring(begSubQueryIndex + 1, endSubQueryIndex + 1);
+
+                            // Now, look in newFilter (which changes) and replace that subQueryCall with the subQueryId
+                            newFilter = newFilter.replace("$" + subQueryCall, subQueryId);
+
+                            // Now, add the subQueryId and subQueryCall to subQueries.
+                            this.stmt.getSubQueries().put(subQueryId, subQueryCall);
+
+                            for (int i=0; i<begSubQueryIndeces.size(); i++) {
+                                int begElement = begSubQueryIndeces.get(i);
+                                if (begElement > begSubQueryIndex) {
+                                    int newElement = begElement - (subQueryCall.length());
+                                    begSubQueryIndeces.set(i, newElement);
+                                }
+
+                                int endElement = endSubQueryIndeces.get(i);
+                                if (endElement > endSubQueryIndex) {
+                                    int newElement = endElement - (subQueryCall.length()-1);
+                                    endSubQueryIndeces.set(i, newElement);
+                                }
+                            }
+                        }
+                        criterion.setFilter(newFilter);
+                    } else {
+                        throw new IllegalArgumentException("SubQuery is malformed");
+                    }
+                }
+            });
         }
     }
 

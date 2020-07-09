@@ -2,6 +2,7 @@ package com.cj.sql_builder;
 
 import com.cj.model.select_statement.SelectStatement;
 
+@SuppressWarnings("DuplicatedCode")
 public class MySqlSqlBuilder extends SqlBuilder {
 
     public MySqlSqlBuilder(SelectStatement selectStatement) throws Exception {
@@ -26,7 +27,7 @@ public class MySqlSqlBuilder extends SqlBuilder {
 
         // Group By
         if (selectStatement.isGroupBy()) {
-            this.createGroupByClause(selectStatement.getColumns()));
+            this.createGroupByClause(selectStatement.getColumns());
         }
 
         // Order By
