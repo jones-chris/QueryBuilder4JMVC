@@ -2,6 +2,9 @@ package com.cj.model;
 
 
 import com.cj.constants.DatabaseType;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -10,7 +13,7 @@ public class Database {
 
     private String databaseName;
     private DatabaseType databaseType;
-    private transient List<Schema> schemas = new ArrayList<>();
+    private @JsonIgnore List<Schema> schemas = new ArrayList<>();
 
     public Database(String databaseName, DatabaseType databaseType) {
         this.databaseName = databaseName;
@@ -39,6 +42,16 @@ public class Database {
 
     public void setSchemas(List<Schema> schemas) {
         this.schemas = schemas;
+    }
+
+    @Override
+    public String toString() {
+        String s = "";
+        try {
+            s = new ObjectMapper().writeValueAsString(this);
+        } catch (JsonProcessingException ignored) {}
+
+        return s;
     }
 
 }

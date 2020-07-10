@@ -1,6 +1,7 @@
 package com.cj.model;
 
 import com.cj.sql_builder.SqlCleanser;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -13,7 +14,7 @@ public class Table implements SqlRepresentation {
     private String databaseName;
     private String schemaName;
     private String tableName;
-    private transient List<Column> columns = new ArrayList<>();
+    private @JsonIgnore List<Column> columns = new ArrayList<>();
 
     public Table(String databaseName, String schemaName, String tableName) {
         this.fullyQualifiedName = String.format("%s.%s.%s", databaseName, schemaName, tableName);

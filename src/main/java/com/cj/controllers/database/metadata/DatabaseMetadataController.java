@@ -80,16 +80,15 @@ public class DatabaseMetadataController {
      * @param tables A List of Table objects for which to retrieve columns
      * @return A ResponseEntity containing a List of Column objects.
      */
-    @PostMapping(value = "/database/schema/table/column")
-    public ResponseEntity<List<Column>> getColumns(@RequestBody List<Table> tables) throws Exception {
+    @PostMapping(value = "/{database}/{schema}/{tables}/column")
+    public ResponseEntity<List<Column>> getColumns(@PathVariable String database,
+                                                   @PathVariable String schema,
+                                                   @PathVariable String tables) throws Exception {
+        String[] splitTables = tables.split("&");
         List<Column> allColumns = new ArrayList<>();
         // todo:  instead  of making a cache trip for each table, make cache SQL include WHERE IN clause?
-        for (Table table : tables) {
-            String databaseName = table.getDatabaseName();
-            String schemaName = table.getSchemaName();
-            String tableName = table.getTableName();
-
-            List<Column> columns = databaseMetaDataService.getColumns(databaseName, schemaName, tableName);
+        for (String table : splitTables) {
+            List<Column> columns = databaseMetaDataService.getColumns(database, schema, table);
             allColumns.addAll(columns);
         }
 

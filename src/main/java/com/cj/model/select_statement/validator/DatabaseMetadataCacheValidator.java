@@ -2,15 +2,12 @@ package com.cj.model.select_statement.validator;
 
 import com.cj.cache.DatabaseMetadataCache;
 import com.cj.constants.Constants;
-import com.cj.model.Column;
 import com.cj.model.select_statement.Criterion;
 import com.cj.model.select_statement.SelectStatement;
 import com.cj.sql_builder.SqlCleanser;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.util.List;
-import java.util.Map;
 import java.util.stream.Collectors;
 
 import static com.cj.sql_builder.SqlCleanser.sqlIsClean;

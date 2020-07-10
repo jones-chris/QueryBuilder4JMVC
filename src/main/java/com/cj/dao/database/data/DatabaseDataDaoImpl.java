@@ -1,13 +1,15 @@
 package com.cj.dao.database.data;
 
+import com.cj.cache.DatabaseMetadataCache;
 import com.cj.config.Qb4jConfig;
+import com.cj.model.Column;
 import com.cj.model.QueryResult;
+import com.cj.model.Table;
+import com.cj.model.select_statement.Criterion;
+import com.cj.model.select_statement.Operator;
+import com.cj.model.select_statement.SelectStatement;
+import com.cj.sql_builder.SqlBuilderFactory;
 import com.cj.utils.Converter;
-import com.querybuilder4j.statements.Column;
-import com.querybuilder4j.statements.Criteria;
-import com.querybuilder4j.statements.Operator;
-import com.querybuilder4j.statements.SelectStatement;
-import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
 
@@ -15,16 +17,18 @@ import javax.sql.DataSource;
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.Statement;
-import java.util.Properties;
 
 @Repository
 public class DatabaseDataDaoImpl implements DatabaseDataDao {
 
     private Qb4jConfig qb4jConfig;
 
+    private DatabaseMetadataCache databaseMetadataCache;
+
     @Autowired
-    public DatabaseDataDaoImpl(Qb4jConfig qb4jConfig) {
+    public DatabaseDataDaoImpl(Qb4jConfig qb4jConfig, DatabaseMetadataCache databaseMetadataCache) {
         this.qb4jConfig = qb4jConfig;
+        this.databaseMetadataCache = databaseMetadataCache;
     }
 
     @Override
@@ -35,28 +39,24 @@ public class DatabaseDataDaoImpl implements DatabaseDataDao {
              Statement stmt = conn.createStatement()) {
             ResultSet rs = stmt.executeQuery(sql);
             return new QueryResult(rs, sql);
-        } catch (Exception ex) {
-            throw ex;
         }
 
     }
 
     @Override
-    public String getColumnMembers(String databaseName, String schema, String table, String column, int limit, int offset,
+    public String getColumnMembers(String databaseName, String schemaName, String tableName, String columnName, int limit, int offset,
                                    boolean ascending, String search) throws Exception {
-        schema = (schema.equals("null")) ? null : schema;
-        String tableAndColumn = table + "." + column;
+        schemaName = (schemaName.equals("null")) ? null : schemaName;
 
         SelectStatement selectStatement = new SelectStatement();
         selectStatement.setDistinct(true);
-        selectStatement.getColumns().add(new Column(tableAndColumn));
-        selectStatement.setTable(table);
+        int columnDataType = this.databaseMetadataCache.findColumnByName(databaseName, schemaName, tableName, columnName)
+                .getDataType();
+        Column column = new Column(databaseName, schemaName, tableName, columnName, columnDataType, null);
+        selectStatement.getColumns().add(column);
+        selectStatement.setTable(new Table(databaseName, schemaName, tableName));
         if (search != null) {
-            Criteria criterion = new Criteria(0);
-            criterion.setColumn(tableAndColumn);
-            criterion.setOperator(Operator.like);
-            criterion.setFilter(search);
-
+            Criterion criterion = new Criterion(null, null, column, Operator.like, search, null);
             selectStatement.getCriteria().add(criterion);
         }
         selectStatement.setLimit(Integer.toUnsignedLong(limit));
@@ -64,20 +64,15 @@ public class DatabaseDataDaoImpl implements DatabaseDataDao {
         selectStatement.setOrderBy(true);
         selectStatement.setAscending(ascending);
 
-        Properties dataSourceProperties = qb4jConfig.getTargetDataSources().stream()
-                .filter(source -> source.getName().equals(databaseName))
-                .findFirst()
-                .get()
-                .getProperties();
-        String sql = selectStatement.toSql(dataSourceProperties);
+        String sql = SqlBuilderFactory.buildSqlBuilder(selectStatement)
+                .buildSql();
 
         DataSource dataSource = qb4jConfig.getTargetDataSourceAsDataSource(databaseName);
         try (Connection conn = dataSource.getConnection();
              Statement stmt = conn.createStatement()) {
             ResultSet rs = stmt.executeQuery(sql);
             return Converter.convertToJSON(rs).toString();
-        } catch (Exception ex) {
-            throw ex;
         }
+
     }
 }

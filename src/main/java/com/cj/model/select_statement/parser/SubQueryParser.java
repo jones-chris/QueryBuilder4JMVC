@@ -2,6 +2,8 @@ package com.cj.model.select_statement.parser;
 
 import com.cj.dao.querytemplate.QueryTemplateDao;
 import com.cj.model.select_statement.SelectStatement;
+import com.cj.sql_builder.SqlBuilder;
+import com.cj.sql_builder.SqlBuilderFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.HashMap;
@@ -17,7 +19,7 @@ public class SubQueryParser {
     protected Map<String, SelectStatement> unbuiltSubQueries = new HashMap<>();
 
     /**
-     * A Map of the stmt's subqueries with the key being the subquery id (subquery0, subquery1, etc) and the value being
+     * A Map of the stmt's sub queries with the key being the subquery id (subquery0, subquery1, etc) and the value being
      * the SELECT SQL string generated from the SelectStatement object in the subQueries field of this class.
      */
     protected Map<String, String> builtSubQueries = new HashMap<>();
@@ -32,8 +34,14 @@ public class SubQueryParser {
      */
     private transient QueryTemplateDao queryTemplateDao;
 
-    public SubQueryParser(SelectStatement stmt) throws Exception {
+    /**
+     * The SqlBuilder object used to build sub queries into SQL string representations.
+     */
+    private SqlBuilder sqlBuilder;
+
+    public SubQueryParser(SelectStatement stmt, SqlBuilder sqlBuilder) throws Exception {
         this.stmt = stmt;
+        this.sqlBuilder = sqlBuilder;
 
         setSubqueries();
 
@@ -133,7 +141,7 @@ public class SubQueryParser {
                 stmt.setSubQueries(getRelevantSubQueries(subQueryArgs));
             }
 
-            String sql = stmt.toSql();
+            String sql = this.sqlBuilder.buildSql();
             builtSubQueries.put(subQueryId, sql);
         }
     }

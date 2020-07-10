@@ -59,7 +59,7 @@ public abstract class SqlBuilder {
 
     public SqlBuilder(SelectStatement selectStatement) throws Exception {
         this.selectStatement = selectStatement;
-        this.subQueryParser = new SubQueryParser(this.selectStatement);
+        this.subQueryParser = new SubQueryParser(this.selectStatement, this);
 
 
         // Prepare the SelectStatement.

@@ -106,7 +106,7 @@ public class DatabaseMetadataCache {
         return this.findColumns(databaseName, schemaName, tableName).stream()
                 .filter(col -> col.getColumnName().equals(columnName))
                 .map(Column::getDataType)
-                .findAny()
+                .findFirst()
                 .orElseThrow(Exception::new);
     }
 
@@ -125,6 +125,14 @@ public class DatabaseMetadataCache {
 
     }
 
+    public Column findColumnByName(String databaseName, String schemaName, String tableName, String columnName) throws Exception {
+        return this.findColumns(databaseName, schemaName, tableName)
+                .stream()
+                .filter(column -> column.getColumnName().equals(columnName))
+                .findFirst()
+                .orElseThrow(Exception::new);
+    }
+
     private List<Schema> getSchemas() throws Exception {
         List<Schema> schemas = new ArrayList<>();
         for (Qb4jConfig.TargetDataSource targetDataSource : qb4jConfig.getTargetDataSources()) {
@@ -135,14 +143,14 @@ public class DatabaseMetadataCache {
                 String databaseName = targetDataSource.getName();
                 while (rs.next()) {
                     String schemaName = rs.getString("TABLE_SCHEM");
-                    Schema schema = new Schema(databaseName, schemaName);
+                    Schema schema = new Schema(databaseName, (schemaName == null) ? "null" : schemaName);
                     schemas.add(schema);
                 }
 
                 // If no schemas exist (which is the case for some databases, like SQLite), add a schema with null for
                 // the schema name.
                 if (schemas.isEmpty()) {
-                    schemas.add(new Schema(databaseName, null));
+                    schemas.add(new Schema(databaseName, "null"));
                 }
 
             }

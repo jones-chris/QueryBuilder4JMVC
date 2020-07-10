@@ -1,5 +1,9 @@
 package com.cj.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -8,7 +12,7 @@ public class Schema {
     private String fullyQualifiedName;
     private String databaseName;
     private String schemaName;
-    private transient List<Table> tables = new ArrayList<>();
+    private @JsonIgnore List<Table> tables = new ArrayList<>();
 
     public Schema(String databaseName, String schemaName) {
         this.fullyQualifiedName = String.format("%s.%s", databaseName, schemaName);
@@ -46,5 +50,15 @@ public class Schema {
 
     public void setTables(List<Table> tables) {
         this.tables = tables;
+    }
+
+    @Override
+    public String toString() {
+        String s = "";
+        try {
+            s = new ObjectMapper().writeValueAsString(this);
+        } catch (JsonProcessingException ignored) {}
+
+        return s;
     }
 }

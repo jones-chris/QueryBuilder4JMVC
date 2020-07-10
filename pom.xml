@@ -17,31 +17,6 @@
         <version>2.2.3.RELEASE</version>
     </parent>
 
-    <repositories>
-        <repository>
-            <id>querybuilder4j-s3-release-repo</id>
-            <name>S3 Release Repository for QueryBuilder4J</name>
-            <url>s3://querybuilder4j/release</url>
-            <releases>
-                <enabled>true</enabled>
-            </releases>
-            <snapshots>
-                <enabled>false</enabled>
-            </snapshots>
-        </repository>
-        <repository>
-            <id>querybuilder4j-s3-snapshot-repo</id>
-            <name>S3 Snapshot Repository for QueryBuilder4J</name>
-            <url>s3://querybuilder4j/snapshot</url>
-            <releases>
-                <enabled>false</enabled>
-            </releases>
-            <snapshots>
-                <enabled>true</enabled>
-            </snapshots>
-        </repository>
-    </repositories>
-
     <build>
         <plugins>
             <plugin>
@@ -134,21 +109,6 @@
             <version>1.7.13</version>
         </dependency>
 
-        <!--This comes from S3-->
-<!--        <dependency>-->
-<!--            <groupId>com.querybuilder4j</groupId>-->
-<!--            <artifactId>querybuilder4j</artifactId>-->
-<!--            <version>1</version>-->
-<!--        </dependency>-->
-
-<!--        This is for local development purposes only when working on the qb4j library and the QueryBuilder4JMVC web app at the same time.-->
-<!--        <dependency>-->
-<!--            <groupId>com.querybuilder4j</groupId>-->
-<!--            <artifactId>querybuilder4j</artifactId>-->
-<!--&lt;!&ndash;            <version>1</version>&ndash;&gt;-->
-<!--            <systemPath>/Users/chris.jones/repos/QueryBuilder4J/target/querybuilder4j-0.0.1.jar</systemPath>-->
-<!--        </dependency>-->
-
         <!-- https://mvnrepository.com/artifact/org.json/json -->
         <dependency>
             <groupId>org.json</groupId>
@@ -184,7 +144,7 @@
             <version>1.1.1</version>
         </dependency>
 
-        <!-- This is used to get the pom's project version number (<version></version>)-->
+        <!-- This is used to get the pom's project version number (in the <version></version> element of this POM)-->
         <dependency>
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-help-plugin</artifactId>
