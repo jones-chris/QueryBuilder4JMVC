@@ -20,9 +20,12 @@ public class DatabaseDataController {
 
     private DatabaseDataService databaseDataService;
 
+    private SqlBuilderFactory sqlBuilderFactory;
+
     @Autowired
-    public DatabaseDataController(DatabaseDataService databaseDataService) {
+    public DatabaseDataController(DatabaseDataService databaseDataService, SqlBuilderFactory sqlBuilderFactory) {
         this.databaseDataService = databaseDataService;
+        this.sqlBuilderFactory = sqlBuilderFactory;
     }
 
     /**
@@ -39,7 +42,7 @@ public class DatabaseDataController {
      * @return A ResponseEntity containing
      */
     @GetMapping(value = "/{database}/{schema}/{table}/{column}/column-member")
-    public ResponseEntity<String> getColumnMembers(@PathVariable String database,
+    public ResponseEntity<QueryResult> getColumnMembers(@PathVariable String database,
                                                    @PathVariable String schema,
                                                    @PathVariable String table,
                                                    @PathVariable String column,
@@ -47,8 +50,8 @@ public class DatabaseDataController {
                                                    @RequestParam int offset,
                                                    @RequestParam boolean ascending,
                                                    @RequestParam(required = false) String search) throws Exception {
-        String jsonResults = databaseDataService.getColumnMembers(database, schema, table, column, limit, offset, ascending, search);
-        return new ResponseEntity<>(jsonResults, HttpStatus.OK);
+        QueryResult columnMembers = databaseDataService.getColumnMembers(database, schema, table, column, limit, offset, ascending, search);
+        return ResponseEntity.ok(columnMembers);
     }
 
     /**
@@ -56,12 +59,12 @@ public class DatabaseDataController {
      * a request to an SNS topic (if the database needed to be healed), and returns the query's results.
      *
      * @param selectStatement The SelectStatement to build a SQL string for.
-     * @return
+     * @return A {@link ResponseEntity} containing a {@link QueryResult}.
      */
     @PostMapping(value = "/{database}/query")
     public ResponseEntity<QueryResult> getQueryResults(@PathVariable String database,
                                                        @RequestBody SelectStatement selectStatement) throws Exception {
-        SqlBuilder sqlBuilder = SqlBuilderFactory.buildSqlBuilder(selectStatement);
+        SqlBuilder sqlBuilder = this.sqlBuilderFactory.buildSqlBuilder(selectStatement);
         String sql = sqlBuilder.buildSql();
 
         QueryResult queryResult = databaseDataService.executeQuery(database, sql);

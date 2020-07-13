@@ -96,7 +96,7 @@ public class Column implements SqlRepresentation {
 
     @Override
     public String toSql(char beginningDelimiter, char endingDelimiter) {
-        if (this.schemaName == null) {
+        if (this.schemaName == null || this.schemaName.equals("null")) {
             if (hasAlias()) {
                 return String.format(" %s%s%s.%s%s%s AS %s ",
                         beginningDelimiter, SqlCleanser.escape(this.tableName), endingDelimiter,
@@ -138,7 +138,7 @@ public class Column implements SqlRepresentation {
         if (withAlias) {
             return this.toSql(beginningDelimiter, endingDelimiter);
         } else {
-            if (this.schemaName == null) {
+            if (this.schemaName == null || this.schemaName.equals("null")) {
                 return String.format(" %s%s%s.%s%s%s ",
                         beginningDelimiter, SqlCleanser.escape(this.tableName), endingDelimiter,
                         beginningDelimiter, SqlCleanser.escape(this.columnName), endingDelimiter);

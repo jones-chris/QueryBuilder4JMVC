@@ -75,7 +75,7 @@ public class Table implements SqlRepresentation {
 
     @Override
     public String toSql(char beginningDelimiter, char endingDelimiter) {
-        if (this.schemaName == null) {
+        if (this.schemaName == null || this.schemaName.equals("null")) {
             return String.format(" %s%s%s ",
                     beginningDelimiter, SqlCleanser.escape(this.tableName), endingDelimiter);
         } else {

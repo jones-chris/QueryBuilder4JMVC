@@ -1,11 +1,13 @@
 package com.cj.sql_builder;
 
-import com.cj.model.select_statement.SelectStatement;
+import com.cj.cache.DatabaseMetadataCache;
+import com.cj.model.select_statement.validator.DatabaseMetadataCacheValidator;
 
 public class OracleSqlBuilder extends SqlBuilder {
 
-    public OracleSqlBuilder(SelectStatement stmt) throws Exception {
-        super(stmt);
+    public OracleSqlBuilder(DatabaseMetadataCache databaseMetadataCache,
+                            DatabaseMetadataCacheValidator databaseMetadataCacheValidator) {
+        super(databaseMetadataCache, databaseMetadataCacheValidator);
         beginningDelimiter = '"';
         endingDelimiter = '"';
     }
@@ -13,13 +15,13 @@ public class OracleSqlBuilder extends SqlBuilder {
     @Override
     public String buildSql() throws Exception {
         // Select
-        createSelectClause(selectStatement.isDistinct(), selectStatement.getColumns());
+        createSelectClause();
 
         // From
-        createFromClause(selectStatement.getTable());
+        createFromClause();
 
         // Where
-        createWhereClause(selectStatement.getCriteria());
+        createWhereClause();
 
         // Limit
         if (! selectStatement.getCriteria().isEmpty()) {
@@ -27,29 +29,33 @@ public class OracleSqlBuilder extends SqlBuilder {
         } else {
             this.stringBuilder.append(" WHERE ");
         }
-        createLimitClause(selectStatement.getLimit());
+        createLimitClause();
 
         // Group By
-        createGroupByClause(selectStatement.getColumns());
+        createGroupByClause();
 
         // Order By
-        createOrderByClause(selectStatement.getColumns(), selectStatement.isAscending());
+        createOrderByClause();
 
         // Offset
-        createOffsetClause(selectStatement.getOffset());
+        createOffsetClause();
 
         return this.stringBuilder.toString();
     }
 
     @Override
-    protected void createLimitClause(Long limit) {
+    protected void createLimitClause() {
+        Long limit = this.selectStatement.getLimit();
+
         if (limit != null) {
             this.stringBuilder.append(" ROWNUM < ").append(limit);
         }
     }
 
     @Override
-    protected void createOffsetClause(Long offset) {
+    protected void createOffsetClause() {
+        Long offset = this.selectStatement.getOffset();
+
         if (offset != null) {
             this.stringBuilder.append(" OFFSET ").append(offset).append(" ROWS ");
         }

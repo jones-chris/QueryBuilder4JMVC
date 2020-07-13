@@ -22,10 +22,19 @@ public class CriteriaSqlStringHolder {
         if (criterion.hasOpeningParenthesis()) {
             numOfOpeningParenthesisInBranch++;
         }
+
+        if (criterion.hasClosingParenthesis()) {
+            numOfClosingParenthesisInBranch += criterion.getClosingParenthesis().size();
+        }
     }
 
     public int getDiffOfOpeningAndClosingParenthesis() {
         return this.numOfOpeningParenthesisInBranch - numOfClosingParenthesisInBranch;
+    }
+
+    public void resetNumOfOpeningAndClosingParenthesis() {
+        this.numOfOpeningParenthesisInBranch = 0;
+        this.numOfClosingParenthesisInBranch = 0;
     }
 
 }

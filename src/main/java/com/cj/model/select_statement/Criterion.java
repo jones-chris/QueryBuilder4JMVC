@@ -11,6 +11,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import static com.cj.sql_builder.SqlCleanser.sqlIsClean;
 import static java.util.Optional.ofNullable;
@@ -33,7 +34,10 @@ public class Criterion implements SqlRepresentation, Validator {
         this.column = column;
         this.operator = operator;
         this.filter = filter;
-        this.childCriteria = childCriteria;
+
+        if (childCriteria != null) {
+            this.childCriteria = childCriteria;
+        }
     }
 
     public Criterion getParentCriterion() {
@@ -77,7 +81,9 @@ public class Criterion implements SqlRepresentation, Validator {
     }
 
     public void setChildCriteria(List<Criterion> childCriteria) {
-        this.childCriteria = childCriteria;
+        if (childCriteria != null) {
+            this.childCriteria = childCriteria;
+        }
     }
 
     public boolean isRoot() {
@@ -93,7 +99,7 @@ public class Criterion implements SqlRepresentation, Validator {
     }
 
     public boolean isParent() {
-        return ! this.childCriteria.isEmpty();
+        return this.childCriteria != null && ! this.childCriteria.isEmpty();
     }
 
     public boolean hasParent() {
@@ -106,6 +112,10 @@ public class Criterion implements SqlRepresentation, Validator {
 
     public boolean hasOpeningParenthesis() {
         return this.openingParenthesis.equals(Parenthesis.FrontParenthesis);
+    }
+
+    public boolean hasClosingParenthesis() {
+        return this.closingParenthesis != null && ! this.closingParenthesis.isEmpty();
     }
 
     @Override
@@ -148,7 +158,9 @@ public class Criterion implements SqlRepresentation, Validator {
                 .map(SqlCleanser::escape)
                 .orElseThrow(IllegalArgumentException::new);
 
-        if (schema == null) {
+        String closingParenthesisString = this.closingParenthesis.stream().map(Enum::toString).collect(Collectors.joining());
+
+        if (schema == null || schema.equals("null")) {
             return String.format(" %s %s%s%s%s.%s%s%s %s %s%s ",
                     this.getConjunction(),
                     this.getOpeningParenthesis(),
@@ -156,7 +168,7 @@ public class Criterion implements SqlRepresentation, Validator {
                     beginningDelimiter, columnName, endingDelimiter,
                     this.getOperator(),
                     this.getFilter(),
-                    this.getClosingParenthesis());
+                    closingParenthesisString);
         } else {
             return String.format(" %s %s%s%s%s.%s%s%s.%s%s%s %s %s%s ",
                     this.getConjunction(),
@@ -166,7 +178,7 @@ public class Criterion implements SqlRepresentation, Validator {
                     beginningDelimiter, columnName, endingDelimiter,
                     this.getOperator(),
                     this.getFilter(),
-                    this.getClosingParenthesis());
+                    closingParenthesisString);
         }
     }
 
@@ -187,7 +199,14 @@ public class Criterion implements SqlRepresentation, Validator {
     public String toSqlDeep(char beginningDelimiter, char endingDelimiter, CriteriaSqlStringHolder criteriaSqlStringHolder) throws IllegalArgumentException {
         // If this criterion is a parent (meaning, it has childCriteria), then add a front parenthesis because it's the
         // start of a nested WHERE clause.
-        if (this.isParent()) {
+        if (this.isRoot()) {
+            this.openingParenthesis = Parenthesis.Empty;
+            criteriaSqlStringHolder.resetNumOfOpeningAndClosingParenthesis();
+        }
+
+        // If the criterion is somewhere in the middle of the tree - it is not a root criterion, but it is a parent of child
+        // criteria.
+        if (! this.isRoot() && this.isParent()) {
             this.openingParenthesis = Parenthesis.FrontParenthesis;
         }
 
@@ -197,6 +216,7 @@ public class Criterion implements SqlRepresentation, Validator {
 
             for (int i=0; i<numClosingParenthesisToAdd; i++) {
                 this.closingParenthesis.add(Parenthesis.EndParenthesis);
+
             }
         }
 
@@ -212,17 +232,23 @@ public class Criterion implements SqlRepresentation, Validator {
     }
 
     public boolean isValid() {
-        // column and operator must always be non-null.
+        // Column and operator must always be non-null.
         if (column == null || operator == null) {
             return false;
         }
 
-        // If operator is `isNotNull` or `isNull` and filter is null or an empty string, then criterion is not valid.
-        if ((operator != Operator.isNotNull || operator != Operator.isNull) && (filter == null || filter.equals(""))) {
+        // If operator is not `isNotNull` and `isNull` and filter is null or an empty string, then criterion is not valid.
+        // In other words, the criterion has an operator that expects a non-null or non-empty filter, but the filter is
+        // null or an empty string.
+        if ((operator != Operator.isNotNull && operator != Operator.isNull) && (filter == null || filter.equals(""))) {
             return false;
         }
 
         return sqlIsClean(this);
+    }
+
+    public boolean hasSearchOperator() {
+        return this.operator != null && (this.operator.equals(Operator.like) || this.operator.equals(Operator.notLike));
     }
 
 }

@@ -8,6 +8,7 @@ import com.cj.model.select_statement.*;
 import com.cj.model.select_statement.parser.SubQueryParser;
 import com.cj.model.select_statement.validator.DatabaseMetadataCacheValidator;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -55,19 +56,24 @@ public abstract class SqlBuilder {
      */
     protected SubQueryParser subQueryParser;
 
+    /**
+     * The class responsible for validating the various fields in the `selectStatement`.
+     */
     protected DatabaseMetadataCacheValidator databaseMetadataCacheValidator;
 
-    public SqlBuilder(SelectStatement selectStatement) throws Exception {
+    public SqlBuilder(DatabaseMetadataCache databaseMetadataCache, DatabaseMetadataCacheValidator databaseMetadataCacheValidator) {
+        this.databaseMetadataCache = databaseMetadataCache;
+        this.databaseMetadataCacheValidator = databaseMetadataCacheValidator;
+    }
+
+    public SqlBuilder setStatement(SelectStatement selectStatement) throws Exception {
         this.selectStatement = selectStatement;
         this.subQueryParser = new SubQueryParser(this.selectStatement, this);
 
 
         // Prepare the SelectStatement.
         this.addExcludingJoinCriteria();
-
-        if (this.selectStatement.isSuppressNulls()) {
-            this.addSuppressNullsCriteria();
-        }
+        this.addSuppressNullsCriteria();
 
         // If subQueries has not been set (if this is the case, it will have a 0 size), then set subQueries.
         // This is done because if this SelectStatement is a subquery, then it will already have subQueries and we
@@ -78,11 +84,8 @@ public abstract class SqlBuilder {
 
         this.replaceParameters();
         this.quoteCriteriaFilterItems();
-    }
 
-    @Autowired
-    public void setDatabaseMetadataCache(DatabaseMetadataCache databaseMetadataCache) {
-        this.databaseMetadataCache = databaseMetadataCache;
+        return this;
     }
 
     @Autowired
@@ -94,144 +97,156 @@ public abstract class SqlBuilder {
 
     /**
      * Creates the SELECT clause of a SELECT SQL statement.
-     *
-     * @param distinct Whether the generated SELECT SQL should have a DISTINCT clause.
-     * @param columns A list of columns to generate the SELECT SQL statement.
      */
-    protected void createSelectClause(boolean distinct, List<Column> columns) {
-        String startSql = (distinct) ? "SELECT DISTINCT " : "SELECT ";
+    protected void createSelectClause() {
+        List<Column> columns = this.selectStatement.getColumns();
+        boolean isDistinct = this.selectStatement.isDistinct();
 
-        StringBuilder sb = new StringBuilder(startSql);
+        if (! columns.isEmpty()) {
+            String startSql = (isDistinct) ? "SELECT DISTINCT " : "SELECT ";
 
-        // Get each column's SQL String representation.
-        List<String> columnsSqlStrings = new ArrayList<>();
-        columns.forEach(column -> {
-            String columnSql = column.toSql(this.beginningDelimiter, this.endingDelimiter);
-            columnsSqlStrings.add(columnSql);
-        });
+            StringBuilder sb = new StringBuilder(startSql);
 
-        // Join the column SQL strings with a ", " between each SQL string.
-        String joinedColumnsSqlStrings = String.join(", ", columnsSqlStrings);
+            // Get each column's SQL String representation.
+            List<String> columnsSqlStrings = new ArrayList<>();
+            columns.forEach(column -> {
+                String columnSql = column.toSql(this.beginningDelimiter, this.endingDelimiter);
+                columnsSqlStrings.add(columnSql);
+            });
 
-         sb.append(joinedColumnsSqlStrings);
+            // Join the column SQL strings with a ", " between each SQL string.
+            String joinedColumnsSqlStrings = String.join(", ", columnsSqlStrings);
 
-         this.stringBuilder.append(sb);
+            sb.append(joinedColumnsSqlStrings);
+
+            this.stringBuilder.append(sb);
+        }
     }
 
     /**
      * Creates the FROM clause of a SELECT SQL statement.
-     *
-     * @param table The table name.
      */
-    protected void createFromClause(Table table) {
-        StringBuilder sb = new StringBuilder(" FROM ");
-        String tableSqlString = table.toSql(this.beginningDelimiter, this.endingDelimiter);
-        sb.append(tableSqlString);
-        this.stringBuilder.append(sb);
+    protected void createFromClause() {
+        Table table = this.selectStatement.getTable();
+
+        if (table != null) {
+            StringBuilder sb = new StringBuilder(" FROM ");
+            String tableSqlString = table.toSql(this.beginningDelimiter, this.endingDelimiter);
+            sb.append(tableSqlString);
+            this.stringBuilder.append(sb);
+        }
     }
 
     /**
      * Creates the JOIN clause of a SELECT SQL statement.
-     *
-     * @param joins A list of Join.
      */
-    protected void createJoinClause(List<Join> joins) {
-        StringBuilder sb = new StringBuilder();
+    protected void createJoinClause() {
+        List<Join> joins = this.selectStatement.getJoins();
 
-        // Get each join's SQL string representation.
-        List<String> joinSqlStrings = new ArrayList<>();
-        joins.forEach(join -> {
-            String joinSqlString = join.toSql(beginningDelimiter, endingDelimiter);
-            joinSqlStrings.add(joinSqlString);
-        });
+        if (! joins.isEmpty()) {
+            StringBuilder sb = new StringBuilder();
 
-        // Join the join SQL strings with a " " between each SQL string.
-        String joinedSqlStrings = String.join(" ", joinSqlStrings);
+            // Get each join's SQL string representation.
+            List<String> joinSqlStrings = new ArrayList<>();
+            joins.forEach(join -> {
+                String joinSqlString = join.toSql(beginningDelimiter, endingDelimiter);
+                joinSqlStrings.add(joinSqlString);
+            });
 
-        sb.append(joinedSqlStrings);
+            // Join the join SQL strings with a " " between each SQL string.
+            String joinedSqlStrings = String.join(" ", joinSqlStrings);
 
-        this.stringBuilder.append(sb);
+            sb.append(joinedSqlStrings);
+
+            this.stringBuilder.append(sb);
+        }
     }
 
     /**
      * Creates the WHERE clause of a SQL CRUD statement.
-     *
-     * @param criteria A list of Criteria.
      */
-    protected void createWhereClause(List<Criterion> criteria) throws Exception {
-        CriteriaSqlStringHolder criteriaSqlStringHolder = new CriteriaSqlStringHolder();
+    protected void createWhereClause() {
+        List<Criterion> criteria = this.selectStatement.getCriteria();
 
-        this.selectStatement.getCriteria().forEach(criterion -> {
-            criterion.toSqlDeep(this.beginningDelimiter, this.endingDelimiter, criteriaSqlStringHolder);
-        });
+        if (! criteria.isEmpty()) {
+            CriteriaSqlStringHolder criteriaSqlStringHolder = new CriteriaSqlStringHolder();
 
-        this.stringBuilder.append(" WHERE ");
-        String joinedCriteriaSqlStrings = String.join(" ", criteriaSqlStringHolder.getCriterionSqlStrings());
-        this.stringBuilder.append(joinedCriteriaSqlStrings);
+            this.selectStatement.getCriteria().forEach(criterion -> {
+                criterion.toSqlDeep(this.beginningDelimiter, this.endingDelimiter, criteriaSqlStringHolder);
+            });
+
+            this.stringBuilder.append(" WHERE ");
+            String joinedCriteriaSqlStrings = String.join(" ", criteriaSqlStringHolder.getCriterionSqlStrings());
+            this.stringBuilder.append(joinedCriteriaSqlStrings);
+        }
     }
 
     /**
      * Creates the GROUP BY clause of a SELECT SQL statement.
-     *
-     * @param columns A list of columns.
      */
     @SuppressWarnings("DuplicatedCode")
-    protected void createGroupByClause(List<Column> columns) {
-        StringBuilder sb = new StringBuilder(" GROUP BY ");
+    protected void createGroupByClause() {
+        List<Column> columns = this.selectStatement.getColumns();
 
-        // Get each column's SQL string representation.
-        List<String> columnsSqlStrings = new ArrayList<>();
-        columns.forEach(column -> {
-            String columnSqlString = column.toSql(beginningDelimiter, endingDelimiter, false);
-            columnsSqlStrings.add(columnSqlString);
-        });
+        if (this.selectStatement.isGroupBy() && ! columns.isEmpty()) {
+            StringBuilder sb = new StringBuilder(" GROUP BY ");
 
-        // Join the column SQL strings with a ", " between each SQL string.
-        String joinedColumnSqlStrings = String.join(", ", columnsSqlStrings);
+            // Get each column's SQL string representation.
+            List<String> columnsSqlStrings = new ArrayList<>();
+            columns.forEach(column -> {
+                String columnSqlString = column.toSql(beginningDelimiter, endingDelimiter, false);
+                columnsSqlStrings.add(columnSqlString);
+            });
 
-        sb.append(joinedColumnSqlStrings);
+            // Join the column SQL strings with a ", " between each SQL string.
+            String joinedColumnSqlStrings = String.join(", ", columnsSqlStrings);
 
-        this.stringBuilder.append(sb);
+            sb.append(joinedColumnSqlStrings);
+
+            this.stringBuilder.append(sb);
+        }
     }
 
     /**
      * Creates the ORDER BY clause of a SELECT SQL statement.
-     *
-     * @param columns A list of columns.
-     * @param ascending Whether the generated SQL ORDER BY clause should be ascending or not.
      */
     @SuppressWarnings("DuplicatedCode")
-    protected void createOrderByClause(List<Column> columns, boolean ascending) {
-        StringBuilder sb = new StringBuilder(" ORDER BY ");
+    protected void createOrderByClause() {
+        List<Column> columns = this.selectStatement.getColumns();
+        boolean isAscending = this.selectStatement.isAscending();
 
-        // Get each column's SQL string representation.
-        List<String> columnsSqlStrings = new ArrayList<>();
-        columns.forEach(column -> {
-            String columnSqlString = column.toSql(beginningDelimiter, endingDelimiter, false);
-            columnsSqlStrings.add(columnSqlString);
-        });
+        if (this.selectStatement.isOrderBy() && ! columns.isEmpty()) {
+            StringBuilder sb = new StringBuilder(" ORDER BY ");
 
-        // Join the column SQL strings with a ", " between each SQL string.
-        String joinedColumnSqlStrings = String.join(", ", columnsSqlStrings);
+            // Get each column's SQL string representation.
+            List<String> columnsSqlStrings = new ArrayList<>();
+            columns.forEach(column -> {
+                String columnSqlString = column.toSql(beginningDelimiter, endingDelimiter, false);
+                columnsSqlStrings.add(columnSqlString);
+            });
 
-        sb.append(joinedColumnSqlStrings);
+            // Join the column SQL strings with a ", " between each SQL string.
+            String joinedColumnSqlStrings = String.join(", ", columnsSqlStrings);
 
-        // Append " ASC " or " DESC " depending on the value of the `ascending` parameter.
-        if (ascending) {
-            sb.append(" ASC ");
-        } else {
-            sb.append(" DESC ");
+            sb.append(joinedColumnSqlStrings);
+
+            // Append " ASC " or " DESC " depending on the value of the `ascending` parameter.
+            if (isAscending) {
+                sb.append(" ASC ");
+            } else {
+                sb.append(" DESC ");
+            }
+
+            this.stringBuilder.append(sb);
         }
-
-        this.stringBuilder.append(sb);
     }
 
     /**
      * Creates the LIMIT clause of a SELECT SQL statement.
-     *
-     * @param limit The limit.
      */
-    protected void createLimitClause(Long limit) {
+    protected void createLimitClause() {
+        Long limit = this.selectStatement.getLimit();
+
         if (limit != null) {
             this.stringBuilder.append(String.format(" LIMIT %s ", limit));
         }
@@ -239,10 +254,10 @@ public abstract class SqlBuilder {
 
     /**
      * Creates the OFFSET clause of a SELECT SQL statement.
-     *
-     * @param offset The offset.
      */
-    protected void createOffsetClause(Long offset) {
+    protected void createOffsetClause() {
+        Long offset = this.selectStatement.getOffset();
+
         if (offset != null) {
             this.stringBuilder.append(String.format(" OFFSET %s ", offset));
         }
@@ -296,23 +311,25 @@ public abstract class SqlBuilder {
      * is included in the SelectStatement's SQL string representation's WHERE clause.
      */
     private void addSuppressNullsCriteria() {
-        // Create root criteria for first column.
-        boolean addAndConjunction = ! this.selectStatement.getCriteria().isEmpty();
-        Conjunction conjunction = (addAndConjunction) ? Conjunction.And : Conjunction.Empty;
-        Column firstColumn = this.selectStatement.getColumns().get(0);
-        Criterion parentCriterion = new Criterion(null, conjunction, firstColumn, Operator.isNotNull, null, null);
+        if (this.selectStatement.isSuppressNulls()) {
+            // Create root criteria for first column.
+            boolean addAndConjunction = ! this.selectStatement.getCriteria().isEmpty();
+            Conjunction conjunction = (addAndConjunction) ? Conjunction.And : Conjunction.Empty;
+            Column firstColumn = this.selectStatement.getColumns().get(0);
+            Criterion parentCriterion = new Criterion(null, conjunction, firstColumn, Operator.isNotNull, null, null);
 
-        // Create list of children criteria, which are all columns except for the first column.
-        List<Criterion> childCriteria = Collections.emptyList();
-        this.selectStatement.getColumns().forEach(column -> {
-            Criterion childCriterion = new Criterion(parentCriterion, Conjunction.And, column, Operator.isNotNull, null, null);
-        });
+            // Create list of children criteria, which are all columns except for the first column.
+            List<Criterion> childCriteria = Collections.emptyList();
+            this.selectStatement.getColumns().forEach(column -> {
+                Criterion childCriterion = new Criterion(parentCriterion, Conjunction.And, column, Operator.isNotNull, null, null);
+            });
 
-        // Add child criteria to parent criterion.
-        parentCriterion.setChildCriteria(childCriteria);
+            // Add child criteria to parent criterion.
+            parentCriterion.setChildCriteria(childCriteria);
 
-        // Add parent criterion to SelectStatement's criteria.
-        this.selectStatement.getCriteria().add(parentCriterion);
+            // Add parent criterion to SelectStatement's criteria.
+            this.selectStatement.getCriteria().add(parentCriterion);
+        }
     }
 
     /**
@@ -390,12 +407,20 @@ public abstract class SqlBuilder {
 
                 filterItem = escape(filterItem);
 
-                // Get the column's data type from the cache, because we don't trust the column's data type that the client
-                // sent.
-                int columnDataType = this.databaseMetadataCache.getColumnDataType(criterion.getColumn());
-                boolean shouldHaveQuotes = this.databaseMetadataCacheValidator.isColumnQuoted(columnDataType);
-                if (shouldHaveQuotes) {
+                // If the criterion's operator is a "search" operator (LIKE or NOT LIKE), then wrap the filter in single
+                // quotes so that the database will treat it as a string search regardless of whether the column type
+                // should be wrapped or not.
+                if (criterion.hasSearchOperator()) {
                     filterItem = String.format("'%s'", filterItem);
+                } else {
+                    // If the criterion's filter does not contain a search character, then proceed as normal but getting
+                    // the column's data type from the cache, because we don't trust the column's data type that the client
+                    // sent.
+                    int columnDataType = this.databaseMetadataCache.getColumnDataType(criterion.getColumn());
+                    boolean shouldHaveQuotes = this.databaseMetadataCacheValidator.isColumnQuoted(columnDataType);
+                    if (shouldHaveQuotes) {
+                        filterItem = String.format("'%s'", filterItem);
+                    }
                 }
 
                 newFilterItems[i] = filterItem;

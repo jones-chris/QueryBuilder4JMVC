@@ -1,53 +1,43 @@
 package com.cj.sql_builder;
 
-import com.cj.model.select_statement.SelectStatement;
+import com.cj.cache.DatabaseMetadataCache;
+import com.cj.model.select_statement.validator.DatabaseMetadataCacheValidator;
 
 public class SqlServerSqlBuilder extends SqlBuilder {
 
-    public SqlServerSqlBuilder(SelectStatement selectStatement) throws Exception {
-        super(selectStatement);
+    public SqlServerSqlBuilder(DatabaseMetadataCache databaseMetadataCache,
+                               DatabaseMetadataCacheValidator databaseMetadataCacheValidator) {
+        super(databaseMetadataCache, databaseMetadataCacheValidator);
         beginningDelimiter = '[';
         endingDelimiter = ']';
     }
 
     @Override
-    public String buildSql() throws Exception {
-        // Select
-        this.createSelectClause(selectStatement.isDistinct(), selectStatement.getColumns());
-
-        // From
-        this.createFromClause(selectStatement.getTable());
-
-        // Where
-        this.createWhereClause(selectStatement.getCriteria());
-
-        // Group By
-        if (this.selectStatement.isGroupBy()) {
-            this.createGroupByClause(selectStatement.getColumns());
-        }
-
-        // Order By
-        if (this.selectStatement.isOrderBy()) {
-            this.createOrderByClause(selectStatement.getColumns(), selectStatement.isAscending());
-        }
-
-        // Offset
-        this.createOffsetClause(selectStatement.getOffset());
-
-        // Fetch/Limit
-        this.createFetchClause(selectStatement.getLimit());
+    public String buildSql() {
+        this.createSelectClause();
+        this.createFromClause();
+        this.createWhereClause();
+        this.createGroupByClause();
+        this.createOrderByClause();
+        this.createOffsetClause();
+        this.createLimitClause();
 
         return this.stringBuilder.toString();
     }
 
     @Override
-    protected void createOffsetClause(Long offset) {
+    protected void createOffsetClause() {
+        Long offset = this.selectStatement.getOffset();
+
         if (offset != null) {
             this.stringBuilder.append(" OFFSET ").append(offset).append(" ROWS ");
         }
     }
 
-    private void createFetchClause(Long limit) {
+    @Override
+    protected void createLimitClause() {
+        Long limit = this.selectStatement.getLimit();
+
         if (limit != null) {
             this.stringBuilder.append(" FETCH NEXT ").append(limit).append(" ROWS ONLY ");
         }

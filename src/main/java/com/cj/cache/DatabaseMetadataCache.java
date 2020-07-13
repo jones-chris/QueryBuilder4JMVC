@@ -31,15 +31,17 @@ public class DatabaseMetadataCache {
     @Autowired
     public DatabaseMetadataCache(Qb4jConfig qb4jConfig) throws Exception {
         this.qb4jConfig = qb4jConfig;
-        refreshCache();
+        refreshCache();  // Populate cache on cache instantiation - which should occur at app start up.
     }
 
     /**
-     * Run on start up AND every 24 hours thereafter.
+     * Run every 24 hours thereafter.  This method walks the qb4j target databases that are included in the Qb4jConfig.json
+     * file and saves the target database metadata (databases, schemas, tables, and columns) to this class' `cache` field.
+     * This class eager loads this metadata.
      *
      * @throws Exception If an exception is raised when querying one of the target data sources.
      */
-    @Scheduled(initialDelay = 0, fixedRate = 8640000000L)
+    @Scheduled(fixedRate = 8640000000L)
     public void refreshCache() throws Exception {
         // Get list of databases from qb4jConfig's target data sources.
         List<Database> databases = qb4jConfig.getTargetDataSources().stream()
