@@ -37,4 +37,8 @@ public class CriteriaSqlStringHolder {
         this.numOfClosingParenthesisInBranch = 0;
     }
 
+    public String getSqlStringRepresentation() {
+        return String.join(" ", this.getCriterionSqlStrings());
+    }
+
 }

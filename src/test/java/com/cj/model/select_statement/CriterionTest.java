@@ -6,6 +6,7 @@ import org.junit.Test;
 import java.sql.Types;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.List;
 
 import static org.junit.Assert.*;
 
@@ -95,61 +96,87 @@ public class CriterionTest {
     @Test
     public void toSqlDeep_oneBranchWithOneNodeDeep() {
         Column column = createMockColumn("null", true);
-        Criterion rootCriterion = createMockCriterion(null, column);
-        Criterion childCriterion = createMockCriterion(rootCriterion, column);
+        Criterion rootCriterion = createMockCriterion(null, column, null);
+        Criterion childCriterion = createMockCriterion(rootCriterion, column, null);
         rootCriterion.getChildCriteria().add(childCriterion);
+        CriteriaSqlStringHolder criteriaSqlStringHolder = new CriteriaSqlStringHolder();
         String expectedSql = "  `test`.`test` = test   AND `test`.`test` = test ";
 
-        String actualSql = rootCriterion.toSqlDeep('`', '`', new CriteriaSqlStringHolder());
+        rootCriterion.toSqlDeep('`', '`', criteriaSqlStringHolder);
 
-        assertEquals(expectedSql, actualSql);
+        assertEquals(expectedSql, criteriaSqlStringHolder.getSqlStringRepresentation());
     }
 
     @Test
     public void toSqlDeep_twoBranchesWithOneNodeDeep() {
         Column column = createMockColumn("null", true);
-        Criterion rootCriterion = createMockCriterion(null, column);
-        Criterion childCriterion1 = createMockCriterion(rootCriterion, column);
-        Criterion childCriterion2 = createMockCriterion(rootCriterion, column);
+        Criterion rootCriterion = createMockCriterion(null, column, null);
+        Criterion childCriterion1 = createMockCriterion(rootCriterion, column, null);
+        Criterion childCriterion2 = createMockCriterion(rootCriterion, column, null);
         rootCriterion.setChildCriteria(Arrays.asList(childCriterion1, childCriterion2));
+        CriteriaSqlStringHolder criteriaSqlStringHolder = new CriteriaSqlStringHolder();
         String expectedSql = "  `test`.`test` = test   AND `test`.`test` = test   AND `test`.`test` = test ";
 
-        String actualSql = rootCriterion.toSqlDeep('`', '`', new CriteriaSqlStringHolder());
+        rootCriterion.toSqlDeep('`', '`', criteriaSqlStringHolder);
 
-        assertEquals(expectedSql, actualSql);
+        assertEquals(expectedSql, criteriaSqlStringHolder.getSqlStringRepresentation());
     }
 
     @Test
     public void toSqlDeep_oneBranchWithTwoNodesDeep() {
         Column column = createMockColumn("null", true);
-        Criterion rootCriterion = createMockCriterion(null, column);
-        Criterion childCriterion1 = createMockCriterion(rootCriterion, column);
-        Criterion childCriterion1_1 = createMockCriterion(childCriterion1, column);
+        Criterion rootCriterion = createMockCriterion(null, column, null);
+        Criterion childCriterion1 = createMockCriterion(rootCriterion, column, null);
+        Criterion childCriterion1_1 = createMockCriterion(childCriterion1, column, null);
         childCriterion1.setChildCriteria(Collections.singletonList(childCriterion1_1));
         rootCriterion.setChildCriteria(Collections.singletonList(childCriterion1));
+        CriteriaSqlStringHolder criteriaSqlStringHolder = new CriteriaSqlStringHolder();
         String expectedSql = "  `test`.`test` = test   AND (`test`.`test` = test   AND `test`.`test` = test) ";
 
-        String actualSql = rootCriterion.toSqlDeep('`', '`', new CriteriaSqlStringHolder());
+        rootCriterion.toSqlDeep('`', '`', criteriaSqlStringHolder);
 
-        assertEquals(expectedSql, actualSql);
+        assertEquals(expectedSql, criteriaSqlStringHolder.getSqlStringRepresentation());
     }
 
     @Test
     public void toSqlDeep_oneBranchWithTwoNestedBranches() {
         Column column = createMockColumn("null", true);
-        Criterion rootCriterion = createMockCriterion(null, column);
-        Criterion childCriterion1 = createMockCriterion(rootCriterion, column);
-        Criterion childCriterion1_1 = createMockCriterion(childCriterion1, column);
+        Criterion rootCriterion = createMockCriterion(null, column, null);
+        Criterion childCriterion1 = createMockCriterion(rootCriterion, column, null);
+        Criterion childCriterion1_1 = createMockCriterion(childCriterion1, column, null);
         childCriterion1.setChildCriteria(Collections.singletonList(childCriterion1_1));
-        Criterion childCriterion2 = createMockCriterion(rootCriterion, column);
-        Criterion childCriterion2_1 = createMockCriterion(childCriterion2, column);
+        Criterion childCriterion2 = createMockCriterion(rootCriterion, column, null);
+        Criterion childCriterion2_1 = createMockCriterion(childCriterion2, column, null);
         childCriterion2.setChildCriteria(Collections.singletonList(childCriterion2_1));
         rootCriterion.setChildCriteria(Arrays.asList(childCriterion1, childCriterion2));
+        CriteriaSqlStringHolder criteriaSqlStringHolder = new CriteriaSqlStringHolder();
         String expectedSql = "  `test`.`test` = test   AND (`test`.`test` = test   AND `test`.`test` = test)   AND (`test`.`test` = test   AND `test`.`test` = test) ";
 
-        String actualSql = rootCriterion.toSqlDeep('`', '`', new CriteriaSqlStringHolder());
+        rootCriterion.toSqlDeep('`', '`', criteriaSqlStringHolder);
 
-        assertEquals(expectedSql, actualSql);
+        assertEquals(expectedSql, criteriaSqlStringHolder.getSqlStringRepresentation());
+    }
+
+    @Test
+    public void toSqlDeep_twoRoots() {
+        Column column = createMockColumn("null", true);
+        Criterion rootCriterion1 = createMockCriterion(null,  column, null);
+        Criterion rootCriterion2 = createMockCriterion(null, column, Conjunction.And);
+        Criterion childCriterion1_1 = createMockCriterion(rootCriterion1, column, null);
+        Criterion childCriterion2_1 = createMockCriterion(rootCriterion2, column, null);
+        Criterion childCriterion2_1_1 = createMockCriterion(childCriterion2_1, column, null);
+        childCriterion2_1.setChildCriteria(Collections.singletonList(childCriterion2_1_1));
+        rootCriterion1.setChildCriteria(Collections.singletonList(childCriterion1_1));
+        rootCriterion2.setChildCriteria(Collections.singletonList(childCriterion2_1));
+        List<Criterion> rootCriteria = Arrays.asList(rootCriterion1, rootCriterion2);
+        String expectedSql = "  `test`.`test` = test   AND `test`.`test` = test   AND `test`.`test` = test   AND (`test`.`test` = test   AND `test`.`test` = test) ";
+        CriteriaSqlStringHolder criteriaSqlStringHolder = new CriteriaSqlStringHolder();
+
+        for (Criterion rootCriterion : rootCriteria) {
+            rootCriterion.toSqlDeep('`', '`', criteriaSqlStringHolder);
+        }
+
+        assertEquals(expectedSql, criteriaSqlStringHolder.getSqlStringRepresentation());
     }
 
     private Column createMockColumn(String schema, boolean hasSingleQuotedColumn) {
@@ -157,11 +184,11 @@ public class CriterionTest {
         return new Column("test", schema, "test", "test", dataType, null);
     }
 
-    private Criterion createMockCriterion(Criterion parentCriterion, Column column) {
+    private Criterion createMockCriterion(Criterion parentCriterion, Column column, Conjunction parentCriterionConjunction) {
         // If no parentCriterion parameter, then return a root criterion.
         // Else, return a child criterion.
         if (parentCriterion == null) {
-            return new Criterion(null, null, column, Operator.equalTo, "test", null);
+            return new Criterion(null, parentCriterionConjunction, column, Operator.equalTo, "test", null);
         } else {
             return new Criterion(parentCriterion, Conjunction.And, column, Operator.equalTo, "test", null);
         }

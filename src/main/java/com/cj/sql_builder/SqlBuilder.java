@@ -88,11 +88,6 @@ public abstract class SqlBuilder {
         return this;
     }
 
-    @Autowired
-    public void setDatabaseMetadataCacheValidator(DatabaseMetadataCacheValidator databaseMetadataCacheValidator) {
-        this.databaseMetadataCacheValidator = databaseMetadataCacheValidator;
-    }
-
     public abstract String buildSql() throws Exception;
 
     /**
@@ -163,7 +158,7 @@ public abstract class SqlBuilder {
     }
 
     /**
-     * Creates the WHERE clause of a SQL CRUD statement.
+     * Creates the WHERE clause of a SELECT SQL statement.
      */
     protected void createWhereClause() {
         List<Criterion> criteria = this.selectStatement.getCriteria();
@@ -176,7 +171,7 @@ public abstract class SqlBuilder {
             });
 
             this.stringBuilder.append(" WHERE ");
-            String joinedCriteriaSqlStrings = String.join(" ", criteriaSqlStringHolder.getCriterionSqlStrings());
+            String joinedCriteriaSqlStrings = criteriaSqlStringHolder.getSqlStringRepresentation();
             this.stringBuilder.append(joinedCriteriaSqlStrings);
         }
     }

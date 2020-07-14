@@ -12,6 +12,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static com.cj.sql_builder.SqlCleanser.sqlIsClean;
 import static java.util.Optional.ofNullable;
@@ -106,7 +107,7 @@ public class Criterion implements SqlRepresentation, Validator {
         return this.parentCriterion != null;
     }
 
-    public boolean isLastChild() {
+    public boolean isLastChildInBranch() {
         return ! this.isParent() && this.hasParent();
     }
 
@@ -194,11 +195,8 @@ public class Criterion implements SqlRepresentation, Validator {
      *                                the tree.
      * @return The SQL string representation of the criteria tree.
      */
-    // todo:  keep track of opening parenthesis in branch of tree.  When at the last child in the tree, make sure ending ending parenthesis
-    // todo:  matches the number of opening parenthesis.
-    public String toSqlDeep(char beginningDelimiter, char endingDelimiter, CriteriaSqlStringHolder criteriaSqlStringHolder) throws IllegalArgumentException {
-        // If this criterion is a parent (meaning, it has childCriteria), then add a front parenthesis because it's the
-        // start of a nested WHERE clause.
+    public void toSqlDeep(char beginningDelimiter, char endingDelimiter, CriteriaSqlStringHolder criteriaSqlStringHolder) throws IllegalArgumentException {
+        // If this criterion is a root criterion (meaning, it has no parent), then reset the criteriaSqlStringHolder.
         if (this.isRoot()) {
             this.openingParenthesis = Parenthesis.Empty;
             criteriaSqlStringHolder.resetNumOfOpeningAndClosingParenthesis();
@@ -211,12 +209,11 @@ public class Criterion implements SqlRepresentation, Validator {
         }
 
         // If criterion is the last child in this branch of the tree, add the necessary number of closing parenthesis.
-        if (this.isLastChild()) {
+        if (this.isLastChildInBranch()) {
             int numClosingParenthesisToAdd = criteriaSqlStringHolder.getDiffOfOpeningAndClosingParenthesis();
 
             for (int i=0; i<numClosingParenthesisToAdd; i++) {
                 this.closingParenthesis.add(Parenthesis.EndParenthesis);
-
             }
         }
 
@@ -227,8 +224,6 @@ public class Criterion implements SqlRepresentation, Validator {
         for (Criterion childCriterion : this.childCriteria) {
             childCriterion.toSqlDeep(beginningDelimiter, endingDelimiter, criteriaSqlStringHolder);
         }
-
-        return String.join(" ", criteriaSqlStringHolder.getCriterionSqlStrings());
     }
 
     public boolean isValid() {
