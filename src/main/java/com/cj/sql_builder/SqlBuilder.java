@@ -314,10 +314,12 @@ public abstract class SqlBuilder {
             Criterion parentCriterion = new Criterion(null, conjunction, firstColumn, Operator.isNotNull, null, null);
 
             // Create list of children criteria, which are all columns except for the first column.
-            List<Criterion> childCriteria = Collections.emptyList();
-            this.selectStatement.getColumns().forEach(column -> {
-                Criterion childCriterion = new Criterion(parentCriterion, Conjunction.And, column, Operator.isNotNull, null, null);
-            });
+            List<Criterion> childCriteria = new ArrayList<>();
+            for (int i=1; i<this.selectStatement.getColumns().size(); i++) {
+                Column column = this.selectStatement.getColumns().get(i);
+                Criterion childCriterion = new Criterion(parentCriterion, Conjunction.Or, column, Operator.isNotNull, null, null);
+                childCriteria.add(childCriterion);
+            }
 
             // Add child criteria to parent criterion.
             parentCriterion.setChildCriteria(childCriteria);

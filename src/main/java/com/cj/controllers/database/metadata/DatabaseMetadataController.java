@@ -10,6 +10,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import javax.validation.Valid;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -81,14 +82,10 @@ public class DatabaseMetadataController {
      * @return A ResponseEntity containing a List of Column objects.
      */
     @PostMapping(value = "/{database}/{schema}/{tables}/column")
-    public ResponseEntity<List<Column>> getColumns(@PathVariable String database,
-                                                   @PathVariable String schema,
-                                                   @PathVariable String tables) throws Exception {
-        String[] splitTables = tables.split("&");
+    public ResponseEntity<List<Column>> getColumns(@RequestBody List<Table> tables) throws Exception {
         List<Column> allColumns = new ArrayList<>();
-        // todo:  instead  of making a cache trip for each table, make cache SQL include WHERE IN clause?
-        for (String table : splitTables) {
-            List<Column> columns = databaseMetaDataService.getColumns(database, schema, table);
+        for (Table table : tables) {
+            List<Column> columns = databaseMetaDataService.getColumns(table.getDatabaseName(), table.getSchemaName(), table.getTableName());
             allColumns.addAll(columns);
         }
 

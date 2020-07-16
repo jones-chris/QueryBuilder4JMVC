@@ -32,7 +32,7 @@ public class QueryTemplateController {
      * @param ascending Whether the query that retrieves the query template names should be in ascending or descending order.
      * @return A ResponseEntity object containing a List of Strings with each String being the name of a query template.
      */
-    @GetMapping(value = "/")
+    @GetMapping(value = "")
     public ResponseEntity<List<String>> getQueryTemplates(@RequestParam(required = false) Integer limit,
                                                           @RequestParam(required = false) Integer offset,
                                                           @RequestParam(required = false) boolean ascending) throws Exception {

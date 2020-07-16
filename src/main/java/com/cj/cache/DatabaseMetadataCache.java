@@ -94,7 +94,7 @@ public class DatabaseMetadataCache {
     public List<Column> findColumns(String databaseName, String schemaName, String tableName) throws Exception {
         return this.findTables(databaseName, schemaName).stream()
                 .filter(table -> table.getTableName().equals(tableName))
-                .map(Table::getColumns)
+                .map(Table::getColumns) // todo: sort alphabetically.
                 .findAny()
                 .orElseThrow(Exception::new);
     }
@@ -173,7 +173,7 @@ public class DatabaseMetadataCache {
                 while (rs.next()) {
                     String schemaName = rs.getString("TABLE_SCHEM");
                     String tableName = rs.getString("TABLE_NAME");
-                    Table table = new Table(databaseName, schemaName, tableName);
+                    Table table = new Table(databaseName, (schemaName == null) ? "null" : schemaName, tableName);
                     tables.add(table);
                 }
 
